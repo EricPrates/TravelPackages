@@ -1,11 +1,17 @@
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Searchbar } from "react-native-paper";
+import { useState } from "react";
 
 export default function HomeScreen() {
-
+    const [searchQuery, setSearchQuery] = useState('');
 
     return (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Text>Home Screen</Text>
+        <View style={{ padding: 16 }}>
+            <Searchbar
+                placeholder="Buscar destinos..."
+                onChangeText={setSearchQuery}
+                value={searchQuery}
+            />
         </View>
     );
 }
