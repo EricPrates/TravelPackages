@@ -1,5 +1,7 @@
+
+
 const travelPackageModel = (sequelize, DataTypes) => {
-    const TravelPackage = sequelize.define('travel_package', {
+    const TravelPackage = sequelize.define('travel_packages', {
         destination: {
             type: DataTypes.STRING,
             allowNull: false
@@ -27,7 +29,7 @@ const travelPackageModel = (sequelize, DataTypes) => {
         totalPrice:{
             type: DataTypes.FLOAT,
             allowNull: true
-        }
+        },
     });
 
     return TravelPackage;
