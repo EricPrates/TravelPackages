@@ -3,7 +3,7 @@ import { ENUM } from "sequelize";
 const packageComponentsModel = (sequelize, DataTypes) => {
     const PackageComponents = sequelize.define('package_components', {
         type:{
-            type: ENUM('FLIGHT', 'HOTEL', 'TOUR',  'MEAL'),
+            type: DataTypes.ENUM('FLIGHT', 'HOTEL', 'TOUR',  'MEAL'),
             allowNull: false
         },
 
@@ -13,11 +13,15 @@ const packageComponentsModel = (sequelize, DataTypes) => {
         },
         componentName: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         },
         componentPrice: {
             type: DataTypes.FLOAT,
             allowNull: false
+        },
+        packageId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
         }
     });
 
