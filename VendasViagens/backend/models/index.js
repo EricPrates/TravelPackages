@@ -1,5 +1,5 @@
 import DbConfig from "../config/database.js";
-import Sequelize from "sequelize";
+import {Sequelize} from "sequelize";
 import packageComponentsModel from "./PackageComponents.model.js";
 import travelPackageModel from "./travelPackage.model.js";
 import UserModel from "./User.model.js";

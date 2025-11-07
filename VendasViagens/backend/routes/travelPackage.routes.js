@@ -1,4 +1,4 @@
-import express from "express";
+/* import express from "express";
 import * as travels from"../controller/TravelPackage.controller.js";
 
 const router = express.Router();
@@ -11,4 +11,4 @@ router.delete('/:id', travels.remove);
 
 export default app =>{
     app.use ('/travel-packages', router);
-}
+} */

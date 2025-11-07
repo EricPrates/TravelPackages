@@ -4,22 +4,18 @@ const Users = db.Users;
 const TravelPackage = db.TravelPackage;
 const PackageComponents = db.PackageComponents;
 
-export default findAll = async (req, res) => {
+export const findAll = async (req, res) => {
     try{
-        const {name, des} = req.query.nome
-        const condition = nome? {nome:{[Op.like]: `%${name}`}}: null;
-
-        const data = await TravelPackage.findAll({
-            where: condition,
-            include: [{
-                model:PackageComponents,
-                as: 'travelPackage',
-                atributes: ['id', 'nome'],
-                through: {atributes: []}
-            }]
+             
+        const data = await Users.findAll({
+            
+            attributes: ['id', 'name', 'email', 'role', 'cash', 'miles'],
         })
+        res.send(data)
     }catch(error){
-
+        res.status(500).send({
+            message: error.message || "Erro ao buscar usuários"
+        })
     }
 
 
