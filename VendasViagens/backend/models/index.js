@@ -18,9 +18,16 @@ db.Users = UserModel(sequelize, Sequelize.DataTypes);
 db.TravelPackage = travelPackageModel(sequelize, Sequelize.DataTypes);
 db.PackageComponents = packageComponentsModel(sequelize, Sequelize.DataTypes);
 
-db.Users.belongsToMany(db.TravelPackage, { through: 'UserTravelPackages', as: 'bookedPackages', foreignKey: 'userId' });
-db.TravelPackage.belongsToMany(db.Users, { through: 'UserTravelPackages', as: 'users', foreignKey: 'packageId' });
-db.TravelPackage.hasMany(db.PackageComponents, { foreignKey: 'packageId', as: 'components' });
-db.PackageComponents.belongsTo(db.TravelPackage, { foreignKey: 'packageId', as: 'travelPackage' });
+db.Users.belongsToMany(db.TravelPackage, { through: 'UserTravelPackages', 
+as: 'bookedPackages', foreignKey: 'userId', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+
+db.TravelPackage.belongsToMany(db.Users, { through: 'UserTravelPackages', 
+as: 'users', foreignKey: 'packageId', onDelete: 'CASCADE', onUpdate: 'CASCADE'  });
+
+db.TravelPackage.hasMany(db.PackageComponents, { foreignKey: 'packageId', 
+as: 'components', onDelete: 'CASCADE', onUpdate: 'CASCADE'  });
+
+db.PackageComponents.belongsTo(db.TravelPackage, { foreignKey: 'packageId', 
+as: 'travelPackage', onDelete: 'CASCADE', onUpdate: 'CASCADE'  });
 
 export default db;

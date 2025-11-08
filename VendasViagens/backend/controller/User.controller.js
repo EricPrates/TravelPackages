@@ -1,5 +1,6 @@
 import db from "../models/index.js";
 const Op = db.Sequelize.Op;
+
 const Users = db.Users;
 const TravelPackage = db.TravelPackage;
 
@@ -23,7 +24,7 @@ export const findAll = async (req, res) => {
 
 
 };
-export const findOne = async (req, res) => {
+export const findOneByName = async (req, res) => {
     
     try{
         const name = req.params.name;
