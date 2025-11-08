@@ -1,7 +1,10 @@
-const userModel = (sequelize, DataTypes) => {
-    const User = sequelize.define('user', {
-        name: {
-            type: DataTypes.STRING,
+import {Model} from "sequelize";
+
+class User extends Model {
+    static init(sequelize, DataTypes) {
+        return super.init({
+            name: {
+                type: DataTypes.STRING,
             allowNull: true
         },
         email: {
@@ -26,10 +29,19 @@ const userModel = (sequelize, DataTypes) => {
             type:DataTypes.INTEGER,
             allowNull:false,
             defaultValue:0
-        }
-    });
+        }},
+           { 
+            sequelize,
+            modelName: 'User',
+            tableName: 'users'
+        });
 
+    }
+
+
+}
+
+export default function(sequelize, DataTypes) {
+    User.init(sequelize, DataTypes);
     return User;
-};
-
-export default userModel;
+}

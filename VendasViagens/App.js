@@ -6,7 +6,7 @@ import 'react-native-gesture-handler';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { Button } from '@react-navigation/elements';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import MenuDrawer from './navigator/MenuDrawer';
+import MenuDrawer from './frontend/navigator/MenuDrawer';
 
 
 export default function App() {

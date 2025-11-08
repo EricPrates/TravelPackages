@@ -1,31 +1,45 @@
 import { ENUM } from "sequelize";
+import {Model} from "sequelize";
 
-const packageComponentsModel = (sequelize, DataTypes) => {
-    const PackageComponents = sequelize.define('package_components', {
-        type:{
-            type: DataTypes.ENUM('FLIGHT', 'HOTEL', 'TOUR',  'MEAL'),
+class PackageComponents extends Model {
+    static init(sequelize, DataTypes) {
+        return super.init({
+            title: {
+                type: DataTypes.STRING,
+                allowNull: false
+            },
+            type:{
+            type: DataTypes.ENUM('FLIGHT', 'HOTEL', 'TOUR',  'MEAL', 'TRANSPORT', 'ACTIVITY', 'INSURANCE'),
             allowNull: false
         },
 
-        componentType: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
         componentName: {
             type: DataTypes.STRING,
             allowNull: true
         },
-        componentPrice: {
+        moneyPrice: {
             type: DataTypes.FLOAT,
+            allowNull: false
+        },
+        milesPrice: {
+            type: DataTypes.INTEGER,
             allowNull: false
         },
         packageId: {
             type: DataTypes.INTEGER,
             allowNull: true,
         }
-    });
+    },{
+        sequelize,
+        modelName: 'PackageComponents',
+        tableName: 'package_components'
+    })
 
-    return PackageComponents;
+
 };
+}
 
-export default packageComponentsModel;
+export default function(sequelize, DataTypes) {
+    PackageComponents.init(sequelize, DataTypes);
+    return PackageComponents;
+}
