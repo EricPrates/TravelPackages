@@ -4,6 +4,23 @@ const Op = db.Sequelize.Op;
 const Users = db.Users;
 const TravelPackage = db.TravelPackage;
 
+export const findOne = async (req, res) => {
+    const id = req.params.id;
+    try{
+        const data = await Users.findByPk(id, {
+            include: [{
+                model: TravelPackage, as: 'bookedPackages',
+                attributes: ['id', 'title', 'description', 'price', 'duration', 'destination', 'availableSlots', 'image'],
+                through: { attributes: [] },
+            }]
+        });
+        res.send(data);
+    }catch(error){
+        res.status(500).send({
+            message: error.message || "Erro ao buscar usuário com id=" + id
+        });
+    }
+};
 
 export const findAll = async (req, res) => {
     try{
