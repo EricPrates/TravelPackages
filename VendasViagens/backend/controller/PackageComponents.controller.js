@@ -29,7 +29,7 @@ export const findAll = async (req, res) =>{
             const data = await PackageComponents.findAll({
                 include: [{
                     model: TravelPackage, as: 'travelPackage',
-                    attributes: ['id', 'title', 'description', 'price', 'duration', 'destination', 'availableSlots', 'image'],
+                    attributes: ['id', 'title', 'description', 'priceMiles', 'priceCash', 'duration', 'destination', 'availableSlots', 'image'],
                     through: { attributes: [] },
                 }]
             });
@@ -47,7 +47,7 @@ export const findByPk = async (req, res) => {
         const data = await PackageComponents.findByPk(id, {
             include: [{
                 model: TravelPackage, as: 'travelPackage',
-                attributes: ['id', 'title', 'description', 'price', 'duration', 'destination', 'availableSlots', 'image'],
+                attributes: ['id', 'title', 'description', 'priceMiles', 'priceCash', 'duration', 'destination', 'availableSlots', 'image'],
                 through: { attributes: [] },
             }]
         });
@@ -77,6 +77,49 @@ export const create = async (req, res) => {
     }catch(error){
         res.status(500).send({
             message: "Erro ao criar componente de pacote"
+        });
+    }
+};
+
+export const update = async (req, res) => {
+    const id = req.params.id;
+    try{
+        const [updated] = await PackageComponents.update (req.body, {
+            where: {id: id}
+        });
+        if(updated > 0){
+            const updatedComponent = await PackageComponents.findByPk(id);
+            res.status(200).send({
+                message: "Componente de pacote atualizado com sucesso.",
+                data: updatedComponent
+            });
+        }else{
+            res.status(404).send({
+                message: `Não foi possível encontrar o componente de pacote com id=${id}.`
+            });
+        }
+    }catch(error){
+        res.status(500).send({
+            message: "Erro ao atualizar componente de pacote com id=" + id
+        });
+    }
+};
+export const remove = async (req, res) => {
+    const id = req.params.id;
+    try{
+        const deleted = await PackageComponents.destroy({
+            where: {id: id}
+        });
+        if(deleted == 1){
+          res.sendStatus(204);
+        }else{
+            res.status(404).send({
+                message: `Não foi possível encontrar o componente de pacote com id=${id}.`
+            });
+        }
+    }catch(error){
+        res.status(500).send({
+            message: "Erro ao deletar componente de pacote com id=" + id
         });
     }
 };

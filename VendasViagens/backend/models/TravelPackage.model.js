@@ -11,7 +11,11 @@ class TravelPackage extends Model {
                 type: DataTypes.STRING,
                 allowNull: false
             },
-            price: {
+            priceMiles: {
+                type: DataTypes.FLOAT,
+                allowNull: false
+            },
+            priceCash: {
                 type: DataTypes.FLOAT,
                 allowNull: false
             },
@@ -27,9 +31,17 @@ class TravelPackage extends Model {
                 type: DataTypes.INTEGER,
                 allowNull: false
             },
-            image: {
-                type: DataTypes.STRING,
-                allowNull: true
+            images: {
+                type: DataTypes.TEXT,
+                allowNull: true,
+                defaultValue: '[]',
+                get() {
+                    const rawValue = this.getDataValue('images');
+                    return rawValue ? JSON.parse(rawValue) : [];
+                },
+                set(value) {
+                    this.setDataValue('images', JSON.stringify(value));
+                }
             },
         }, {  
             sequelize,
@@ -38,10 +50,10 @@ class TravelPackage extends Model {
         });
     }
 
-    calculateTotalPrice() {
+    calculateTotalPriceMiles() {
         const components = this.components || [];
         return components.reduce((total, component) => {
-            return total + (component.calculateTotalPrice?.() || component.price || 0);
+            return total + (component.calculateTotalPriceMiles?.() || component.priceMiles || 0);
         }, 0);
     }
 

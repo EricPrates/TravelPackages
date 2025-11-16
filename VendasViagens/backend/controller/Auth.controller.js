@@ -83,7 +83,7 @@ export const requireAgent = (req, res, next) => {
         return res.status(401).send({ message: "Token de acesso requerido." });
     }
     if (req.user.role !== 'agent') {
-        return res.status(403).send({ message: "Acesso negado. Permissão de administrador requerida." });
+        return res.status(403).send({ message: "Acesso negado. Permissão de agente requerida." });
     }
     next();
 }
