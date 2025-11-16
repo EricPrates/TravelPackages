@@ -42,12 +42,22 @@ export const findAll = async (req, res) => {
 
 };
 export const findOneByName = async (req, res) => {
-    
+  let name;
     try{
-        const name = req.params.name;
-        const condition = name ? {name: {[Op.iLike]: `%${name}%`}} : null;
-        const data = await Users.findOne({
-            where: condition,
+        name = req.query.name;
+        if(!name){
+            res.status(400).send({
+                message: "O nome é obrigatório."
+            });
+            return;
+        }
+        const nameClean = name.trim();
+        const data = await Users.findAll({
+            where: {
+                name: {
+                    [Op.like]: `%${nameClean}%`
+                }
+            },
             include: [{
                 model: TravelPackage, as: 'bookedPackages',
                 attributes: ['id', 'title', 'description', 'price', 'duration', 'destination', 'availableSlots', 'image', 'totalPrice'],
@@ -55,11 +65,11 @@ export const findOneByName = async (req, res) => {
             }
             ]
         })
-        if(data){
-            res.status(200).send(data)
+        if(data.length > 0){
+         return   res.status(200).send(data)
         }else{
-            res.status(404).send({
-                message: `Não foi possível encontrar o usuário com nome=${name}.`
+          return  res.status(404).send({
+                message: `Não foi possível encontrar o usuário com nome=${nameClean}.`
             })
         }
     }catch(error){
@@ -72,16 +82,16 @@ export const findOneByName = async (req, res) => {
 export const create = async (req, res) => {
     if(!req.body.name){
         res.status(400).send({
-            message: "O campo 'name' é obrigatório."
+            message: "O campo nome é obrigatório."
         });
         return;
     }
     
     try {
         const user = await Users.create(req.body);
-        res.status(201).send(user);
+      return  res.status(201).send(user);
     } catch (error) {
-        res.status(500).send({
+        return res.status(500).send({
             message: "Erro ao criar usuário."
         });
     }
