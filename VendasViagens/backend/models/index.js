@@ -3,6 +3,7 @@ import {Sequelize} from "sequelize";
 import packageComponentsModel from "./PackageComponents.model.js";
 import travelPackageModel from "./travelPackage.model.js";
 import UserModel from "./User.model.js";
+import transactionsModel from "./Transaction.model.js";
 
 const sequelize = new Sequelize({
     dialect: DbConfig.dialect,
@@ -17,6 +18,7 @@ db.sequelize = sequelize;
 db.Users = UserModel(sequelize, Sequelize.DataTypes);
 db.TravelPackage = travelPackageModel(sequelize, Sequelize.DataTypes);
 db.PackageComponents = packageComponentsModel(sequelize, Sequelize.DataTypes);
+db.Transactions = transactionsModel(sequelize, Sequelize.DataTypes);
 
 db.Users.belongsToMany(db.TravelPackage, { through: 'UserTravelPackages', 
 as: 'bookedPackages', foreignKey: 'userId', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
@@ -29,5 +31,12 @@ as: 'components', onDelete: 'CASCADE', onUpdate: 'CASCADE'  });
 
 db.PackageComponents.belongsTo(db.TravelPackage, { foreignKey: 'packageId', 
 as: 'travelPackage', onDelete: 'CASCADE', onUpdate: 'CASCADE'  });
+db
+db.Transactions.belongsTo(db.Users, { foreignKey: 'userId', 
+as: 'user', onDelete: 'CASCADE', onUpdate: 'CASCADE'  });
+
+db.Users.hasMany(db.Transactions, { foreignKey: 'userId', 
+as: 'transactions', onDelete: 'CASCADE', onUpdate: 'CASCADE'  });
+
 
 export default db;

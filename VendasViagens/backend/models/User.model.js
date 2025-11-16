@@ -3,7 +3,7 @@ import {Model} from "sequelize";
 class User extends Model {
     static init(sequelize, DataTypes) {
         return super.init({
-            name: {
+        name: {
                 type: DataTypes.STRING,
             allowNull: true
         },
@@ -20,12 +20,12 @@ class User extends Model {
             type: DataTypes.STRING,
             allowNull: false
         },
-        cash: {
+        balanciInCash: {
             type: DataTypes.FLOAT,
             allowNull: false,
             defaultValue: 0.0
         },
-        miles:{
+        balanceInMiles:{
             type:DataTypes.INTEGER,
             allowNull:false,
             defaultValue:0

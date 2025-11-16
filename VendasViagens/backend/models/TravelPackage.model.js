@@ -30,7 +30,7 @@ class TravelPackage extends Model {
             image: {
                 type: DataTypes.STRING,
                 allowNull: true
-            }
+            },
         }, {  
             sequelize,
             modelName: 'TravelPackage', 
