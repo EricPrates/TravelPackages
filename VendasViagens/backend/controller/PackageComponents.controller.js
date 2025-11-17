@@ -1,5 +1,6 @@
 import db from "../models/index.js";
 const Op = db.Sequelize.Op;
+import {AmadeusFlightService} from "amadeus" ;
 const PackageComponents = db.PackageComponents;
 const TravelPackage = db.TravelPackage;
 
@@ -24,7 +25,7 @@ export const findOneByName = async (req, res) => {
         });
     }
 }
-export const findAll = async (req, res) =>{
+export const findAllWithPrices = async (req, res) =>{
         try{
             const data = await PackageComponents.findAll({
                 include: [{

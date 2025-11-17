@@ -17,18 +17,18 @@ class PackageComponents extends Model {
             type: DataTypes.STRING,
             allowNull: true
         },
-        moneyPrice: {
-            type: DataTypes.FLOAT,
-            allowNull: false
-        },
-        milesPrice: {
-            type: DataTypes.INTEGER,
-            allowNull: false
+        AmadeusId: {
+            type: DataTypes.STRING,
+            allowNull: true
         },
         packageId: {
             type: DataTypes.INTEGER,
             allowNull: true,
-        }
+        }, 
+        metadata: {
+                type: DataTypes.JSON,
+                allowNull: true
+        },
     },{
         sequelize,
         modelName: 'PackageComponents',
