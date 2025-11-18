@@ -1,7 +1,7 @@
 
 import dotenv from"dotenv";                     
 import jwt from"jsonwebtoken" ;
-import db from"../models/index.js" ;
+import db from"../../models/index.js" ;
 import bcrypt from"bcrypt" ;
 
 const JWT_PRIVATE_KEY= process.env.JWT_PRIVATE_KEY; 

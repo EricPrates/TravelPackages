@@ -1,7 +1,6 @@
 import express from "express";
-import * as travels from"../controller/TravelPackage.controller.js";
-import { tokenValidated,requireAgent } from "../controller/Auth.controller.js";
-
+import * as travels from '../services/myServices/TravelPackage.service.js';
+import { tokenValidated,requireAgent } from '../services/myServices/Auth.js';
 const router = express.Router();
 
 router.post('/', tokenValidated, requireAgent, travels.create);

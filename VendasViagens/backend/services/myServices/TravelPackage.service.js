@@ -1,4 +1,5 @@
-import db from "../models/index.js";
+import db from '../../models/index.js';
+
 const Op = db.Sequelize.Op;
 const Users = db.Users;
 const TravelPackage = db.TravelPackage;
@@ -76,17 +77,17 @@ export const create = async (req, res) => {
     
     }
     try {
-        const travelPackage = await TravelPackage.create({
-            title: req.body.title,
-            description: req.body.description,
-            price: req.body.price,
-            duration: req.body.duration,
-            destination: req.body.destination,
-            availableSlots: req.body.availableSlots,
-            image: req.body.image
+        const {userId, title, destination, origin, departureDate, returnDate, } = req.body;
+        const data = await TravelPackage.create({
+            title: title,
+            destination: destination,
+            origin: origin,
+            departureDate: departureDate,
+            returnDate: returnDate,
+            userId: userId,
         });
-        const data = await TravelPackage.create(travelPackage);
-        res.status(202).send(data);
+
+        res.status(201).send(data);
     } catch (error) {
         res.status(500).send({
             message: error.message || "Erro ao criar pacote de viagem"

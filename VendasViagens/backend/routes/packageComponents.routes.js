@@ -1,6 +1,6 @@
 import express from 'express';
-import * as package_components from '../controller/PackageComponents.controller.js';
-import { tokenValidated } from '../controller/Auth.controller.js';
+import * as package_components from '../services/myServices/PackageComponents.service.js';
+import { tokenValidated } from '../services/myServices/Auth.js';
 
 const router = express.Router();
 

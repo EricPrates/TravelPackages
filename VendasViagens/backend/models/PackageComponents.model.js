@@ -5,11 +5,11 @@ class PackageComponents extends Model {
     static init(sequelize, DataTypes) {
         return super.init({
             title: {
-                type: DataTypes.STRING,
-                allowNull: false
+            type: DataTypes.STRING,
+            allowNull: false
             },
             type:{
-            type: DataTypes.ENUM('FLIGHT', 'HOTEL', 'TOUR',  'MEAL', 'TRANSPORT', 'ACTIVITY', 'INSURANCE'),
+            type: DataTypes.ENUM('FLIGHT', 'HOTEL', 'ACTIVITY', 'CAR_RENTAL'),
             allowNull: false
         },
 
@@ -17,17 +17,42 @@ class PackageComponents extends Model {
             type: DataTypes.STRING,
             allowNull: true
         },
-        AmadeusId: {
+        AmadeusId : {
             type: DataTypes.STRING,
+            allowNull: true
+        },
+        moneyPrice: {
+            type: DataTypes.FLOAT,
+            allowNull: true
+        },
+        milesPrice: {
+            type: DataTypes.INTEGER,
             allowNull: true
         },
         packageId: {
             type: DataTypes.INTEGER,
             allowNull: true,
         }, 
-        metadata: {
-                type: DataTypes.JSON,
+        departureDate: {
+                type: DataTypes.DATE,
                 allowNull: true
+        },
+        returnDate: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
+        origin: {
+            type: DataTypes.STRING,
+            allowNull: true 
+        },
+        destination: {
+            type: DataTypes.STRING,
+            allowNull: true 
+        },
+        numberOfTravelers: {
+            type: DataTypes.INTEGER,
+            allowNull: true, 
+            defaultValue: 1
         },
     },{
         sequelize,

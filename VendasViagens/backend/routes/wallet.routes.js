@@ -1,6 +1,6 @@
 import express from 'express';
-import * as wallet from '../controller/Wallet.controller.js';
-import { tokenValidated } from '../controller/Auth.controller.js';
+import * as wallet from '../services/myServices/Wallet.service.js';
+import { tokenValidated } from '../services/myServices/Auth.js';
 
 const router = express.Router();
 

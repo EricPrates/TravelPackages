@@ -11,16 +11,16 @@ class TravelPackage extends Model {
                 type: DataTypes.STRING,
                 allowNull: false
             },
-            priceMiles: {
-                type: DataTypes.FLOAT,
+            origin: {
+                type: DataTypes.STRING,
                 allowNull: false
             },
-            priceCash: {
-                type: DataTypes.FLOAT,
+            departureDate: {
+                type: DataTypes.DATE,
                 allowNull: false
             },
-            duration: {
-                type: DataTypes.INTEGER,
+            returnDate: {
+                type: DataTypes.DATE,
                 allowNull: false
             },
             description: {
