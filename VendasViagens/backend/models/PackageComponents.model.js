@@ -54,6 +54,20 @@ class PackageComponents extends Model {
             allowNull: true, 
             defaultValue: 1
         },
+        checkin: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
+        checkout: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
+        isSelected: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        }, 
+        
     },{
         sequelize,
         modelName: 'PackageComponents',

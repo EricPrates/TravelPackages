@@ -1,5 +1,5 @@
 import db from '../../models/index.js';
-
+import {amadeusClient}  from '../amadeusServices/AmadeusClient.Service.js';
 const Op = db.Sequelize.Op;
 const Users = db.Users;
 const TravelPackage = db.TravelPackage;
@@ -36,7 +36,46 @@ export const findAll = async (req, res) => {
         })
     }
 };
-
+export const createdPackageWithOptions = async (packageData) => {
+    try{
+    const {title, destination, origin, departureDate, returnDate, 
+            description, availableSlots, agentId, images, checkin, checkout } = packageData;
+   
+        const travelPackage = await TravelPackage.create({
+            title,
+            destination,
+            origin, 
+            departureDate,
+            returnDate,
+            description,
+            availableSlots,
+            agentId,
+            images: images || [],
+        });
+        const formattedDepartureDate = new Date(departureDate).toISOString().split('T')[0];
+        const formattedReturnDate = new Date(returnDate).toISOString().split('T')[0];
+        const formattedCheckin = checkin ? new Date(checkin).toISOString().split('T')[0] : null;
+        const formattedCheckout = checkout ? new Date(checkout).toISOString().split('T')[0] : null;
+        const [flights, hotels, activities, carRentals] = await Promise.all([
+            amadeusClient.searchFlights({ origin, destination, departureDate: formattedDepartureDate, returnDate: formattedReturnDate }),
+            amadeusClient.searchHotels({ destination, checkin: formattedCheckin, checkout: formattedCheckout }),
+            amadeusClient.searchActivities({ destination }),
+            amadeusClient.searchCarRentals({ destination, departureDate: formattedDepartureDate, returnDate: formattedReturnDate }),
+        ]);
+        return{
+            travelPackage,
+            options: {
+                flights: flights,
+                hotels: hotels,
+                activities: activities,
+                carRentals: carRentals,
+            }
+        }
+    }catch(error){
+        return error;
+    }
+   
+};
 export const findOne = async (req, res) => {
     try{
         const id = req.params.id;
@@ -77,14 +116,18 @@ export const create = async (req, res) => {
     
     }
     try {
-        const {userId, title, destination, origin, departureDate, returnDate, } = req.body;
+        const {userId, title, destination, origin, departureDate, returnDate, description, availableSlots, image} = req.body;
         const data = await TravelPackage.create({
             title: title,
             destination: destination,
             origin: origin,
             departureDate: departureDate,
             returnDate: returnDate,
+            description: description,
+            availableSlots: availableSlots,
+            image: image,
             userId: userId,
+
         });
 
         res.status(201).send(data);

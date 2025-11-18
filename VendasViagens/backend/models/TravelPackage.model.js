@@ -43,6 +43,10 @@ class TravelPackage extends Model {
                     this.setDataValue('images', JSON.stringify(value));
                 }
             },
+            agentId: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+            },
         }, {  
             sequelize,
             modelName: 'TravelPackage', 
