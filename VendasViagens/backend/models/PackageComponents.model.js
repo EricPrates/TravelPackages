@@ -4,11 +4,11 @@ import {Model} from "sequelize";
 class PackageComponents extends Model {
     static init(sequelize, DataTypes) {
         return super.init({
-            title: {
+        title: {
             type: DataTypes.STRING,
             allowNull: false
             },
-            type:{
+        type:{
             type: DataTypes.ENUM('FLIGHT', 'HOTEL', 'ACTIVITY', 'CAR_RENTAL'),
             allowNull: false
         },
@@ -62,11 +62,7 @@ class PackageComponents extends Model {
             type: DataTypes.DATE,
             allowNull: true
         },
-        isSelected: {
-            type: DataTypes.BOOLEAN,
-            allowNull: false,
-            defaultValue: false
-        }, 
+        
         
     },{
         sequelize,
