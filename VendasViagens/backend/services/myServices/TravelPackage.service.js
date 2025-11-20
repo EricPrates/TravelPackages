@@ -36,80 +36,94 @@ export const findAll = async (req, res) => {
         })
     }
 };
-const isValidDate = x => { date instanceof Date && !isNaN(date.getTime()) };
 
 
-export const createdPackageWithOptions = async (req, res) => {
+
+export const createBasePackage = async (req, res) => {
     try {
 
-        const { title, destination, origin, departureDate, returnDate,
-            description, availableSlots, agentId, images, checkinDate, checkoutDate } = req.body;
-
-        if (!isValidDate(departureDate) || !isValidDate(checkoutDate) || !isValidDate(checkinDate), isValidDate(returnDate)) {
-            res.status(400).send({
-                sucess: false,
-                message: "Digite datas válidas"
-            })
-            
-
+        const packageData = req.body;
+            const validationError = validatePackageData(packageData);
+        if (validationError) {
+            return res.status(400).json(validationError);
         }
-        if (numberOfTravelers <= 0) {
-                res.status(400).send({
-                    sucess: false,
-                    message: "Digite datas válidas"
-                })
-            }
 
-        const travelPackage = await TravelPackage.create({
-            title,
-            destination,
-            origin,
-            departureDate,
-            returnDate,
-            description,
-            availableSlots,
-            agentId,
-            images: images || [],
-        });
+        const travelPackage = await createPackageInDB(packageData);
 
-        const formattedDepartureDate = new Date(departureDate).toISOString().split('T')[0];
-        const formattedReturnDate = new Date(returnDate).toISOString().split('T')[0];
-        const formattedCheckin = checkinDate ? new Date(checkinDate).toISOString().split('T')[0] : null;
-        const formattedCheckout = checkoutDate ? new Date(checkoutDate).toISOString().split('T')[0] : null;
-        const [flights, hotels, activities, carRentals] = await Promise.allSettled([
-            amadeusClient.searchFlights({ origin, destination, departureDate: formattedDepartureDate, returnDate: formattedReturnDate }),
-            amadeusClient.searchHotels({ destination, checkinDate: formattedCheckin, checkoutDate: formattedCheckout }),
-            amadeusClient.searchActivities({ destination }),
-            amadeusClient.searchCarRentals({ destination, departureDate: formattedDepartureDate, returnDate: formattedReturnDate }),
-        ]);
+        
+        fetchAmadeusOptionsAsync(travelPackage);
+
         res.status(201).json({
             success: true,
-            travelPackage: {
-                id: travelPackage.id,
-                title: travelPackage.title,
-                destination: travelPackage.destination,
-                origin: travelPackage.origin,
-                departureDate: travelPackage.departureDate,
-                returnDate: travelPackage.returnDate,
-                availableSlots: travelPackage.availableSlots,
-                agentId: travelPackage.agentId
-            },
-            availableOptions: {
-                flights: flights || [],
-                hotels: hotels || [],
-                activities: activities || [],
-                carRentals: carRentals || [],
-            },
-            message: 'Pacote criado com opções disponíveis'
+            travelPackage: formatPackageResponse(travelPackage),
+            message: 'Pacote base criado com sucesso. Buscando opções...'
         });
 
     } catch (error) {
-        console.error('Erro em createdPackageWithOptions:', error);
+        console.error('Erro em createBasePackage:', error);
         res.status(500).json({
             success: false,
-            error: error.message || "Erro ao criar pacote de viagem com opções"
+            error: "Erro ao criar pacote de viagem"
         });
     }
+};
+export const validatePackageData = (data) => {
+    const { title, destination, origin, departureDate, returnDate, numberOfTravelers } = data;
+
+  
+    const requiredFields = ['title', 'destination', 'origin', 'departureDate', 'returnDate', 'numberOfTravelers'];
+    const missingFields = requiredFields.filter(field => !data[field]);
+    
+    if (missingFields.length > 0) {
+        return {
+            success: false,
+            message: `Campos obrigatórios faltando: ${missingFields.join(', ')}`
+        };
+    }
+
+    
+    if (!isValidDate(departureDate) || !isValidDate(returnDate)) {
+        return {
+            success: false,
+            message: "Digite datas válidas"
+        };
+    }
+
+
+    if (numberOfTravelers <= 0) {
+        return {
+            success: false,
+            message: "Número de viajantes deve ser maior que zero"
+        };
+    }
+
+    return null; 
+};
+
+export const isValidDate = (dateString) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    return date instanceof Date && !isNaN(date) && date > new Date();
+};
+
+export const createPackageInDB = async (packageData) => {
+    const { 
+        title, destination, origin, departureDate, returnDate,
+        description, availableSlots, agentId, images, numberOfTravelers 
+    } = packageData;
+
+    return await TravelPackage.create({
+        title,
+        destination,
+        origin,
+        departureDate,
+        returnDate,
+        description,
+        availableSlots,
+        agentId: agentId,
+        images: images || [],
+        numberOfTravelers
+    });
 };
 
 export const findOne = async (req, res) => {
@@ -143,7 +157,7 @@ export const findOne = async (req, res) => {
         });
     }
 };
-export const createPackageWithSelectedComponents = async (req, res) => {
+export const addPackageComponents = async (req, res) => {
 
     try {
         const { packageId } = req.params;

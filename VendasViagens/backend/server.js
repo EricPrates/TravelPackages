@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import userRouter from "./routes/user.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import travelPackageRouter from "./routes/travelPackage.routes.js";
-
+import packageComponentsRouter from "./routes/packageComponents.routes.js";
 dotenv.config();
 
 const port = process.env.PORT || 4567;
@@ -28,7 +28,7 @@ app.get('/', (req, res) => res.send('Bem vindo as Vendas de viagens!'))
 userRouter(app);
 authRouter(app);
 travelPackageRouter(app);
-
+packageComponentsRouter(app);
 
 (async () =>{
     try{

@@ -1,5 +1,5 @@
 import Amadeus from 'amadeus';
-
+import travelPackageModel from '../../models/TravelPackage.model.js';
 export class AmadeusClient {
     constructor() {
         this.amadeus = new Amadeus({
@@ -7,6 +7,51 @@ export class AmadeusClient {
             clientSecret: process.env.API_SECRET
         });
     }
+
+    fetchAmadeusOptionsAsync = async (travelPackage) => {
+        try {
+            const formattedDepartureDate = new Date(travelPackage.departureDate).toISOString().split('T')[0];
+            const formattedReturnDate = new Date(travelPackage.returnDate).toISOString().split('T')[0];
+
+
+            const [flights, hotels, activities, carRentals] = await Promise.allSettled([
+                this.searchFlights({
+                    origin: travelPackage.origin,
+                    destination: travelPackage.destination,
+                    departureDate: formattedDepartureDate,
+                    returnDate: formattedReturnDate,
+                    numberOfTravelers: travelPackage.numberOfTravelers
+                }),
+                this.searchHotels({
+                    destination: travelPackage.destination,
+                    checkin: formattedDepartureDate,
+                    checkout: formattedReturnDate,
+                    numberOfTravelers: travelPackage.numberOfTravelers
+                }),
+                this.searchActivities({
+                    destination: travelPackage.destination
+                }),
+                this.searchCarRentals({
+                    destination: travelPackage.destination,
+                    departureDate: formattedDepartureDate,
+                    returnDate: formattedReturnDate
+                })
+            ]);
+
+
+            return {
+                flights,
+                hotels,
+                activities,
+                carRentals,
+
+            };
+
+        } catch (error) {
+            console.error('Erro ao buscar opções Amadeus:', error);
+            throw error;
+        }
+    };
 
     calculateMilesPrice(moneyPrice, type) {
         switch (type) {
@@ -24,7 +69,7 @@ export class AmadeusClient {
     async searchFlights(params) {
         const { origin, destination, departureDate, returnDate, numberOfTravelers } = params;
         try {
-            const codes = await this.searchByCity(origin, destination,"FLIGHT");
+            const codes = await this.searchCityCode(origin, destination, "FLIGHT");
             const flightParams = {
                 originLocationCode: codes.originCode,
                 destinationLocationCode: codes.destinationCode,
@@ -54,9 +99,9 @@ export class AmadeusClient {
 
 
     async searchHotels(params) {
-        const {destination, checkin, checkout, numberOfTravelers} = params;
+        const { destination, checkin, checkout, numberOfTravelers } = params;
         try {
-            const cityCode = await this.searchByCity(undefined, destination,"HOTEL");
+            const cityCode = await this.searchCityCode(undefined, destination, "HOTEL");
             const response = await this.amadeus.shopping.hotelOffers.get(
                 {
                     cityCode: cityCode,
@@ -82,9 +127,9 @@ export class AmadeusClient {
 
 
     async searchActivities(params) {
-        const {destination} = params;
+        const { destination } = params;
         try {
-            const cityCode = await this.searchByCity(undefined, destination,"ACTIVITY");
+            const cityCode = await this.searchCityCode(undefined, destination, "ACTIVITY");
             const response = await this.amadeus.shopping.activities.get(
                 {
                     cityCode: cityCode,
@@ -117,7 +162,7 @@ export class AmadeusClient {
     async searchCarRentals(params) {
         const { destination, returnDate, departureDate } = params;
         try {
-            const cityCode = await this.searchByCity( undefined, destination, "CAR_RENTALS");
+            const cityCode = await this.searchCityCode(undefined, destination, "CAR_RENTALS");
             const response = await this.amadeus.shopping.carRentals.get(
                 {
                     cityCode: cityCode,
@@ -147,27 +192,27 @@ export class AmadeusClient {
             throw error;
         }
     }
-    async searchCityCode(originCity, destinationCity, type){
-        const destinationCode= await this.amadeus.referenceData.locations.get({
+    async searchCityCode(originCity, destinationCity, type) {
+        const destinationCode = await this.amadeus.referenceData.locations.get({
             keyboard: destinationCity,
             subType: 'CITY'
         });
         const originCode = await this.amadeus.referenceData.locations.get({
             keyboard: originCity,
-            subType:'CITY'
+            subType: 'CITY'
         })
-        if (!destinationCity.data.length && !originCity.data.length){
+        if (!destinationCode.data.length && !originCode.data.length) {
             throw new Error("Cidade não encontrada")
         }
-        if(type == "FLIGHT"){
-            return {originCode, destinationCode}
+        if (type == "FLIGHT") {
+            return { originCode: originCode.data[0].iataCode, destinationCode: destinationCode.data[0].iataCode }
         }
-        else{
-            return destinationCode
+        else {
+            return destinationCode.data[0].iataCode;
         }
-        
+
     }
 
-   
+
 }
 export const amadeusClient = new AmadeusClient();

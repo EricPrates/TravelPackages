@@ -3,8 +3,8 @@ import * as travels from '../services/myServices/TravelPackage.service.js';
 import { tokenValidated,requireAgent } from '../services/myServices/Auth.js';
 const router = express.Router();
 
-router.post('/', tokenValidated, requireAgent, travels.createdPackageWithOptions);
-router.post('/:packageId/select-components', tokenValidated, requireAgent, travels.createPackageWithSelectedComponents);
+router.post('/', tokenValidated, requireAgent, travels.createBasePackage);
+router.post('/custom', tokenValidated, requireAgent, travels.addPackageComponents);
 router.get('/', travels.findAll);
 router.get('/:id', travels.findOne);
 router.put('/:id', tokenValidated, requireAgent, travels.update);
