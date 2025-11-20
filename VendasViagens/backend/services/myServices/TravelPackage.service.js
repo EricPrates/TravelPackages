@@ -36,10 +36,29 @@ export const findAll = async (req, res) => {
         })
     }
 };
+const isValidDate = x => { date instanceof Date && !isNaN(date.getTime()) };
+
+
 export const createdPackageWithOptions = async (req, res) => {
     try {
+
         const { title, destination, origin, departureDate, returnDate,
-            description, availableSlots, agentId, images, checkin, checkout } = req.body;
+            description, availableSlots, agentId, images, checkinDate, checkoutDate } = req.body;
+
+        if (!isValidDate(departureDate) || !isValidDate(checkoutDate) || !isValidDate(checkinDate), isValidDate(returnDate)) {
+            res.status(400).send({
+                sucess: false,
+                message: "Digite datas válidas"
+            })
+            
+
+        }
+        if (numberOfTravelers <= 0) {
+                res.status(400).send({
+                    sucess: false,
+                    message: "Digite datas válidas"
+                })
+            }
 
         const travelPackage = await TravelPackage.create({
             title,
@@ -52,20 +71,21 @@ export const createdPackageWithOptions = async (req, res) => {
             agentId,
             images: images || [],
         });
+
         const formattedDepartureDate = new Date(departureDate).toISOString().split('T')[0];
         const formattedReturnDate = new Date(returnDate).toISOString().split('T')[0];
-        const formattedCheckin = checkin ? new Date(checkin).toISOString().split('T')[0] : null;
-        const formattedCheckout = checkout ? new Date(checkout).toISOString().split('T')[0] : null;
-        const [flights, hotels, activities, carRentals] = await Promise.all([
+        const formattedCheckin = checkinDate ? new Date(checkinDate).toISOString().split('T')[0] : null;
+        const formattedCheckout = checkoutDate ? new Date(checkoutDate).toISOString().split('T')[0] : null;
+        const [flights, hotels, activities, carRentals] = await Promise.allSettled([
             amadeusClient.searchFlights({ origin, destination, departureDate: formattedDepartureDate, returnDate: formattedReturnDate }),
-            amadeusClient.searchHotels({ destination, checkin: formattedCheckin, checkout: formattedCheckout }),
+            amadeusClient.searchHotels({ destination, checkinDate: formattedCheckin, checkoutDate: formattedCheckout }),
             amadeusClient.searchActivities({ destination }),
             amadeusClient.searchCarRentals({ destination, departureDate: formattedDepartureDate, returnDate: formattedReturnDate }),
         ]);
         res.status(201).json({
             success: true,
             travelPackage: {
-                id: travelPackage.id, // ✅ ID disponível
+                id: travelPackage.id,
                 title: travelPackage.title,
                 destination: travelPackage.destination,
                 origin: travelPackage.origin,
@@ -128,7 +148,20 @@ export const createPackageWithSelectedComponents = async (req, res) => {
     try {
         const { packageId } = req.params;
         const { selectedFlight, selectedHotel, selectedActivities, selectedCarRental } = req.body;
-
+        if (selectedActivities.checkInDate || selectedActivities.checkOutDate) {
+            res.status(400).json({
+                success: false,
+                message: "As datas de check-in e check-out não são necessárias para atividades."
+            });
+            return;
+        }
+        if (selectedFlight.numberOfTravelers <= 0) {
+            res.status(400).json({
+                success: false,
+                message: "O número de viajantes deve ser maior que zero."
+            });
+            return;
+        }
         const savedComponents = [];
         if (selectedFlight) {
             const airline = selectedFlight.validatingAirlineCodes?.[0] || 'Airline';
@@ -183,26 +216,26 @@ export const createPackageWithSelectedComponents = async (req, res) => {
                     packageId: packageId,
                     amadeusId: amadeusId,
                 });
-                
+
             });
             const createdActivities = await Promise.all(activityPromises);
             savedComponents.push(...createdActivities);
         }
-        if(selectedCarRental) {
+        if (selectedCarRental) {
             const carComponent = await PackageComponents.create({
                 name: `Carro: ${selectedCarRental.vehicle?.name || 'Carro Alugado'}`,
-                description: `Aluguel de carro de ${selectedCarRental.pickUpDate} a ${selectedCarRental.dropOffDate}`,
+                description: `Aluguel de carro de ${selectedCarRental.checkInDate} a ${selectedCarRental.checkOutDate}`,
                 type: 'CAR_RENTAL',
                 moneyPrice: selectedCarRental.moneyPrice,
                 milesPrice: selectedCarRental.milesPrice,
                 packageId: packageId,
                 amadeusId: selectedCarRental.id,
-                departureDate: selectedCarRental.pickUpDate,
-                returnDate: selectedCarRental.dropOffDate
+                departureDate: selectedCarRental.checkin,
+                returnDate: selectedCarRental.checkout
             });
             savedComponents.push(carComponent);
         }
-         res.status(201).json({
+        res.status(201).json({
             success: true,
             message: 'Componentes adicionados ao pacote com sucesso!',
             packageId: packageId,
@@ -237,7 +270,8 @@ export const update = async (req, res) => {
             where: { id: travelPackageId }
         });
         if (updated === 1) {
-            res.status(204);
+            const updatedTravelPackage = await TravelPackage.findByPk(travelPackageId);
+            res.status(200).send(updatedTravelPackage);
         } else {
             res.status(404).send({
                 message: "Pacote de viagem não encontrado."
@@ -258,7 +292,7 @@ export const remove = async (req, res) => {
         });
 
         if (deleted == 1) {
-            res.status(204);
+            res.sendStatus(204);
         } else {
             res.status(404).send({
                 message: `Não foi possível encontrar o pacote de viagem com id=${id}.`

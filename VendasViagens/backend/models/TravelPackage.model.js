@@ -3,54 +3,79 @@ import { Model } from "sequelize";
 class TravelPackage extends Model {
     static init(sequelize, DataTypes) {
         return super.init({
-            title: {
-                type: DataTypes.STRING,
-                allowNull: false
-            },
-            destination: {
-                type: DataTypes.STRING,
-                allowNull: false
-            },
-            origin: {
-                type: DataTypes.STRING,
-                allowNull: false
-            },
-            departureDate: {
-                type: DataTypes.DATE,
-                allowNull: false
-            },
-            returnDate: {
-                type: DataTypes.DATE,
-                allowNull: false
-            },
-            description: {
-                type: DataTypes.TEXT,
-                allowNull: false
-            },
-            availableSlots: {
+            id: {
                 type: DataTypes.INTEGER,
+                primaryKey: true,
+                autoIncrement: true,
                 allowNull: false
-            },
-            images: {
-                type: DataTypes.TEXT,
-                allowNull: true,
-                defaultValue: '[]',
-                get() {
-                    const rawValue = this.getDataValue('images');
-                    return rawValue ? JSON.parse(rawValue) : [];
-                },
-                set(value) {
-                    this.setDataValue('images', JSON.stringify(value));
-                }
             },
             agentId: {
                 type: DataTypes.INTEGER,
                 allowNull: false,
+                references: {
+                    model: 'users',     
+                    key: 'id'
+                },
             },
-        }, {  
+            title: {
+                    type: DataTypes.STRING,
+                    allowNull: false
+                },
+                destination: {
+                    type: DataTypes.STRING,
+                    allowNull: false
+                },
+                origin: {
+                    type: DataTypes.STRING,
+                    allowNull: false
+                },
+                departureDate: {
+                    type: DataTypes.DATE,
+                    allowNull: false
+                },
+                returnDate: {
+                    type: DataTypes.DATE,
+                    allowNull: false
+                },
+                description: {
+                    type: DataTypes.TEXT,
+                    allowNull: false
+                },
+                availableSlots: {
+                    type: DataTypes.INTEGER,
+                    allowNull: false
+                },
+                status: {
+                    type: DataTypes.ENUM('AVAILABLE', 'CONFIRMED', 'CANCELLED', 'REFUNDED'),
+                    defaultValue: 'AVAILABLE',
+                    allowNull: false
+                },
+                purchaseDate: {
+                    type: DataTypes.DATE,
+                    allowNull: true,
+                    defaultValue: DataTypes.NOW
+                },
+
+                images: {
+                    type: DataTypes.TEXT,
+                    allowNull: true,
+                    defaultValue: '[]',
+                    get() {
+                        const rawValue = this.getDataValue('images');
+                        return rawValue ? JSON.parse(rawValue) : [];
+                    },
+                    set(value) {
+                        this.setDataValue('images', JSON.stringify(value));
+                    }
+                },
+                agentId: {
+                    type: DataTypes.INTEGER,
+                    allowNull: false,
+                },
+            }, {
             sequelize,
-            modelName: 'TravelPackage', 
-            tableName: 'travel_packages' 
+            modelName: 'TravelPackage',
+            tableName: 'travel_packages'
         });
     }
 
@@ -75,13 +100,13 @@ class TravelPackage extends Model {
         }, 0);
     }
 
-    
+
 }
 
-    
 
 
-export default function(sequelize, DataTypes) {
+
+export default function (sequelize, DataTypes) {
     TravelPackage.init(sequelize, DataTypes);
     return TravelPackage;
 }

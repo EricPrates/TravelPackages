@@ -1,7 +1,7 @@
 import DbConfig from "../config/database.js";
 import {Sequelize} from "sequelize";
 import packageComponentsModel from "./PackageComponents.model.js";
-import travelPackageModel from "./travelPackage.model.js";
+import travelPackageModel from "./TravelPackage.model.js";
 import UserModel from "./User.model.js";
 import transactionsModel from "./Transaction.model.js";
 
@@ -31,12 +31,24 @@ as: 'components', onDelete: 'CASCADE', onUpdate: 'CASCADE'  });
 
 db.PackageComponents.belongsTo(db.TravelPackage, { foreignKey: 'packageId', 
 as: 'travelPackage', onDelete: 'CASCADE', onUpdate: 'CASCADE'  });
-db
+
 db.Transactions.belongsTo(db.Users, { foreignKey: 'userId', 
 as: 'user', onDelete: 'CASCADE', onUpdate: 'CASCADE'  });
 
 db.Users.hasMany(db.Transactions, { foreignKey: 'userId', 
 as: 'transactions', onDelete: 'CASCADE', onUpdate: 'CASCADE'  });
+db.TravelPackage.belongsTo(db.Users, { 
+    foreignKey: 'agentId', 
+    as: 'agent',
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE'
+});
 
+db.Users.hasMany(db.TravelPackage, { 
+    foreignKey: 'agentId', 
+    as: 'createdPackages',
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE'
+});
 
 export default db;

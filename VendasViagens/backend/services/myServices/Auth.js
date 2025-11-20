@@ -32,7 +32,7 @@ export const login = async (req, res) => {
                 email: findUser.email,
                 id: findUser.id, 
                 role: findUser.role 
-            }, PRIVATE_KEY, 
+            }, JWT_PRIVATE_KEY, 
             { 
                 expiresIn: '15m',
                 algorithm: 'RS256'
@@ -62,7 +62,7 @@ export const login = async (req, res) => {
 
 export const tokenValidated = (req, res, next) => {
     const authHeader = req.headers.authorization;
-    if (!authHeader && !authHeader.startsWith("Bearer ")) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res.status(401).send({ message: "Token de acesso requerido Bearer." });
     }
     const token = authHeader.split(" ")[1];

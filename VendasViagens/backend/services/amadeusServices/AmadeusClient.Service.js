@@ -24,7 +24,7 @@ export class AmadeusClient {
     async searchFlights(params) {
         const { origin, destination, departureDate, returnDate, numberOfTravelers } = params;
         try {
-            const codes = await this.searchFlightsByCity(origin, destination);
+            const codes = await this.searchByCity(origin, destination,"FLIGHT");
             const flightParams = {
                 originLocationCode: codes.originCode,
                 destinationLocationCode: codes.destinationCode,
@@ -56,7 +56,7 @@ export class AmadeusClient {
     async searchHotels(params) {
         const {destination, checkin, checkout, numberOfTravelers} = params;
         try {
-            const cityCode = await this.searchHotelsByCity(destination);
+            const cityCode = await this.searchByCity(undefined, destination,"HOTEL");
             const response = await this.amadeus.shopping.hotelOffers.get(
                 {
                     cityCode: cityCode,
@@ -84,7 +84,7 @@ export class AmadeusClient {
     async searchActivities(params) {
         const {destination} = params;
         try {
-            const cityCode = await this.searchActivitiesByCity(destination);
+            const cityCode = await this.searchByCity(undefined, destination,"ACTIVITY");
             const response = await this.amadeus.shopping.activities.get(
                 {
                     cityCode: cityCode,
@@ -117,7 +117,7 @@ export class AmadeusClient {
     async searchCarRentals(params) {
         const { destination, returnDate, departureDate } = params;
         try {
-            const cityCode = await this.searchCarRentalsByCity(destination);
+            const cityCode = await this.searchByCity( undefined, destination, "CAR_RENTALS");
             const response = await this.amadeus.shopping.carRentals.get(
                 {
                     cityCode: cityCode,
@@ -147,75 +147,27 @@ export class AmadeusClient {
             throw error;
         }
     }
+    async searchCityCode(originCity, destinationCity, type){
+        const destinationCode= await this.amadeus.referenceData.locations.get({
+            keyboard: destinationCity,
+            subType: 'CITY'
+        });
+        const originCode = await this.amadeus.referenceData.locations.get({
+            keyboard: originCity,
+            subType:'CITY'
+        })
+        if (!destinationCity.data.length && !originCity.data.length){
+            throw new Error("Cidade não encontrada")
+        }
+        if(type == "FLIGHT"){
+            return {originCode, destinationCode}
+        }
+        else{
+            return destinationCode
+        }
+        
+    }
 
-    async searchHotelsByCity(city) {
-        try {
-            const response = await this.amadeus.referenceData.locations.get({
-                keyword: city,
-                subType: 'CITY'
-            });
-            if (!response.data.length) {
-                throw new Error('Cidade não encontrada');
-            }
-            return response.data[0].iataCode;
-        } catch (error) {
-            console.error("Erro ao buscar código IATA da cidade:", error);
-            throw error;
-        }
-    }
-    async searchFlightsByCity(originCity, destinationCity) {
-        try {
-            const [origemResponse, destinoResponse] = await Promise.all([
-                this.amadeus.referenceData.locations.get({
-                    keyword: originCity,
-                    subType: 'CITY'
-                }),
-                this.amadeus.referenceData.locations.get({
-                    keyword: destinationCity,
-                    subType: 'CITY'
-                })
-            ]);
-            if (!origemResponse.data.length || !destinoResponse.data.length) {
-                throw new Error('Cidade de origem ou destino não encontrada');
-            }
-
-            const originCode = origemResponse.data[0]?.iataCode;
-            const destinationCode = destinoResponse.data[0]?.iataCode;
-            return { originCode, destinationCode };
-        } catch (error) {
-            console.error("Erro ao buscar códigos IATA das cidades:", error);
-            throw error;
-        }
-    }
-    async searchActivitiesByCity(city) {
-        try {
-            const response = await this.amadeus.referenceData.locations.get({
-                keyword: city,
-                subType: 'CITY'
-            });
-            if (!response.data.length) {
-                throw new Error('Cidade não encontrada');
-            }
-            return response.data[0].iataCode;
-        } catch (error) {
-            console.error("Erro ao buscar código IATA da cidade:", error);
-            throw error;
-        }
-    }
-    async searchCarRentalsByCity(city) {
-        try {
-            const response = await this.amadeus.referenceData.locations.get({
-                keyword: city,
-                subType: 'CITY'
-            });
-            if (!response.data.length) {
-                throw new Error('Cidade não encontrada');
-            }
-            return response.data[0].iataCode;
-        } catch (error) {
-            console.error("Erro ao buscar código IATA da cidade:", error);
-            throw error;
-        }
-    }
+   
 }
 export const amadeusClient = new AmadeusClient();

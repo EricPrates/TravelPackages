@@ -1,12 +1,28 @@
-import db from "../../models/index.js";
+import db from "../../../models/index.js";
+
 const Op = db.Sequelize.Op;
-import { amadeusClient } from "../amadeusServices/AmadeusClient.js";
 const PackageComponents = db.PackageComponents;
 const TravelPackage = db.TravelPackage;
 
 
 
-
+export const findByType = async (req, res) => {
+    const type = req.params.type;
+    try {
+        const data = await PackageComponents.findAll({
+            where: {
+                type: {
+                    [Op.iLike]: `%${type}%`
+                }
+            }
+        });
+        res.status(200).send(data);
+    } catch (error) {
+        res.status(500).send({
+            message: "Erro ao buscar componente de pacote com tipo=" + type
+        });
+    }
+};
 
 export const findByPk = async (req, res) => {
     const id = req.params.id;

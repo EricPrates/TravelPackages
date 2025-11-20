@@ -1,80 +1,102 @@
 import { ENUM } from "sequelize";
-import {Model} from "sequelize";
+import { Model } from "sequelize";
 
 class PackageComponents extends Model {
     static init(sequelize, DataTypes) {
         return super.init({
-        title: {
-            type: DataTypes.STRING,
-            allowNull: false
+            id: {
+                type: DataTypes.INTEGER,
+                primaryKey: true,
+                autoIncrement: true,
+                allowNull: false
             },
-        type:{
-            type: DataTypes.ENUM('FLIGHT', 'HOTEL', 'ACTIVITY', 'CAR_RENTAL'),
-            allowNull: false
-        },
+            title: {
+                type: DataTypes.STRING,
+                allowNull: false
+            },
+            type: {
+                type: DataTypes.ENUM('FLIGHT', 'HOTEL', 'ACTIVITY', 'CAR_RENTAL'),
+                allowNull: false
+            },
 
-        componentName: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
-        AmadeusId : {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
-        moneyPrice: {
-            type: DataTypes.FLOAT,
-            allowNull: true
-        },
-        milesPrice: {
-            type: DataTypes.INTEGER,
-            allowNull: true
-        },
-        packageId: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-        }, 
-        departureDate: {
+            name: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+            AmadeusId: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+            moneyPrice: {
+                type: DataTypes.FLOAT,
+                allowNull: true
+            },
+            milesPrice: {
+                type: DataTypes.INTEGER,
+                allowNull: true
+            },
+            packageId: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+                references: {
+                    model: 'travel_packages',  // ← Tabela que ele referencia
+                    key: 'id'                   // ← Campo que ele referencia (a PK)
+                }
+            },
+            departureDate: {
                 type: DataTypes.DATE,
                 allowNull: true
-        },
-        returnDate: {
-            type: DataTypes.DATE,
-            allowNull: true
-        },
-        origin: {
-            type: DataTypes.STRING,
-            allowNull: true 
-        },
-        destination: {
-            type: DataTypes.STRING,
-            allowNull: true 
-        },
-        numberOfTravelers: {
-            type: DataTypes.INTEGER,
-            allowNull: true, 
-            defaultValue: 1
-        },
-        checkin: {
-            type: DataTypes.DATE,
-            allowNull: true
-        },
-        checkout: {
-            type: DataTypes.DATE,
-            allowNull: true
-        },
-        
-        
-    },{
-        sequelize,
-        modelName: 'PackageComponents',
-        tableName: 'package_components'
-    })
+            },
+            returnDate: {
+                type: DataTypes.DATE,
+                allowNull: true
+            },
+            origin: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+            destination: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+            numberOfTravelers: {
+                type: DataTypes.INTEGER,
+                allowNull: true,
+                defaultValue: 1
+            },
+            checkInDate: {
+                type: DataTypes.DATE,
+                allowNull: true
+            },
+            checkOutDate: {
+                type: DataTypes.DATE,
+                allowNull: true
+            },
+            description: {
+                type: DataTypes.STRING,
+                allowNull: true
+            },
+            packageId: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+                references: {
+                    model: 'travel_packages',
+                    key: 'id'
+                }
+            }
 
 
-};
+        }, {
+            sequelize,
+            modelName: 'PackageComponents',
+            tableName: 'package_components'
+        })
+
+
+    };
 }
 
-export default function(sequelize, DataTypes) {
+export default function (sequelize, DataTypes) {
     PackageComponents.init(sequelize, DataTypes);
     return PackageComponents;
 }
