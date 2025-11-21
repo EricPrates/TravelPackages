@@ -10,49 +10,79 @@ export class AmadeusClient {
 
     fetchAmadeusOptionsAsync = async (travelPackage) => {
         try {
-            const formattedDepartureDate = new Date(travelPackage.departureDate).toISOString().split('T')[0];
-            const formattedReturnDate = new Date(travelPackage.returnDate).toISOString().split('T')[0];
+            const formattedDepartureDate = travelPackage?.departureDate
+                ? new Date(travelPackage.departureDate).toISOString().split('T')[0]
+                : null;
+            const formattedReturnDate = travelPackage?.returnDate
+                ? new Date(travelPackage.returnDate).toISOString().split('T')[0]
+                : null;
+                const formattedCheckinDate =  travelPackage?.checkInDate
+                ? new Date(travelPackage.checkInDate).toISOString().split('T')[0]
+                : null;
+            const formattedCheckoutDate = travelPackage?.checkOutDate
+                ? new Date(travelPackage.checkOutDate).toISOString().split('T')[0]
+                : null;
 
-
-            const [flights, hotels, activities, carRentals] = await Promise.allSettled([
+            const [
+                flightsResult,
+                hotelsResult,
+                activitiesResult,
+                carRentalsResult
+            ] = await Promise.all([
                 this.searchFlights({
                     origin: travelPackage.origin,
                     destination: travelPackage.destination,
                     departureDate: formattedDepartureDate,
                     returnDate: formattedReturnDate,
                     numberOfTravelers: travelPackage.numberOfTravelers
-                }),
+                }).catch(err => { console.error('searchFlights failed', err); return []; }),
+
                 this.searchHotels({
                     destination: travelPackage.destination,
-                    checkin: formattedDepartureDate,
-                    checkout: formattedReturnDate,
+                    checkin: formattedCheckinDate,
+                    checkout: formattedCheckoutDate,
                     numberOfTravelers: travelPackage.numberOfTravelers
-                }),
+                }).catch(err => { console.error('searchHotels failed', err); return []; }),
+
                 this.searchActivities({
                     destination: travelPackage.destination
-                }),
+                }).catch(err => { console.error('searchActivities failed', err); return []; }),
+
                 this.searchCarRentals({
                     destination: travelPackage.destination,
-                    departureDate: formattedDepartureDate,
-                    returnDate: formattedReturnDate
-                })
+                    checkin: formattedCheckinDate,
+                    checkout: formattedCheckoutDate
+                }).catch(err => { console.error('searchCarRentals failed', err); return []; })
             ]);
 
-
             return {
-                flights,
-                hotels,
-                activities,
-                carRentals,
-
+                flights: flightsResult,
+                hotels: hotelsResult,
+                activities: activitiesResult,
+                carRentals: carRentalsResult
             };
-
         } catch (error) {
             console.error('Erro ao buscar opções Amadeus:', error);
             throw error;
         }
     };
+     async fetchOptionsByType(travelPackage, type) {
+        const departureDate = travelPackage?.departureDate ? new Date(travelPackage.departureDate).toISOString().split('T')[0] : null;
+        const returnDate = travelPackage?.returnDate ? new Date(travelPackage.returnDate).toISOString().split('T')[0] : null;
 
+        switch (type) {
+            case 'FLIGHT':
+                return this.searchFlights({ origin: travelPackage.origin, destination: travelPackage.destination, departureDate, returnDate, numberOfTravelers: travelPackage.numberOfTravelers });
+            case 'HOTEL':
+                return this.searchHotels({ destination: travelPackage.destination, checkin: departureDate, checkout: returnDate, numberOfTravelers: travelPackage.numberOfTravelers });
+            case 'ACTIVITY':
+                return this.searchActivities({ destination: travelPackage.destination });
+            case 'CAR_RENTAL':
+                return this.searchCarRentals({ destination: travelPackage.destination, departureDate, returnDate });
+            default:
+                throw new Error('Tipo inválido');
+        }
+    }
     calculateMilesPrice(moneyPrice, type) {
         switch (type) {
             case 'FLIGHT':
@@ -75,7 +105,7 @@ export class AmadeusClient {
                 destinationLocationCode: codes.destinationCode,
                 departureDate: departureDate,
                 adults: numberOfTravelers || 1,
-
+                
             };
             if (returnDate) {
                 flightParams.returnDate = returnDate;
@@ -162,7 +192,7 @@ export class AmadeusClient {
     async searchCarRentals(params) {
         const { destination, returnDate, departureDate } = params;
         try {
-            const cityCode = await this.searchCityCode(undefined, destination, "CAR_RENTALS");
+            const cityCode = await this.searchCityCode(undefined, destination, "CAR_RENTAL");
             const response = await this.amadeus.shopping.carRentals.get(
                 {
                     cityCode: cityCode,
@@ -193,24 +223,30 @@ export class AmadeusClient {
         }
     }
     async searchCityCode(originCity, destinationCity, type) {
-        const destinationCode = await this.amadeus.referenceData.locations.get({
-            keyboard: destinationCity,
-            subType: 'CITY'
-        });
-        const originCode = await this.amadeus.referenceData.locations.get({
-            keyboard: originCity,
-            subType: 'CITY'
-        })
-        if (!destinationCode.data.length && !originCode.data.length) {
-            throw new Error("Cidade não encontrada")
-        }
-        if (type == "FLIGHT") {
-            return { originCode: originCode.data[0].iataCode, destinationCode: destinationCode.data[0].iataCode }
-        }
-        else {
-            return destinationCode.data[0].iataCode;
-        }
+        try {
+            const destPromise = destinationCity
+                ? this.amadeus.referenceData.locations.get({ keyword: destinationCity, subType: 'CITY' })
+                : Promise.resolve(null);
+            const origPromise = originCity
+                ? this.amadeus.referenceData.locations.get({ keyword: originCity, subType: 'CITY' })
+                : Promise.resolve(null);
 
+            const [destinationCode, originCode] = await Promise.all([destPromise, origPromise]);
+
+            const destData = destinationCode?.data && destinationCode.data.length ? destinationCode.data[0] : null;
+            const origData = originCode?.data && originCode.data.length ? originCode.data[0] : null;
+
+            if (type === "FLIGHT") {
+                if (!origData || !destData) return null;
+                return { originCode: origData.iataCode || origData.id, destinationCode: destData.iataCode || destData.id };
+            } else {
+                if (!destData) return null;
+                return destData.iataCode || destData.id;
+            }
+        } catch (err) {
+            console.error("Erro ao buscar códigos de cidade:", err);
+            throw err;
+        }
     }
 
 

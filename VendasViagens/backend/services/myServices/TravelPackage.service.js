@@ -1,47 +1,113 @@
 import db from '../../models/index.js';
 import { amadeusClient } from '../amadeusServices/AmadeusClient.Service.js';
-const Op = db.Sequelize.Op;
 const Users = db.Users;
 const TravelPackage = db.TravelPackage;
 const PackageComponents = db.PackageComponents;
 
-export const findAll = async (req, res) => {
+
+
+export const fetchOptions = async (req, res) => {
     try {
-        const data = await TravelPackage.findAll({
-            include: [
-                {
-                    model: PackageComponents, as: 'components',
-                    attributes: ['id', 'name', 'description', 'price'],
-                },
-                {
-                    model: Users, as: 'users',
-                    attributes: ['id', 'name', 'email', 'role'],
-                    through: { attributes: [] },
-                },
-            ],
-            attributes: ['id', 'title', 'description', 'price', 'duration', 'destination', 'availableSlots', 'image'],
-        })
+        const { id } = req.params;
+        const { type } = req.query; 
+        const travelPackage = await TravelPackage.findByPk(id);
+        if (!travelPackage) return res.status(404).json({ success: false, message: 'Pacote não encontrado' });
 
-        if (data) {
-            res.status(200).send(data)
-
-        } else {
-            res.status(404).send({
-                message: `Não foi possível encontrar pacotes de viagem.`
-            })
+        if (type) {
+            const ALLOWED = ['FLIGHT', 'HOTEL', 'ACTIVITY', 'CAR_RENTAL'];
+            if (!ALLOWED.includes(type)) {
+                return res.status(400).json({ success: false, message: 'Type inválido. Use FLIGHT|HOTEL|ACTIVITY|CAR_RENTAL' });
+            }
+            const options = await amadeusClient.fetchOptionsByType(travelPackage, type);
+            return res.status(200).json({ success: true, type, options });
         }
+
+        const options = await amadeusClient.fetchAmadeusOptionsAsync(travelPackage);
+        return res.status(200).json({ success: true, options });
     } catch (error) {
-        res.status(500).send({
-            message: error.message || "Erro ao buscar pacotes de viagem"
-        })
+        console.error('Erro em fetchOptions:', error);
+        return res.status(500).json({ success: false, error: error.message || 'Erro ao buscar opções' });
     }
 };
 
+export const addPackageComponent = async (req, res) => {
+    try {
+        const packageId = req.params.id; 
+        const { type, component } = req.body;
 
+        const travelPackage = await TravelPackage.findByPk(packageId);
+        if (!travelPackage) return res.status(404).json({ success: false, message: 'Pacote não encontrado' });
+
+        const ALLOWED = ['FLIGHT', 'HOTEL', 'ACTIVITY', 'CAR_RENTAL'];
+        if (!type || !ALLOWED.includes(type)) {
+            return res.status(400).json({ success: false, message: 'Type inválido. Use FLIGHT|HOTEL|ACTIVITY|CAR_RENTAL' });
+        }
+        if (!component || typeof component !== 'object') {
+            return res.status(400).json({ success: false, message: 'component é obrigatório no body' });
+        }
+
+     
+        const payload = {
+            packageId,
+            type,
+            name: component.name || component.title || `${type} component`,
+            description: component.description || null,
+            amadeusId: component.id || component.amadeusId || null,
+            moneyPrice: Number(component.moneyPrice ?? 0),
+            milesPrice: Number(component.milesPrice ?? 0),
+            checkin: component.checkin ? component.checkin : null,
+            checkout: component.checkout ? component.checkout : null,
+            departureDate: component.departureDate ? component.departureDate : null,
+            returnDate: component.returnDate ? component.returnDate : null
+        };
+
+
+        if (type === 'FLIGHT') {
+            payload.moneyPrice = component.moneyPrice || 0;
+            payload.milesPrice = component.milesPrice || 0;
+            payload.origin = component.origin;
+            payload.destination = component.destination;
+            payload.departureDate = component.departureDate;
+            payload.returnDate = component.returnDate;
+            payload.numberOfTravelers = component.numberOfTravelers? component.numberOfTravelers: 1;
+        } else if (type === 'HOTEL') {
+            payload.moneyPrice = component.moneyPrice || 0;
+            payload.milesPrice = component.milesPrice || 0;
+            payload.checkin = component.checkin || null;
+            payload.checkout = component.checkout || null;
+        } else if (type === 'CAR_RENTAL') {
+            payload.moneyPrice = component.moneyPrice || 0;
+            payload.milesPrice = component.milesPrice || 0;
+            payload.checkin =  component.checkin || null;
+            payload.checkout =  component.checkout || null;
+        }
+
+        const created = await PackageComponents.create(payload);
+
+
+        const comps = await PackageComponents.findAll({ where: { packageId } });
+        const totalPrice = comps.reduce((s, c) => s + (c.moneyPrice || 0), 0);
+        const totalMiles = comps.reduce((s, c) => s + (c.milesPrice || 0), 0);
+
+        return res.status(201).json({
+            success: true,
+            component: {
+                id: created.id,
+                type: created.type,
+                name: created.name,
+                moneyPrice: created.moneyPrice,
+                milesPrice: created.milesPrice
+            },
+            totals: { totalPrice, totalMiles }
+        });
+    } catch (error) {
+        console.error('Erro em addPackageComponent:', error);
+        return res.status(500).json({ success: false, error: error.message || 'Erro ao adicionar componente' });
+    }
+};
 
 export const createBasePackage = async (req, res) => {
     try {
-
         const packageData = req.body;
             const validationError = validatePackageData(packageData);
         if (validationError) {
@@ -49,17 +115,11 @@ export const createBasePackage = async (req, res) => {
         }
 
         const travelPackage = await createPackageInDB(packageData);
-
-        
-        fetchAmadeusOptionsAsync(travelPackage);
-
         res.status(201).json({
             success: true,
-            travelPackage: formatPackageResponse(travelPackage),
-            message: 'Pacote base criado com sucesso. Buscando opções...'
+            package: travelPackage
         });
-
-    } catch (error) {
+        } catch (error) {
         console.error('Erro em createBasePackage:', error);
         res.status(500).json({
             success: false,
@@ -68,7 +128,7 @@ export const createBasePackage = async (req, res) => {
     }
 };
 export const validatePackageData = (data) => {
-    const { title, destination, origin, departureDate, returnDate, numberOfTravelers } = data;
+    const { name, destination, origin, departureDate, returnDate, numberOfTravelers } = data;
 
   
     const requiredFields = ['title', 'destination', 'origin', 'departureDate', 'returnDate', 'numberOfTravelers'];
@@ -138,7 +198,6 @@ export const findOne = async (req, res) => {
                 {
                     model: Users, as: 'users',
                     attributes: ['id', 'name', 'email', 'role'],
-                    through: { attributes: [] },
                 },
             ],
             attributes: ['id', 'title', 'description', 'price', 'duration', 'destination', 'availableSlots', 'image'],
