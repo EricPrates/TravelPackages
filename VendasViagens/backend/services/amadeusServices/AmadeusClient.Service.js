@@ -1,11 +1,48 @@
-import Amadeus from 'amadeus';
-import travelPackageModel from '../../models/TravelPackage.model.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
 export class AmadeusClient {
     constructor() {
-        this.amadeus = new Amadeus({
-            clientId: process.env.API_KEY,
-            clientSecret: process.env.API_SECRET
-        });
+        this.baseURL = 'https://test.api.amadeus.com';
+        this.clientId = process.env.API_KEY;
+        this.clientSecret = process.env.API_SECRET;
+        this.accessToken = null;
+        this.tokenExpiry = null;
+    }
+
+    async getAccessToken() {
+     
+        if (this.accessToken && this.tokenExpiry && Date.now() < this.tokenExpiry) {
+            return this.accessToken;
+        }
+
+        try {
+            const response = await fetch(`${this.baseURL}/v1/security/oauth2/token`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    grant_type: 'client_credentials',
+                    client_id: this.clientId,
+                    client_secret: this.clientSecret
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Falha na autenticação: ${response.status}`);
+            }
+
+            const data = await response.json();
+            this.accessToken = data.access_token;
+            this.tokenExpiry = Date.now() + (29 * 60 * 1000);
+            
+            return this.accessToken;
+
+        } catch (error) {
+            console.error('Erro ao obter token Amadeus:', error.message);
+            throw error;
+        }
     }
 
     fetchAmadeusOptionsAsync = async (travelPackage) => {
@@ -16,7 +53,7 @@ export class AmadeusClient {
             const formattedReturnDate = travelPackage?.returnDate
                 ? new Date(travelPackage.returnDate).toISOString().split('T')[0]
                 : null;
-                const formattedCheckinDate =  travelPackage?.checkInDate
+            const formattedCheckinDate = travelPackage?.checkInDate
                 ? new Date(travelPackage.checkInDate).toISOString().split('T')[0]
                 : null;
             const formattedCheckoutDate = travelPackage?.checkOutDate
@@ -30,26 +67,26 @@ export class AmadeusClient {
                 carRentalsResult
             ] = await Promise.all([
                 this.searchFlights({
-                    origin: travelPackage.origin,
-                    destination: travelPackage.destination,
+                    origin: travelPackage.origin, // ✅ Já espera código (ex: "GRU")
+                    destination: travelPackage.destination, // ✅ Já espera código (ex: "GIG")
                     departureDate: formattedDepartureDate,
                     returnDate: formattedReturnDate,
                     numberOfTravelers: travelPackage.numberOfTravelers
                 }).catch(err => { console.error('searchFlights failed', err); return []; }),
 
                 this.searchHotels({
-                    destination: travelPackage.destination,
+                    destination: travelPackage.destination, // ✅ Já espera código (ex: "RIO")
                     checkin: formattedCheckinDate,
                     checkout: formattedCheckoutDate,
                     numberOfTravelers: travelPackage.numberOfTravelers
                 }).catch(err => { console.error('searchHotels failed', err); return []; }),
 
                 this.searchActivities({
-                    destination: travelPackage.destination
+                    destination: travelPackage.destination // ✅ Já espera código (ex: "RIO")
                 }).catch(err => { console.error('searchActivities failed', err); return []; }),
 
                 this.searchCarRentals({
-                    destination: travelPackage.destination,
+                    destination: travelPackage.destination, // ✅ Já espera código (ex: "RIO")
                     checkin: formattedCheckinDate,
                     checkout: formattedCheckoutDate
                 }).catch(err => { console.error('searchCarRentals failed', err); return []; })
@@ -66,23 +103,42 @@ export class AmadeusClient {
             throw error;
         }
     };
-     async fetchOptionsByType(travelPackage, type) {
+
+    async fetchOptionsByType(travelPackage, type) {
         const departureDate = travelPackage?.departureDate ? new Date(travelPackage.departureDate).toISOString().split('T')[0] : null;
         const returnDate = travelPackage?.returnDate ? new Date(travelPackage.returnDate).toISOString().split('T')[0] : null;
 
         switch (type) {
             case 'FLIGHT':
-                return this.searchFlights({ origin: travelPackage.origin, destination: travelPackage.destination, departureDate, returnDate, numberOfTravelers: travelPackage.numberOfTravelers });
+                return this.searchFlights({ 
+                    origin: travelPackage.origin, // ✅ Código
+                    destination: travelPackage.destination, // ✅ Código
+                    departureDate, 
+                    returnDate, 
+                    numberOfTravelers: travelPackage.numberOfTravelers 
+                });
             case 'HOTEL':
-                return this.searchHotels({ destination: travelPackage.destination, checkin: departureDate, checkout: returnDate, numberOfTravelers: travelPackage.numberOfTravelers });
+                return this.searchHotels({ 
+                    destination: travelPackage.destination, // ✅ Código
+                    checkin: departureDate, 
+                    checkout: returnDate, 
+                    numberOfTravelers: travelPackage.numberOfTravelers 
+                });
             case 'ACTIVITY':
-                return this.searchActivities({ destination: travelPackage.destination });
+                return this.searchActivities({ 
+                    destination: travelPackage.destination // ✅ Código
+                });
             case 'CAR_RENTAL':
-                return this.searchCarRentals({ destination: travelPackage.destination, departureDate, returnDate });
+                return this.searchCarRentals({ 
+                    destination: travelPackage.destination, // ✅ Código
+                    checkin: departureDate, 
+                    checkout: returnDate 
+                });
             default:
                 throw new Error('Tipo inválido');
         }
     }
+
     calculateMilesPrice(moneyPrice, type) {
         switch (type) {
             case 'FLIGHT':
@@ -91,87 +147,155 @@ export class AmadeusClient {
                 return Math.round(moneyPrice * 80);
             case 'ACTIVITY':
                 return Math.round(moneyPrice * 50);
+            case 'CAR_RENTAL':
+                return Math.round(moneyPrice * 70);
             default:
                 return Math.round(moneyPrice * 100);
         }
     }
 
-    async searchFlights(params) {
-        const { origin, destination, departureDate, returnDate, numberOfTravelers } = params;
+    async getCityCoordinates(cityCode) {
         try {
-            const codes = await this.searchCityCode(origin, destination, "FLIGHT");
-            const flightParams = {
-                originLocationCode: codes.originCode,
-                destinationLocationCode: codes.destinationCode,
-                departureDate: departureDate,
-                adults: numberOfTravelers || 1,
+            const token = await this.getAccessToken();
+            
+            // Tenta buscar como CITY primeiro
+            let url = new URL(`${this.baseURL}/v1/reference-data/locations`);
+            url.searchParams.append('keyword', cityCode);
+            url.searchParams.append('subType', 'CITY');
+
+            let response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            let data = await response.json();
+            
+            // Se não encontrou como cidade, tenta como AIRPORT
+            if (!data.data || data.data.length === 0) {
+                console.log(`⚠️  ${cityCode} não encontrado como cidade, tentando como aeroporto...`);
                 
-            };
-            if (returnDate) {
-                flightParams.returnDate = returnDate;
+                url = new URL(`${this.baseURL}/v1/reference-data/locations`);
+                url.searchParams.append('keyword', cityCode);
+                url.searchParams.append('subType', 'AIRPORT');
+
+                response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                data = await response.json();
             }
 
-            const response = await this.amadeus.shopping.flightOffersSearch.get(flightParams);
+            if (!data.data || data.data.length === 0) {
+                throw new Error(`Localização ${cityCode} não encontrada`);
+            }
 
-            const responseWithPrices = response.data.map(flight => {
-                return {
-                    ...flight,
-                    moneyPrice: parseFloat(flight.price.total),
-                    milesPrice: this.calculateMilesPrice(parseFloat(flight.price.total), 'FLIGHT')
-                };
-            });
-            return responseWithPrices;
+            const location = data.data[0];
+            return {
+                latitude: location.geoCode.latitude,
+                longitude: location.geoCode.longitude,
+                cityName: location.name,
+                iataCode: location.iataCode
+            };
+
         } catch (error) {
-            console.error("Erro ao buscar voos:", error);
+            console.error(`❌ Erro ao buscar coordenadas de ${cityCode}:`, error.message);
             throw error;
         }
     }
-
 
     async searchHotels(params) {
         const { destination, checkin, checkout, numberOfTravelers } = params;
         try {
-            const cityCode = await this.searchCityCode(undefined, destination, "HOTEL");
-            const response = await this.amadeus.shopping.hotelOffers.get(
-                {
-                    cityCode: cityCode,
-                    checkInDate: checkin,
-                    checkOutDate: checkout,
-                    adults: numberOfTravelers || 1
+            console.log(`🏨 Buscando hotéis em ${destination}...`);
+            
+            const token = await this.getAccessToken();
+            const cityCode = destination;
 
+            const url = new URL(`${this.baseURL}/v2/shopping/hotel-offers`);
+            url.searchParams.append('cityCode', cityCode);
+            if (checkin) url.searchParams.append('checkInDate', checkin);
+            if (checkout) url.searchParams.append('checkOutDate', checkout);
+            url.searchParams.append('adults', numberOfTravelers || 1);
+            url.searchParams.append('radius', '5');
+            url.searchParams.append('radiusUnit', 'KM');
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
                 }
-            );
-            const responseWithPrices = response.data.map(hotel => {
-                return {
-                    ...hotel,
-                    moneyPrice: parseFloat(hotel.offers[0].price.total),
-                    milesPrice: this.calculateMilesPrice(parseFloat(hotel.offers[0].price.total), 'HOTEL')
-                };
             });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+            }
+
+            const data = await response.json();
+            const responseWithPrices = data.data.map(hotel => ({
+                ...hotel,
+                moneyPrice: parseFloat(hotel.offers[0]?.price?.total || 0),
+                milesPrice: this.calculateMilesPrice(parseFloat(hotel.offers[0]?.price?.total || 0), 'HOTEL')
+            }));
+
+            console.log(`✅ ${responseWithPrices.length} hotéis encontrados em ${cityCode}`);
             return responseWithPrices;
+
         } catch (error) {
-            console.error("Erro ao buscar hotéis:", error);
-            throw error;
+            console.error("❌ Erro ao buscar hotéis:", error.message);
+            return [];
         }
     }
 
-
     async searchActivities(params) {
-        const { destination } = params;
+        const { destination, latitude, longitude } = params;
         try {
-            const cityCode = await this.searchCityCode(undefined, destination, "ACTIVITY");
-            const response = await this.amadeus.shopping.activities.get(
-                {
-                    cityCode: cityCode,
-                    radius: 30,
-                    radiusUnit: 'KM',
-                    categories: ['SIGHTSEEING', 'SHOPPING', 'NIGHTLIFE']
-                }
-            );
-            const responseWithPrices = response.data.map(activity => {
+            console.log(`🎯 Buscando atividades em ${destination}...`);
+            
+            const token = await this.getAccessToken();
+            
+            // Se não tiver lat/long, busca as coordenadas da cidade
+            let lat = latitude;
+            let long = longitude;
+            
+            if (!lat || !long) {
+                console.log(`📍 Buscando coordenadas de ${destination}...`);
+                const coords = await this.getCityCoordinates(destination);
+                lat = coords.latitude;
+                long = coords.longitude;
+                console.log(`✅ Coordenadas: ${lat}, ${long}`);
+            }
 
+            const url = new URL(`${this.baseURL}/v1/shopping/activities`);
+            url.searchParams.append('latitude', lat);
+            url.searchParams.append('longitude', long);
+            url.searchParams.append('radius', '20');
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+            }
+
+            const data = await response.json();
+            
+            if (!data.data || data.data.length === 0) {
+                console.log(`⚠️  Nenhuma atividade encontrada em ${destination}`);
+                return [];
+            }
+
+            const responseWithPrices = data.data.map(activity => {
                 const price = activity.price;
-                const moneyPrice = parseFloat(price.amount);
+                const moneyPrice = parseFloat(price?.amount || 0);
                 const milesPrice = this.calculateMilesPrice(moneyPrice, 'ACTIVITY');
 
                 return {
@@ -182,73 +306,112 @@ export class AmadeusClient {
                     displayMiles: milesPrice.toLocaleString()
                 };
             });
+
+            console.log(`✅ ${responseWithPrices.length} atividades encontradas`);
             return responseWithPrices;
+
         } catch (error) {
-            console.error("Erro ao buscar atividades:", error);
-            throw error;
+            console.error("❌ Erro ao buscar atividades:", error.message);
+            return [];
         }
     }
 
     async searchCarRentals(params) {
-        const { destination, returnDate, departureDate } = params;
+        const { destination, checkin, checkout } = params;
         try {
-            const cityCode = await this.searchCityCode(undefined, destination, "CAR_RENTAL");
-            const response = await this.amadeus.shopping.carRentals.get(
-                {
-                    cityCode: cityCode,
-                    pickUpDateTime: departureDate,
-                    dropOffDateTime: returnDate,
-                    currency: 'BRL'
-                }
-            );
-            const responseWithPrices = response.data.map(car => {
+            console.log(`🚗 Buscando carros em ${destination}...`);
+            
+            const token = await this.getAccessToken();
+            const cityCode = destination;
 
+            const url = new URL(`${this.baseURL}/v1/shopping/car-rental-offers`);
+            url.searchParams.append('cityCode', cityCode);
+            url.searchParams.append('pickUpDateTime', checkin ? `${checkin}T10:00:00` : '2025-12-01T10:00:00');
+            url.searchParams.append('dropOffDateTime', checkout ? `${checkout}T10:00:00` : '2025-12-03T10:00:00');
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+            }
+
+            const data = await response.json();
+            const responseWithPrices = data.data.map(car => {
                 const price = car.estimatedTotal;
-                const moneyPrice = parseFloat(price.amount);
+                const moneyPrice = parseFloat(price?.amount || 0);
                 const milesPrice = this.calculateMilesPrice(moneyPrice, 'CAR_RENTAL');
+                
                 return {
                     ...car,
                     moneyPrice: moneyPrice,
                     milesPrice: milesPrice,
                     displayPrice: moneyPrice.toFixed(2),
                     displayMiles: milesPrice.toLocaleString(),
-                    currency: price.currency
+                    currency: price?.currency || 'BRL'
                 };
             });
+
+            console.log(`✅ ${responseWithPrices.length} carros encontrados em ${cityCode}`);
             return responseWithPrices;
 
         } catch (error) {
-            console.error("Erro ao buscar aluguel de carros:", error);
-            throw error;
+            console.error("❌ Erro ao buscar aluguel de carros:", error.message);
+            return [];
         }
     }
-    async searchCityCode(originCity, destinationCity, type) {
+
+    async searchFlights(params) {
+        const { origin, destination, departureDate, returnDate, numberOfTravelers } = params;
         try {
-            const destPromise = destinationCity
-                ? this.amadeus.referenceData.locations.get({ keyword: destinationCity, subType: 'CITY' })
-                : Promise.resolve(null);
-            const origPromise = originCity
-                ? this.amadeus.referenceData.locations.get({ keyword: originCity, subType: 'CITY' })
-                : Promise.resolve(null);
+            console.log(`✈️ Buscando voos ${origin} → ${destination}...`);
+            
+            const token = await this.getAccessToken();
+            const originCode = origin;
+            const destinationCode = destination;
 
-            const [destinationCode, originCode] = await Promise.all([destPromise, origPromise]);
+            const url = new URL(`${this.baseURL}/v2/shopping/flight-offers`);
+            url.searchParams.append('originLocationCode', originCode);
+            url.searchParams.append('destinationLocationCode', destinationCode);
+            url.searchParams.append('departureDate', departureDate || '2025-12-01');
+            url.searchParams.append('adults', numberOfTravelers || 1);
+            url.searchParams.append('currencyCode', 'BRL');
+            url.searchParams.append('max', '10');
 
-            const destData = destinationCode?.data && destinationCode.data.length ? destinationCode.data[0] : null;
-            const origData = originCode?.data && originCode.data.length ? originCode.data[0] : null;
-
-            if (type === "FLIGHT") {
-                if (!origData || !destData) return null;
-                return { originCode: origData.iataCode || origData.id, destinationCode: destData.iataCode || destData.id };
-            } else {
-                if (!destData) return null;
-                return destData.iataCode || destData.id;
+            if (returnDate) {
+                url.searchParams.append('returnDate', returnDate);
             }
-        } catch (err) {
-            console.error("Erro ao buscar códigos de cidade:", err);
-            throw err;
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+            }
+
+            const data = await response.json();
+            const responseWithPrices = data.data.map(flight => ({
+                ...flight,
+                moneyPrice: parseFloat(flight.price.total),
+                milesPrice: this.calculateMilesPrice(parseFloat(flight.price.total), 'FLIGHT')
+            }));
+
+            console.log(`✅ ${responseWithPrices.length} voos encontrados ${originCode} → ${destinationCode}`);
+            return responseWithPrices;
+
+        } catch (error) {
+            console.error("❌ Erro ao buscar voos:", error.message);
+            return [];
         }
     }
-
-
 }
+
 export const amadeusClient = new AmadeusClient();

@@ -1,10 +1,10 @@
 import db from '../../models/index.js';
-import { amadeusClient } from '../amadeusServices/AmadeusClient.Service.js';
+import { travelDataService } from '../TravelData.Service.js';
+
+const Op = db.Sequelize.Op;
 const Users = db.Users;
 const TravelPackage = db.TravelPackage;
 const PackageComponents = db.PackageComponents;
-
-
 
 export const fetchOptions = async (req, res) => {
     try {
@@ -13,17 +13,70 @@ export const fetchOptions = async (req, res) => {
         const travelPackage = await TravelPackage.findByPk(id);
         if (!travelPackage) return res.status(404).json({ success: false, message: 'Pacote não encontrado' });
 
+        // Buscar opção específica por tipo
         if (type) {
             const ALLOWED = ['FLIGHT', 'HOTEL', 'ACTIVITY', 'CAR_RENTAL'];
             if (!ALLOWED.includes(type)) {
                 return res.status(400).json({ success: false, message: 'Type inválido. Use FLIGHT|HOTEL|ACTIVITY|CAR_RENTAL' });
             }
-            const options = await amadeusClient.fetchOptionsByType(travelPackage, type);
+
+            let options = [];
+            switch (type) {
+                case 'FLIGHT':
+                    options = await travelDataService.searchFlights({
+                        origin: travelPackage.origin,
+                        destination: travelPackage.destination,
+                        departureDate: travelPackage.departureDate,
+                        returnDate: travelPackage.returnDate,
+                        numberOfTravelers: travelPackage.numberOfTravelers || 1
+                    });
+                    break;
+                case 'HOTEL':
+                    options = await travelDataService.searchHotels({
+                        destination: travelPackage.destination,
+                        checkin: travelPackage.departureDate,
+                        checkout: travelPackage.returnDate,
+                        numberOfTravelers: travelPackage.numberOfTravelers || 1
+                    });
+                    break;
+                case 'ACTIVITY':
+                    options = await travelDataService.searchActivities({
+                        destination: travelPackage.destination
+                    });
+                    break;
+                case 'CAR_RENTAL':
+                    options = await travelDataService.searchCarRentals({
+                        destination: travelPackage.destination,
+                        checkin: travelPackage.departureDate,
+                        checkout: travelPackage.returnDate
+                    });
+                    break;
+            }
+            
             return res.status(200).json({ success: true, type, options });
         }
 
-        const options = await amadeusClient.fetchAmadeusOptionsAsync(travelPackage);
-        return res.status(200).json({ success: true, options });
+        // Buscar todas as opções de uma vez
+        const options = await travelDataService.searchAllOptions({
+            origin: travelPackage.origin,
+            destination: travelPackage.destination,
+            departureDate: travelPackage.departureDate,
+            returnDate: travelPackage.returnDate,
+            checkin: travelPackage.departureDate,
+            checkout: travelPackage.returnDate,
+            numberOfTravelers: travelPackage.numberOfTravelers || 1
+        });
+
+        return res.status(200).json({ 
+            success: true, 
+            options: {
+                flights: options.flights,
+                hotels: options.hotels,
+                activities: options.activities,
+                carRentals: options.cars
+            },
+            summary: options.summary
+        });
     } catch (error) {
         console.error('Erro em fetchOptions:', error);
         return res.status(500).json({ success: false, error: error.message || 'Erro ao buscar opções' });
@@ -46,11 +99,10 @@ export const addPackageComponent = async (req, res) => {
             return res.status(400).json({ success: false, message: 'component é obrigatório no body' });
         }
 
-     
         const payload = {
             packageId,
             type,
-            name: component.name || component.title || `${type} component`,
+            name: component.name || `${type} component`,
             description: component.description || null,
             amadeusId: component.id || component.amadeusId || null,
             moneyPrice: Number(component.moneyPrice ?? 0),
@@ -60,7 +112,6 @@ export const addPackageComponent = async (req, res) => {
             departureDate: component.departureDate ? component.departureDate : null,
             returnDate: component.returnDate ? component.returnDate : null
         };
-
 
         if (type === 'FLIGHT') {
             payload.moneyPrice = component.moneyPrice || 0;
@@ -84,7 +135,6 @@ export const addPackageComponent = async (req, res) => {
 
         const created = await PackageComponents.create(payload);
 
-
         const comps = await PackageComponents.findAll({ where: { packageId } });
         const totalPrice = comps.reduce((s, c) => s + (c.moneyPrice || 0), 0);
         const totalMiles = comps.reduce((s, c) => s + (c.milesPrice || 0), 0);
@@ -105,21 +155,58 @@ export const addPackageComponent = async (req, res) => {
         return res.status(500).json({ success: false, error: error.message || 'Erro ao adicionar componente' });
     }
 };
+export const findAll = async (req, res) => {
+    try {
+        const data = await TravelPackage.findAll({
+            include: [
+                {
+                    model: PackageComponents, as: 'components',
+                    attributes: ['id', 'name', 'description'],
+                },
+                {
+                    model: Users, as: 'users',
+                    attributes: ['id', 'name', 'email', 'role'],
+                },
+            ],
+        });
+        res.send(data);
+    } catch (error) {
+        res.status(500).send({
+            message: error.message || "Erro ao buscar pacotes de viagem"
+        });
+    }
+};
 
 export const createBasePackage = async (req, res) => {
     try {
         const packageData = req.body;
-            const validationError = validatePackageData(packageData);
+        
+      
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({
+                success: false,
+                message: "Usuário não autenticado"
+            });
+        }
+        
+        const agentId = req.user.id;
+
+        const validationError = validatePackageData(packageData);
         if (validationError) {
             return res.status(400).json(validationError);
         }
 
-        const travelPackage = await createPackageInDB(packageData);
+
+        const travelPackage = await createPackageInDB({
+            ...packageData,
+            agentId: agentId
+        });
+
         res.status(201).json({
             success: true,
             package: travelPackage
         });
-        } catch (error) {
+    } catch (error) {
         console.error('Erro em createBasePackage:', error);
         res.status(500).json({
             success: false,
@@ -127,10 +214,11 @@ export const createBasePackage = async (req, res) => {
         });
     }
 };
-export const validatePackageData = (data) => {
-    const { name, destination, origin, departureDate, returnDate, numberOfTravelers } = data;
 
-  
+export const validatePackageData = (data) => {
+
+    const { title, destination, origin, departureDate, returnDate, numberOfTravelers } = data;
+
     const requiredFields = ['title', 'destination', 'origin', 'departureDate', 'returnDate', 'numberOfTravelers'];
     const missingFields = requiredFields.filter(field => !data[field]);
     
@@ -141,14 +229,12 @@ export const validatePackageData = (data) => {
         };
     }
 
-    
     if (!isValidDate(departureDate) || !isValidDate(returnDate)) {
         return {
             success: false,
             message: "Digite datas válidas"
         };
     }
-
 
     if (numberOfTravelers <= 0) {
         return {
@@ -168,23 +254,33 @@ export const isValidDate = (dateString) => {
 
 export const createPackageInDB = async (packageData) => {
     const { 
-        title, destination, origin, departureDate, returnDate,
-        description, availableSlots, agentId, images, numberOfTravelers 
+        title, 
+        destination, 
+        origin, 
+        departureDate, 
+        returnDate,
+        description, 
+        availableSlots, 
+        agentId, 
+        images, 
+        numberOfTravelers 
     } = packageData;
 
     return await TravelPackage.create({
-        title,
+        title, 
         destination,
         origin,
         departureDate,
         returnDate,
-        description,
-        availableSlots,
+        description: description || "Descrição padrão",
+        availableSlots: availableSlots || numberOfTravelers,
         agentId: agentId,
         images: images || [],
         numberOfTravelers
     });
 };
+
+
 
 export const findOne = async (req, res) => {
     try {

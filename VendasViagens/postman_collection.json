@@ -11,7 +11,7 @@
         "method": "POST",
         "header": [
           { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{authToken}}" }
+          { "key": "Authorization", "value": "Bearer {{Ep99661858}}" }
         ],
         "body": {
           "mode": "raw",

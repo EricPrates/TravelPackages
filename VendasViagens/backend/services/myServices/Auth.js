@@ -4,75 +4,112 @@ import jwt from"jsonwebtoken" ;
 import db from"../../models/index.js" ;
 import bcrypt from"bcrypt" ;
 
-const JWT_PRIVATE_KEY= process.env.JWT_PRIVATE_KEY; 
 dotenv.config();
+const JWT_PRIVATE_KEY= process.env.JWT_PRIVATE_KEY; 
+
 
 
 export const login = async (req, res) => {
-      const { email, password } = req.body;
-    try{
+    const { email, password } = req.body;
+    try {
+        console.log('🔐 [LOGIN] Iniciando login para:', email);
+        
         if (!email || !password) {
             return res.status(400).send({ 
                 message: "Email e senha são obrigatórios." 
             });
         }
         
-        const findUser = await db.Users.findOne({ where: { email: email} });
-        if(!findUser){
+        const findUser = await db.Users.findOne({ where: { email: email } });
+        console.log('🔐 [LOGIN] Usuário encontrado:', !!findUser);
+        
+        if (!findUser) {
             return res.status(401).send({ message: "Usuário ou senha inválidos." });
         }
 
         const isPasswordValid = await bcrypt.compare(password, findUser.password);
+        console.log('🔐 [LOGIN] Senha válida?', isPasswordValid);
+        
         if (!isPasswordValid) {
             return res.status(401).send({ message: "Usuário ou senha inválidos." });
         }
         
-        const token = jwt.sign(
+        console.log('🔐 [LOGIN] Passou da validação de senha');
+        
+        // ✅ VERIFIQUE A CHAVE JWT
+        console.log('🔐 [LOGIN] JWT_PRIVATE_KEY existe?', !!JWT_PRIVATE_KEY);
+        console.log('🔐 [LOGIN] JWT_PRIVATE_KEY valor:', JWT_PRIVATE_KEY ? '***' + JWT_PRIVATE_KEY.slice(-3) : 'UNDEFINED');
+        
+        if (!JWT_PRIVATE_KEY) {
+            console.error('❌ JWT_PRIVATE_KEY não definida');
+            return res.status(500).send({ message: "Erro de configuração do servidor" });
+        }
+        
+        console.log('🔐 [LOGIN] Gerando token JWT...');
+        
+         const token = jwt.sign(
             { 
                 email: findUser.email,
                 id: findUser.id, 
                 role: findUser.role 
-            }, JWT_PRIVATE_KEY, 
+            }, 
+            JWT_PRIVATE_KEY, 
             { 
-                expiresIn: '15m',
-                algorithm: 'RS256'
-            }
+                expiresIn: '8h',
+                algorithm: 'HS256'
+            }, 
         );
 
-            return res.status(200).send(
-                {
-                    data: {
-                        user:{
-                            id: findUser.id,
-                            email: findUser.email,
-                            role: findUser.role,
-                            name: findUser.name
-                        },
-                        token: token,
-                        token_type: "Bearer",
-                    }
-                });
-                        
-            }catch(error){
-                return res.status(500).send({ message: "Erro ao autenticar usuário." });
+        // ✅ CORREÇÃO: Use .json() em vez de .send()
+        return res.status(200).json({
+            success: true,
+            data: {
+                user: {
+                    id: findUser.id,
+                    email: findUser.email,
+                    role: findUser.role,
+                    name: findUser.name
+                },
+                token: token,
+                token_type: "Bearer",
             }
+        });
+                        
+    } catch (error) {
+        console.error('Erro no login:', error);
+        return res.status(500).json({ 
+            success: false,
+            message: "Erro ao autenticar usuário." 
+        });
+    }
 };
+
 
 
 
 export const tokenValidated = (req, res, next) => {
     const authHeader = req.headers.authorization;
+    
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).send({ message: "Token de acesso requerido Bearer." });
+        return res.status(401).json({ 
+            success: false,
+            message: "Token de acesso requerido no formato Bearer." 
+        });
     }
+    
     const token = authHeader.split(" ")[1];
+    
     try {
-        const decoded = jwt.verify(token, JWT_PRIVATE_KEY,
-             { algorithms: ['RS256'] });
+       
+        const decoded = jwt.verify(token, JWT_PRIVATE_KEY, { algorithms: ['HS256'] });
         req.user = decoded;
         next();
     } catch (error) {
-        return res.status(401).send({ message: "Token de acesso inválido." });
+        console.error('Erro na validação do token:', error);
+        return res.status(401).json({ 
+            success: false,
+            message: "Token de acesso inválido ou expirado." 
+        });
     }
 }
 

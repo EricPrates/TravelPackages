@@ -9,7 +9,8 @@ router.post('/:id/components', tokenValidated, requireAgent, travels.addPackageC
 router.get('/:id', travels.findOne);
 router.put('/:id', tokenValidated, requireAgent, travels.update);
 router.delete('/:id', tokenValidated, requireAgent, travels.remove);
-
+router.post('/:id/components/batch', tokenValidated, requireAgent, travels.addPackageComponents);
+router.get('/', travels.findAll);
 export default app =>{
     app.use ('/travel-packages', router);
-} 
+}

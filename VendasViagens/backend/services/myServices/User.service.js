@@ -1,7 +1,7 @@
-import db from "../../models/index.js";
-const Op = db.Sequelize.Op;
-
-const Users = db.Users;
+import db from '../../models/index.js';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { Op } from 'sequelize';const Users = db.Users;
 const TravelPackage = db.TravelPackage;
 
 export const findOne = async (req, res) => {
@@ -20,6 +20,21 @@ export const findOne = async (req, res) => {
             message: error.message || "Erro ao buscar usuário com id=" + id
         });
     }
+};
+export const register = async (req, res) => {
+  try {
+    const { name, email, password, role = 'agent' } = req.body;
+    if (!email || !password) return res.status(400).json({ message: 'email e password obrigatórios' });
+    const exists = await Users.findOne({ where: { email } });
+    if (exists) return res.status(409).json({ message: 'Usuário já existe' });
+    const hash = await bcrypt.hash(password, 10);
+    const user = await Users.create({ name, email, password: hash, role });
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_PRIVATE_KEY, { expiresIn: '8h' }, { algorithms: ['HS256'] });
+    return res.status(201).json({ user: { id: user.id, email: user.email }, token });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'erro ao criar usuário' });
+  }
 };
 
 export const findAll = async (req, res) => {

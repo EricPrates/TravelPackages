@@ -32,7 +32,7 @@ packageComponentsRouter(app);
 
 (async () =>{
     try{
-        await db.sequelize.sync({force: true});
+        await db.sequelize.sync();
   
         console.log("Banco de dados sincronizados");
 

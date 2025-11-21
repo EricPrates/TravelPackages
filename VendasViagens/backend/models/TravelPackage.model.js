@@ -3,18 +3,19 @@ import { Model } from "sequelize";
 class TravelPackage extends Model {
     static init(sequelize, DataTypes) {
         return super.init({
+            
             id: {type: DataTypes.INTEGER, primaryKey: true,autoIncrement: true, allowNull: false },
             agentId: {type: DataTypes.INTEGER,allowNull: false,references: {model: 'users',key: 'id'},},
-            title: {type: DataTypes.STRING, allowNull: false},
+            title: {type: DataTypes.STRING, allowNull: true},
             destination: {type: DataTypes.STRING, allowNull: false},
             origin: {type: DataTypes.STRING, allowNull: false},
             departureDate: {type: DataTypes.DATE, allowNull: false},
             returnDate: {type: DataTypes.DATE, allowNull: false},
-            description: {type: DataTypes.TEXT, allowNull: false},
+            description: {type: DataTypes.TEXT, allowNull: true},
             availableSlots: {type: DataTypes.INTEGER,allowNull: false},
-            status: {type: DataTypes.ENUM('AVAILABLE', 'CONFIRMED', 'CANCELLED', 'REFUNDED'),defaultValue: 'AVAILABLE',allowNull: false},
+            status: {type: DataTypes.ENUM('AVAILABLE', 'CONFIRMED', 'CANCELLED', 'REFUNDED'),defaultValue: 'AVAILABLE',allowNull: true},
             purchaseDate: {type: DataTypes.DATE,allowNull: true,defaultValue: DataTypes.NOW},
-            numberOfTravelers: {type: DataTypes.INTEGER,allowNull: false,defaultValue: 1},
+            numberOfTravelers: {type: DataTypes.INTEGER,allowNull: true,defaultValue: 1},
             images: {type: DataTypes.TEXT, allowNull: true, defaultValue: '[]',
                 get() {
                     const rawValue = this.getDataValue('images');
@@ -45,12 +46,6 @@ class TravelPackage extends Model {
         }, 0);
     }
 
-    calculateMilesPrice() {
-        const components = this.components || [];
-        return components.reduce((total, component) => {
-            return total + (component.milesPrice || 0);
-        }, 0);
-    }
 
 
 }
