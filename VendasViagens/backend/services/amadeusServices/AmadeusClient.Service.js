@@ -111,26 +111,26 @@ export class AmadeusClient {
         switch (type) {
             case 'FLIGHT':
                 return this.searchFlights({ 
-                    origin: travelPackage.origin, // ✅ Código
-                    destination: travelPackage.destination, // ✅ Código
+                    origin: travelPackage.origin,
+                    destination: travelPackage.destination,
                     departureDate, 
                     returnDate, 
                     numberOfTravelers: travelPackage.numberOfTravelers 
                 });
             case 'HOTEL':
                 return this.searchHotels({ 
-                    destination: travelPackage.destination, // ✅ Código
+                    destination: travelPackage.destination, 
                     checkin: departureDate, 
                     checkout: returnDate, 
                     numberOfTravelers: travelPackage.numberOfTravelers 
                 });
             case 'ACTIVITY':
                 return this.searchActivities({ 
-                    destination: travelPackage.destination // ✅ Código
+                    destination: travelPackage.destination 
                 });
             case 'CAR_RENTAL':
                 return this.searchCarRentals({ 
-                    destination: travelPackage.destination, // ✅ Código
+                    destination: travelPackage.destination,
                     checkin: departureDate, 
                     checkout: returnDate 
                 });
@@ -172,9 +172,9 @@ export class AmadeusClient {
 
             let data = await response.json();
             
-            // Se não encontrou como cidade, tenta como AIRPORT
+          
             if (!data.data || data.data.length === 0) {
-                console.log(`⚠️  ${cityCode} não encontrado como cidade, tentando como aeroporto...`);
+          
                 
                 url = new URL(`${this.baseURL}/v1/reference-data/locations`);
                 url.searchParams.append('keyword', cityCode);
@@ -203,7 +203,7 @@ export class AmadeusClient {
             };
 
         } catch (error) {
-            console.error(`❌ Erro ao buscar coordenadas de ${cityCode}:`, error.message);
+          
             throw error;
         }
     }
@@ -211,7 +211,7 @@ export class AmadeusClient {
     async searchHotels(params) {
         const { destination, checkin, checkout, numberOfTravelers } = params;
         try {
-            console.log(`🏨 Buscando hotéis em ${destination}...`);
+         
             
             const token = await this.getAccessToken();
             const cityCode = destination;
@@ -258,12 +258,12 @@ export class AmadeusClient {
             
             const token = await this.getAccessToken();
             
-            // Se não tiver lat/long, busca as coordenadas da cidade
+          
             let lat = latitude;
             let long = longitude;
             
             if (!lat || !long) {
-                console.log(`📍 Buscando coordenadas de ${destination}...`);
+                
                 const coords = await this.getCityCoordinates(destination);
                 lat = coords.latitude;
                 long = coords.longitude;
@@ -289,7 +289,7 @@ export class AmadeusClient {
             const data = await response.json();
             
             if (!data.data || data.data.length === 0) {
-                console.log(`⚠️  Nenhuma atividade encontrada em ${destination}`);
+                
                 return [];
             }
 
@@ -307,7 +307,7 @@ export class AmadeusClient {
                 };
             });
 
-            console.log(`✅ ${responseWithPrices.length} atividades encontradas`);
+           
             return responseWithPrices;
 
         } catch (error) {
@@ -356,11 +356,11 @@ export class AmadeusClient {
                 };
             });
 
-            console.log(`✅ ${responseWithPrices.length} carros encontrados em ${cityCode}`);
+       
             return responseWithPrices;
 
         } catch (error) {
-            console.error("❌ Erro ao buscar aluguel de carros:", error.message);
+         
             return [];
         }
     }
@@ -380,7 +380,7 @@ export class AmadeusClient {
             url.searchParams.append('departureDate', departureDate || '2025-12-01');
             url.searchParams.append('adults', numberOfTravelers || 1);
             url.searchParams.append('currencyCode', 'BRL');
-            url.searchParams.append('max', '10');
+            url.searchParams.append('max', '50');
 
             if (returnDate) {
                 url.searchParams.append('returnDate', returnDate);
