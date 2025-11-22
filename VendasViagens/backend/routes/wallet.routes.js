@@ -6,8 +6,8 @@ const router = express.Router();
 
 router.post('/add-funds', tokenValidated, wallet.cashDeposit);
 router.post('/redeem-miles', tokenValidated, wallet.milesDeposit);
-router.get('/balance', tokenValidated, wallet.getBalance);
-router.get('/statements', tokenValidated, wallet.getStatements);
+router.get('/balance/:userId', tokenValidated, wallet.getBalance);
+router.get('/statements/:userId', tokenValidated, wallet.getStatements);
 
 
 export default app =>{

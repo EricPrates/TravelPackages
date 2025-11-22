@@ -3,30 +3,21 @@ import { mockDataService } from './mockServices/MockData.Service.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
-/**
- * Serviço híbrido que usa:
- * - Amadeus para voos e atividades (funcionando bem)
- * - Mock para hotéis e carros (dados limitados no Amadeus test)
- */
+
 export class TravelDataService {
     constructor() {
-        this.useAmadeusForHotels = false; // Mude para true se quiser tentar Amadeus
-        this.useAmadeusForCars = false;   // Mude para true se quiser tentar Amadeus
+        this.useAmadeusForHotels = false; 
+        this.useAmadeusForCars = false;  
     }
 
-    /**
-     * Buscar voos - USA AMADEUS (dados reais)
-     */
+   
     async searchFlights(params) {
         return await amadeusClient.searchFlights(params);
     }
 
-    /**
-     * Buscar atividades - USA AMADEUS com coordenadas do mock
-     * Usa coordenadas pré-mapeadas para garantir resultados
-     */
+   
     async searchActivities(params) {
-        // Usa coordenadas do mock para garantir resultados
+       
         const coords = mockDataService.getCityCoordinates(params.destination);
         
         if (coords) {
@@ -41,11 +32,11 @@ export class TravelDataService {
                     return activities;
                 }
             } catch (error) {
-                // Silencioso - retorna array vazio
+           
             }
         }
         
-        // Tenta buscar direto no Amadeus se não tem coordenadas
+     
         try {
             const activities = await amadeusClient.searchActivities(params);
             return activities && activities.length > 0 ? activities : [];
@@ -54,10 +45,7 @@ export class TravelDataService {
         }
     }
 
-    /**
-     * Buscar hotéis - USA MOCK (dados simulados realistas)
-     * Pode tentar Amadeus primeiro se useAmadeusForHotels = true
-     */
+    
     async searchHotels(params) {
         if (this.useAmadeusForHotels) {
             try {
@@ -66,17 +54,13 @@ export class TravelDataService {
                     return hotels;
                 }
             } catch (error) {
-                // Fallback para mock
+            
             }
         }
         
         return mockDataService.searchHotels(params);
     }
 
-    /**
-     * Buscar aluguel de carros - USA MOCK (dados simulados realistas)
-     * Pode tentar Amadeus primeiro se useAmadeusForCars = true
-     */
     async searchCarRentals(params) {
         if (this.useAmadeusForCars) {
             try {
@@ -85,24 +69,19 @@ export class TravelDataService {
                     return cars;
                 }
             } catch (error) {
-                // Fallback para mock
+             
             }
         }
         
         return mockDataService.searchCarRentals(params);
     }
 
-    /**
-     * Buscar coordenadas de uma cidade - USA AMADEUS
-     */
+   
     async getCityCoordinates(cityCode) {
         return await amadeusClient.getCityCoordinates(cityCode);
     }
 
-    /**
-     * Buscar todas as opções de uma vez
-     * Retorna voos, hotéis, atividades e carros disponíveis
-     */
+
     async searchAllOptions(params) {
         const { origin, destination, departureDate, returnDate, checkin, checkout, numberOfTravelers } = params;
 
@@ -144,9 +123,7 @@ export class TravelDataService {
         };
     }
 
-    /**
-     * Obter nome da cidade
-     */
+  
     getCityName(cityCode) {
         return mockDataService.getCityName(cityCode);
     }

@@ -6,6 +6,7 @@ import userRouter from "./routes/user.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import travelPackageRouter from "./routes/travelPackage.routes.js";
 import packageComponentsRouter from "./routes/packageComponents.routes.js";
+import walletRouter from "./routes/wallet.routes.js";
 dotenv.config();
 
 const port = process.env.PORT || 4567;
@@ -25,8 +26,9 @@ app.use(express.urlencoded({ extended: true }))
 app.get('/', (req, res) => res.send('Bem vindo as Vendas de viagens!'))
 
   
-userRouter(app);
 authRouter(app);
+userRouter(app);
+walletRouter(app);
 travelPackageRouter(app);
 packageComponentsRouter(app);
 

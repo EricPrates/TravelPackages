@@ -6,13 +6,70 @@ import bcrypt from"bcrypt" ;
 
 dotenv.config();
 const JWT_PRIVATE_KEY= process.env.JWT_PRIVATE_KEY; 
+const GOOGLE_ID= process.env.GOOGLE_ID;
+const GOOGLE_SECRET= process.env.GOOGLE_SECRET;
 
+export const googleSignIn = async (req, res) => {
+    try{
+    const { token, user, email, name, picture } = req.body;
+    const tokenResponse = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${token}`);
+    const tokenData = await tokenResponse.json();
 
+    if(tokenData.error){
+        return res.status(401).json({
+            success: false,
+            error:"Token inválido"
+        })
+    }
 
+    let userRecord = await db.Users.findOne({ where: { email: email } });
+
+    if(!userRecord){
+        userRecord = await db.Users.create({
+            name: name,
+            email: email,
+            googleId: user.id,
+            role: 'customer',
+        })
+          const token = jwt.sign(
+            { 
+                email: userRecord.email,
+                name: userRecord.name,
+                id: userRecord.id, 
+                role: userRecord.role 
+            }, 
+            JWT_PRIVATE_KEY, 
+            { 
+                expiresIn: '8h',
+                algorithm: 'HS256'
+            }, 
+        );
+        return res.status(201).json({
+            success: true,
+            data: {
+                user: {
+                    id: userRecord.id,
+                    email: userRecord.email,
+                    role: userRecord.role,
+                    name: userRecord.name
+                },
+                token: token,
+                token_type: "Bearer",
+            }
+        });
+    }
+    }catch(error){
+        console.error('Erro no Google Sign-In:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Erro ao autenticar usuário com Google."
+        });
+    }
+}
 export const login = async (req, res) => {
     const { email, password } = req.body;
     try {
-        console.log('🔐 [LOGIN] Iniciando login para:', email);
+ 
         
         if (!email || !password) {
             return res.status(400).send({ 
@@ -21,31 +78,24 @@ export const login = async (req, res) => {
         }
         
         const findUser = await db.Users.findOne({ where: { email: email } });
-        console.log('🔐 [LOGIN] Usuário encontrado:', !!findUser);
+    
         
         if (!findUser) {
             return res.status(401).send({ message: "Usuário ou senha inválidos." });
         }
 
         const isPasswordValid = await bcrypt.compare(password, findUser.password);
-        console.log('🔐 [LOGIN] Senha válida?', isPasswordValid);
-        
+      
         if (!isPasswordValid) {
             return res.status(401).send({ message: "Usuário ou senha inválidos." });
         }
         
-        console.log('🔐 [LOGIN] Passou da validação de senha');
-        
-        // ✅ VERIFIQUE A CHAVE JWT
-        console.log('🔐 [LOGIN] JWT_PRIVATE_KEY existe?', !!JWT_PRIVATE_KEY);
-        console.log('🔐 [LOGIN] JWT_PRIVATE_KEY valor:', JWT_PRIVATE_KEY ? '***' + JWT_PRIVATE_KEY.slice(-3) : 'UNDEFINED');
-        
+      
         if (!JWT_PRIVATE_KEY) {
-            console.error('❌ JWT_PRIVATE_KEY não definida');
-            return res.status(500).send({ message: "Erro de configuração do servidor" });
+                   return res.status(500).send({ message: "Erro de configuração do servidor" });
         }
         
-        console.log('🔐 [LOGIN] Gerando token JWT...');
+     
         
          const token = jwt.sign(
             { 
@@ -60,7 +110,7 @@ export const login = async (req, res) => {
             }, 
         );
 
-        // ✅ CORREÇÃO: Use .json() em vez de .send()
+    
         return res.status(200).json({
             success: true,
             data: {

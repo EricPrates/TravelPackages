@@ -3,6 +3,7 @@ import * as auth from '../services/myServices/Auth.js';
 
 const router = express.Router();
 router.post('/login', auth.login);
+router.post('/google', auth.googleSignIn);
 export default app => {
     app.use('/auth', router);
 }

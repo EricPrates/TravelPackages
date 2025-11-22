@@ -368,7 +368,7 @@ export class AmadeusClient {
     async searchFlights(params) {
         const { origin, destination, departureDate, returnDate, numberOfTravelers } = params;
         try {
-            console.log(`✈️ Buscando voos ${origin} → ${destination}...`);
+    
             
             const token = await this.getAccessToken();
             const originCode = origin;
@@ -404,11 +404,11 @@ export class AmadeusClient {
                 milesPrice: this.calculateMilesPrice(parseFloat(flight.price.total), 'FLIGHT')
             }));
 
-            console.log(`✅ ${responseWithPrices.length} voos encontrados ${originCode} → ${destinationCode}`);
+           
             return responseWithPrices;
 
         } catch (error) {
-            console.error("❌ Erro ao buscar voos:", error.message);
+
             return [];
         }
     }
