@@ -11,26 +11,27 @@ const GOOGLE_SECRET= process.env.GOOGLE_SECRET;
 const REDIRECT_URL = process.env.GOOGLE_REDIRECT_URI;
 
 export const getGoogleUrl = async (req, res) => {
-    const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
-    const options = {
+    const params = new URLSearchParams({
         client_id: GOOGLE_ID,
         redirect_uri: REDIRECT_URL,
         response_type: 'code',
-        scope: [
-            'https://www.googleapis.com/auth/userinfo.profile',
-            'https://www.googleapis.com/auth/userinfo.email',
-        ].join(' '),
+        scope: 'profile email',
         access_type: 'offline',
-        prompt: 'consent',
-    };
-    const qs = new URLSearchParams(options);
-    const authUrl = `${rootUrl}?${qs.toString()}`;
+        prompt: 'consent'
+    });
+    
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
     
     res.json({ url: authUrl });
 };
+
 export const handleGoogleCallback = async (req, res) =>{
     try{
     const {code} = req.query;
+if(!code){
+    return res.status(400).json({ message: 'Código de autorização não fornecido.' });
+}
+console.log(code);
 
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
        

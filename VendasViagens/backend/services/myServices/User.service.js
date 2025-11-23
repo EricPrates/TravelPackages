@@ -8,11 +8,7 @@ export const findOne = async (req, res) => {
     const id = req.params.id;
     try{
         const data = await Users.findByPk(id, {
-            include: [{
-                model: TravelPackage, as: 'bookedPackages',
-                attributes: ['id', 'title', 'description', 'price', 'duration', 'destination', 'availableSlots', 'image'],
-                through: { attributes: [] },
-            }]
+            attributes: ['id', 'name', 'email', 'role', 'cash', 'miles'],
         });
         res.send(data);
     }catch(error){

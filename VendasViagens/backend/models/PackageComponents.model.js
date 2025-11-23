@@ -18,8 +18,6 @@ class PackageComponents extends Model {
       destination: { type: DataTypes.STRING, allowNull: true },
       numberOfTravelers: { type: DataTypes.INTEGER, allowNull: true, defaultValue: 1 },
       title: { type: DataTypes.STRING, allowNull: true },
-      componentName: { type: DataTypes.STRING, allowNull: true },
-      AmadeusId: { type: DataTypes.STRING, allowNull: true },
       checkinDate: { type: DataTypes.DATE, allowNull: true },
       checkoutDate: { type: DataTypes.DATE, allowNull: true }      
         

@@ -1,6 +1,6 @@
 import { Model } from "sequelize";
 
-class Transaction extends Model {
+class Wallet extends Model {
     static init(sequelize, DataTypes) {
         return super.init({
             id: {
@@ -52,13 +52,13 @@ class Transaction extends Model {
             }
         }, {
             sequelize,
-            modelName: 'Transaction',
-            tableName: 'transactions'
+            modelName: 'Wallet',
+            tableName: 'wallets'
         });
     }
 }
 
 export default function (sequelize, DataTypes) {
-    Transaction.init(sequelize, DataTypes);
-    return Transaction;
+    Wallet.init(sequelize, DataTypes);
+    return Wallet;
 }
