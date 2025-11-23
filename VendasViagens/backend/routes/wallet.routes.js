@@ -10,6 +10,7 @@ router.get('/balance/:userId', tokenValidated, wallet.getBalance);
 router.get('/statements/:userId', tokenValidated, wallet.getWalletStatement);
 
 
+
 export default app =>{
     app.use ('/wallet', router);
 }

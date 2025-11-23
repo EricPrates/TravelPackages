@@ -149,6 +149,7 @@ export const update = async (req, res) => {
         return errorResponse(res, 500, 'Erro ao atualizar usuário.', error.message);
     }
 };
+
 export const remove = async (req, res) => {
     const id = req.params.id;
 
