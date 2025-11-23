@@ -67,26 +67,26 @@ export class AmadeusClient {
                 carRentalsResult
             ] = await Promise.all([
                 this.searchFlights({
-                    origin: travelPackage.origin, // ✅ Já espera código (ex: "GRU")
-                    destination: travelPackage.destination, // ✅ Já espera código (ex: "GIG")
+                    origin: travelPackage.origin, 
+                    destination: travelPackage.destination, 
                     departureDate: formattedDepartureDate,
                     returnDate: formattedReturnDate,
                     numberOfTravelers: travelPackage.numberOfTravelers
                 }).catch(err => { console.error('searchFlights failed', err); return []; }),
 
                 this.searchHotels({
-                    destination: travelPackage.destination, // ✅ Já espera código (ex: "RIO")
+                    destination: travelPackage.destination, 
                     checkin: formattedCheckinDate,
                     checkout: formattedCheckoutDate,
                     numberOfTravelers: travelPackage.numberOfTravelers
                 }).catch(err => { console.error('searchHotels failed', err); return []; }),
 
                 this.searchActivities({
-                    destination: travelPackage.destination // ✅ Já espera código (ex: "RIO")
+                    destination: travelPackage.destination 
                 }).catch(err => { console.error('searchActivities failed', err); return []; }),
 
                 this.searchCarRentals({
-                    destination: travelPackage.destination, // ✅ Já espera código (ex: "RIO")
+                    destination: travelPackage.destination, 
                     checkin: formattedCheckinDate,
                     checkout: formattedCheckoutDate
                 }).catch(err => { console.error('searchCarRentals failed', err); return []; })
@@ -139,19 +139,8 @@ export class AmadeusClient {
         }
     }
 
-    calculateMilesPrice(moneyPrice, type) {
-        switch (type) {
-            case 'FLIGHT':
-                return Math.round(moneyPrice * 90);
-            case 'HOTEL':
-                return Math.round(moneyPrice * 80);
-            case 'ACTIVITY':
-                return Math.round(moneyPrice * 50);
-            case 'CAR_RENTAL':
-                return Math.round(moneyPrice * 70);
-            default:
-                return Math.round(moneyPrice * 100);
-        }
+    calculateMilesPrice(moneyPrice) {
+        return Math.ceil(moneyPrice * 100);
     }
 
     async getCityCoordinates(cityCode) {
@@ -293,21 +282,31 @@ export class AmadeusClient {
                 return [];
             }
 
+            // Simplificar dados das atividades
             const responseWithPrices = data.data.map(activity => {
                 const price = activity.price;
                 const moneyPrice = parseFloat(price?.amount || 0);
                 const milesPrice = this.calculateMilesPrice(moneyPrice, 'ACTIVITY');
 
                 return {
-                    ...activity,
+                    id: activity.id,
+                    type: 'activity',
+                    name: activity.name,
+                    shortDescription: activity.shortDescription || activity.description?.substring(0, 200),
                     moneyPrice: moneyPrice,
                     milesPrice: milesPrice,
                     displayPrice: moneyPrice.toFixed(2),
-                    displayMiles: milesPrice.toLocaleString()
+                    displayMiles: milesPrice.toLocaleString(),
+                    price: {
+                        amount: price?.amount,
+                        currencyCode: price?.currencyCode
+                    },
+                    rating: activity.rating,
+                    pictures: activity.pictures?.slice(0, 3), // Apenas 3 imagens
+                    geoCode: activity.geoCode
                 };
             });
 
-           
             return responseWithPrices;
 
         } catch (error) {
@@ -398,13 +397,39 @@ export class AmadeusClient {
             }
 
             const data = await response.json();
-            const responseWithPrices = data.data.map(flight => ({
-                ...flight,
-                moneyPrice: parseFloat(flight.price.total),
-                milesPrice: this.calculateMilesPrice(parseFloat(flight.price.total), 'FLIGHT')
-            }));
+            
+    
+            const responseWithPrices = data.data.map(flight => {
+                const firstSegment = flight.itineraries?.[0]?.segments?.[0] || {};
+                const lastSegment = flight.itineraries?.[0]?.segments?.slice(-1)[0] || {};
+                
+                return {
+                    id: flight.id,
+                    type: 'flight-offer',
+                    source: flight.source,
+                    moneyPrice: parseFloat(flight.price.total),
+                    milesPrice: this.calculateMilesPrice(parseFloat(flight.price.total), 'FLIGHT'),
+                    price: {
+                        total: flight.price.total,
+                        currency: flight.price.currency
+                    },
+                    airline: flight.validatingAirlineCodes?.[0] || 'N/A',
+                    flightNumber: firstSegment.number || 'N/A',
+                    numberOfStops: (flight.itineraries?.[0]?.segments?.length || 1) - 1,
+                    duration: flight.itineraries?.[0]?.duration || 'N/A',
+                    departure: {
+                        iataCode: firstSegment.departure?.iataCode || originCode,
+                        at: firstSegment.departure?.at,
+                        terminal: firstSegment.departure?.terminal
+                    },
+                    arrival: {
+                        iataCode: lastSegment.arrival?.iataCode || destinationCode,
+                        at: lastSegment.arrival?.at,
+                        terminal: lastSegment.arrival?.terminal
+                    }
+                };
+            });
 
-           
             return responseWithPrices;
 
         } catch (error) {

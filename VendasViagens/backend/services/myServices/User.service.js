@@ -1,67 +1,101 @@
 import db from '../../models/index.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { Op } from 'sequelize';const Users = db.Users;
+import { Op } from 'sequelize';
+import { 
+    successResponse, 
+    errorResponse, 
+    notFoundResponse, 
+    badRequestResponse,
+    conflictResponse,
+    createdResponse 
+} from '../../utils/responseHandler.js';
+
+const Users = db.Users;
 const TravelPackage = db.TravelPackage;
 
 export const findOne = async (req, res) => {
     const id = req.params.id;
-    try{
+    try {
         const data = await Users.findByPk(id, {
-            attributes: ['id', 'name', 'email', 'role', 'cash', 'miles'],
+            attributes: ['id', 'name', 'email', 'role'],
         });
-        res.send(data);
-    }catch(error){
-        res.status(500).send({
-            message: error.message || "Erro ao buscar usuário com id=" + id
-        });
+        
+        if (!data) {
+            return notFoundResponse(res, 'Usuário');
+        }
+        
+        return successResponse(res, 200, data);
+    } catch (error) {
+        return errorResponse(res, 500, 'Erro ao buscar usuário.', error.message);
     }
 };
 export const register = async (req, res) => {
   try {
     const { name, email, password, role = 'agent' } = req.body;
-    if (!email || !password) return res.status(400).json({ message: 'email e password obrigatórios' });
+    
+    if (!email || !password) {
+      return badRequestResponse(res, 'Email e password são obrigatórios.');
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return badRequestResponse(res, 'Email inválido. Use um formato válido como: usuario@exemplo.com');
+    }
+    
     const exists = await Users.findOne({ where: { email } });
-    if (exists) return res.status(409).json({ message: 'Usuário já existe' });
+    if (exists) {
+      return conflictResponse(res, 'Usuário já existe.');
+    }
+    
     const hash = await bcrypt.hash(password, 10);
     const user = await Users.create({ name, email, password: hash, role });
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_PRIVATE_KEY, { expiresIn: '8h' }, { algorithms: ['HS256'] });
-    return res.status(201).json({ user: { id: user.id, email: user.email }, token });
+    
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role }, 
+      process.env.JWT_PRIVATE_KEY, 
+      { expiresIn: '8h', algorithm: 'HS256' }
+    );
+    
+    return createdResponse(res, {
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        name: user.name,
+        role: user.role 
+      }, 
+      token: token,
+      token_type: "Bearer"
+    }, 'Usuário registrado com sucesso.');
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: 'erro ao criar usuário' });
+    console.error('Erro no registro:', err);
+    return errorResponse(res, 500, 'Erro ao criar usuário.', err.message);
   }
 };
 
 export const findAll = async (req, res) => {
-    try{
-             
+    try {
         const data = await Users.findAll({
             include: [{
                 model: TravelPackage, as: 'bookedPackages',
-                attributes: ['id', 'title', 'description', 'duration', 'destination', 'availableSlots', 'image', ],
+                attributes: ['id', 'title', 'description', 'destination', 'availableSlots', 'departureDate', 'returnDate'],
             }],
-            attributes: ['id', 'name', 'email', 'role', 'cash', 'miles'],
-        })
-        res.send(data)
-    }catch(error){
-        res.status(500).send({
-            message: error.message || "Erro ao buscar usuários"
-        })
+            attributes: ['id', 'name', 'email', 'role'],
+        });
+        
+        return successResponse(res, 200, data);
+    } catch (error) {
+        return errorResponse(res, 500, 'Erro ao buscar usuários.', error.message);
     }
-
-
 };
 export const findOneByName = async (req, res) => {
-  let name;
-    try{
-        name = req.query.name;
-        if(!name){
-            res.status(400).send({
-                message: "O nome é obrigatório."
-            });
-            return;
+    try {
+        const name = req.query.name;
+        
+        if (!name) {
+            return badRequestResponse(res, 'O nome é obrigatório.');
         }
+        
         const nameClean = name.trim();
         const data = await Users.findAll({
             where: {
@@ -71,87 +105,64 @@ export const findOneByName = async (req, res) => {
             },
             include: [{
                 model: TravelPackage, as: 'bookedPackages',
-                attributes: ['id', 'title', 'description', 'price', 'duration', 'destination', 'availableSlots', 'image', 'totalPrice'],
+                attributes: ['id', 'title', 'description', 'destination', 'availableSlots', 'totalMoneyPrice', 'totalMilesPrice'],
                 through: { attributes: [] },
-            }
-            ]
-        })
-        if(data.length > 0){
-         return   res.status(200).send(data)
-        }else{
-          return  res.status(404).send({
-                message: `Não foi possível encontrar o usuário com nome=${nameClean}.`
-            })
+            }]
+        });
+        
+        if (data.length === 0) {
+            return notFoundResponse(res, `Usuário com nome "${nameClean}"`);
         }
-    }catch(error){
-        res.status(500).send({
-            message: "Erro ao buscar usuário com nome=" + name
-        })
+        
+        return successResponse(res, 200, data);
+    } catch (error) {
+        return errorResponse(res, 500, 'Erro ao buscar usuário.', error.message);
     }
-}
+};
 
 export const create = async (req, res) => {
-    if(!req.body.name){
-        res.status(400).send({
-            message: "O campo nome é obrigatório."
-        });
-        return;
+    if (!req.body.name) {
+        return badRequestResponse(res, 'O campo nome é obrigatório.');
     }
     
     try {
         const user = await Users.create(req.body);
-      return  res.status(201).send(user);
+        return createdResponse(res, user, 'Usuário criado com sucesso.');
     } catch (error) {
-        return res.status(500).send({
-            message: "Erro ao criar usuário."
-        });
+        return errorResponse(res, 500, 'Erro ao criar usuário.', error.message);
     }
 };
 export const update = async (req, res) => {
     const id = req.params.id;
-    try{
-        const [updated] = await Users.update (req.body, {
-            where: {id: id}
+    try {
+        const [updated] = await Users.update(req.body, {
+            where: { id: id }
         });
-        if(updated > 0){
-            const updatedUser = await Users.findByPk(id);
-            res.status(200).send({
-                message: "Usuário atualizado com sucesso.",
-                data: updatedUser
-            });
-        }else{
-            res.status(404).send({
-                message: `Não foi possível encontrar o usuário com id=${id}.`
-            });
+        
+        if (updated === 0) {
+            return notFoundResponse(res, 'Usuário');
         }
-    }catch(error){
-        res.status(500).send({
-            message: "Erro ao atualizar usuário com id=" + id
-        });
+        
+        const updatedUser = await Users.findByPk(id);
+        return successResponse(res, 200, updatedUser, 'Usuário atualizado com sucesso.');
+    } catch (error) {
+        return errorResponse(res, 500, 'Erro ao atualizar usuário.', error.message);
     }
 };
 export const remove = async (req, res) => {
     const id = req.params.id;
 
-    try{
+    try {
         const deleted = await Users.destroy({
-            where: {id: id}
+            where: { id: id }
         });
-        if(deleted > 0){
-            res.status(200).send({
-                message: "Usuário removido com sucesso."
-            });
-        }else{
-            res.status(404).send({
-                message: `Não foi possível encontrar o usuário com id=${id}.`
-            });
+        
+        if (deleted === 0) {
+            return notFoundResponse(res, 'Usuário');
         }
-    }catch(error){
-        res.status(500).send({
-            message: "Erro ao remover usuário com id=" + id
-        });
+        
+        return successResponse(res, 200, null, 'Usuário removido com sucesso.');
+    } catch (error) {
+        return errorResponse(res, 500, 'Erro ao remover usuário.', error.message);
     }
-
-
-
 };

@@ -1,20 +1,15 @@
 import express from "express";
 import * as users from"../services/myServices/User.service.js";
-import { tokenValidated } from '../services/myServices/Auth.js';
 
 const router = express.Router();
 
 
-router.get('/search', users.findOneByName); // Usa query param: /users/search?name=João
-router.post('/register', users.create);      // Registro público
-
-
-router.get('/', tokenValidated, users.findAll);
-router.get('/:id', tokenValidated, users.findOne);
-router.put('/:id', tokenValidated, users.update);
-router.delete('/:id', tokenValidated, users.remove);
-router.post('/', users.create);
-
+router.post('/register', users.register);
+router.get('/search/:name', users.findOneByName);
+router.get('/', users.findAll);
+router.get('/:id', users.findOne);
+router.put('/:id', users.update);
+router.delete('/:id', users.remove);
 export default app =>{
     app.use ('/users', router);
 }

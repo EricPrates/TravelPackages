@@ -27,15 +27,10 @@ class User extends Model {
                 type: DataTypes.STRING,
                 allowNull: false
             },
-            balanceInCash: {
-                type: DataTypes.FLOAT,
-                allowNull: false,
-                defaultValue: 0.0
-            },
-            balanceInMiles: {
-                type: DataTypes.INTEGER,
-                allowNull: false,
-                defaultValue: 0
+            googleId: {
+                type: DataTypes.STRING,
+                allowNull: true,
+                unique: true
             }
         },
             {

@@ -175,7 +175,7 @@ export const addPackageComponent = async (req, res) => {
         
         await TravelPackage.update({
             totalMoneyPrice: totalPrice,
-            totalPriceMiles: totalMiles
+            totalMilesPrice: totalMiles
         }, {
             where: { id: packageId }
         });
@@ -203,7 +203,7 @@ export const findAll = async (req, res) => {
             include: [
                 {
                     model: PackageComponents, as: 'components',
-                    attributes: ['id', 'name', 'description'],
+                    attributes: ['id', 'title', 'name', 'description', 'type', 'moneyPrice', 'milesPrice'],
                 },
                 {
                     model: Users, as: 'users',
@@ -243,7 +243,7 @@ export const createBasePackage = async (req, res) => {
             ...packageData,
             agentId: agentId,
             totalMoneyPrice: 0,
-            totalPriceMiles: 0
+            totalMilesPrice: 0
         });
 
         res.status(201).json({
@@ -333,7 +333,7 @@ export const findOne = async (req, res) => {
             include: [
                 {
                     model: PackageComponents, as: 'components',
-                    attributes: ['id', 'name', 'description', 'price'],
+                    attributes: ['id', 'title', 'name', 'description', 'type', 'moneyPrice', 'milesPrice'],
                 },
                 {
                     model: Users, as: 'users',

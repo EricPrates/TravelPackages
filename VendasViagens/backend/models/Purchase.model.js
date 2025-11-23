@@ -9,7 +9,7 @@ class Purchase extends Model {
             status: { type: DataTypes.ENUM('PENDING', 'CONFIRMED', 'CANCELLED'), defaultValue: 'PENDING' },
             quantity: { type: DataTypes.INTEGER, defaultValue: 1 },
             totalMoneyPrice: { type: DataTypes.DECIMAL(10, 2) },
-            totalPriceMiles: { type: DataTypes.DECIMAL(10, 2) },
+            totalMilesPrice: { type: DataTypes.DECIMAL(10, 2) },
             paidInMoney: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
             paidInMiles: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
             purchaseDate: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
@@ -26,7 +26,7 @@ class Purchase extends Model {
                     );
                     if (travelPackage) {
                         purchase.totalMoneyPrice = travelPackage.totalMoneyPrice * purchase.quantity;
-                        purchase.totalMilesPrice = travelPackage.totalPriceMiles * purchase.quantity;
+                        purchase.totalMilesPrice = travelPackage.totalMilesPrice * purchase.quantity;
                         
                   
                     }

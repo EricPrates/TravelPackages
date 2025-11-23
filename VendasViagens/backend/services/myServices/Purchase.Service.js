@@ -1,13 +1,36 @@
-import { Sequelize } from 'sequelize';
 import db from '../../models/index.js';
 
-
-const Op = db.Sequelize.Op;
 const Users = db.Users;
 const TravelPackage = db.TravelPackage;
 const Purchase = db.Purchase;
 const Wallet = db.Wallet;
 const sequelize = db.sequelize;
+
+// Taxa de conversão: 1 real = 100 milhas
+const MILES_PER_REAL = 100;
+const MILES_EARNED_RATE = 0.01; // 1% de cashback em milhas
+
+// Função auxiliar para calcular saldo do usuário
+async function getUserBalance(userId, transaction) {
+    const transactions = await Wallet.findAll({
+        where: { userId },
+        transaction
+    });
+
+    let balanceInCash = 0;
+    let balanceInMiles = 0;
+
+    transactions.forEach(t => {
+        const amount = parseFloat(t.amount);
+        if (t.coinType === 'CASH') {
+            balanceInCash += (t.type === 'DEPOSIT' ? amount : -amount);
+        } else if (t.coinType === 'MILES') {
+            balanceInMiles += (t.type === 'DEPOSIT' ? amount : -amount);
+        }
+    });
+
+    return { balanceInCash, balanceInMiles };
+}
 export const findPurchasesByUser = async (req, res) => {
     const userId = req.params.userId;
     try {
@@ -29,67 +52,135 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
         const {
             user_id,
             travel_package_id,
-            quantity,
-            paymentChoice
+            quantity = 1,
+            paymentChoice, 
+            cashAmount = 0,
+            milesAmount = 0
         } = req.body;
 
-        const [user, travelPackage, userWallet] = await Promise.all([
-            Users.findByPk(user_id, { transaction }),
-            TravelPackage.findByPk(travel_package_id, { transaction }),
-            Wallet.findOne({ where: { userId: user_id }, transaction })
-        ]);
-
-        if (!user || !travelPackage || !userWallet) {
+        if (!user_id || !travel_package_id || !paymentChoice) {
             await transaction.rollback();
-            return res.status(404).send({ message: "Recurso não encontrado." });
+            return res.status(400).send({ 
+                success: false,
+                message: "Campos obrigatórios: user_id, travel_package_id, paymentChoice" 
+            });
         }
 
-        const totalMoneyPrice = travelPackage.totalMoneyPrice * quantity;
-        const totalMilesPrice = travelPackage.totalPriceMiles * quantity;
+
+        const [user, travelPackage] = await Promise.all([
+            Users.findByPk(user_id, { transaction }),
+            TravelPackage.findByPk(travel_package_id, { transaction })
+        ]);
+
+        if (!user) {
+            await transaction.rollback();
+            return res.status(404).send({ success: false, message: "Usuário não encontrado." });
+        }
+
+        if (!travelPackage) {
+            await transaction.rollback();
+            return res.status(404).send({ success: false, message: "Pacote não encontrado." });
+        }
+
+
+        if (travelPackage.availableSlots < quantity) {
+            await transaction.rollback();
+            return res.status(400).send({ 
+                success: false,
+                message: `Apenas ${travelPackage.availableSlots} vagas disponíveis.` 
+            });
+        }
+
+  
+        const totalMoneyPrice = parseFloat(travelPackage.totalMoneyPrice) * quantity;
+        const totalMilesPrice = parseFloat(travelPackage.totalMilesPrice) * quantity;
+
+ 
+        const userBalance = await getUserBalance(user_id, transaction);
 
         let paidInMoney = 0;
         let paidInMiles = 0;
+        let milesEarned = 0;
 
+     
         if (paymentChoice === 'cash') {
-
-            if (userWallet.balanceInCash < totalMoneyPrice) {
+      
+            if (userBalance.balanceInCash < totalMoneyPrice) {
                 await transaction.rollback();
-                return res.status(400).send({ message: "Saldo em dinheiro insuficiente." });
+                return res.status(400).send({ 
+                    success: false,
+                    message: `Saldo insuficiente. Necessário: R$ ${totalMoneyPrice.toFixed(2)}, Disponível: R$ ${userBalance.balanceInCash.toFixed(2)}` 
+                });
             }
             paidInMoney = totalMoneyPrice;
+            milesEarned = Math.round(paidInMoney * MILES_EARNED_RATE); // 1% de cashback
 
         } else if (paymentChoice === 'miles') {
-
-            if (userWallet.balanceInMiles < totalMilesPrice) {
+       
+            if (userBalance.balanceInMiles < totalMilesPrice) {
                 await transaction.rollback();
-                return res.status(400).send({ message: "Saldo em milhas insuficiente." });
+                return res.status(400).send({ 
+                    success: false,
+                    message: `Milhas insuficientes. Necessário: ${totalMilesPrice} milhas, Disponível: ${userBalance.balanceInMiles} milhas` 
+                });
             }
             paidInMiles = totalMilesPrice;
 
         } else if (paymentChoice === 'mixed') {
-
-            const { cashAmount, milesAmount } = req.body;
-
-            if (cashAmount + milesAmount !== totalMoneyPrice) {
+          
+            
+           
+            if (cashAmount < 0 || milesAmount < 0) {
                 await transaction.rollback();
-                return res.status(400).send({ message: "Valor total do pagamento não corresponde ao preço." });
+                return res.status(400).send({ 
+                    success: false,
+                    message: "Valores de cashAmount e milesAmount devem ser positivos." 
+                });
             }
 
-            if (userWallet.balanceInCash < cashAmount) {
+          
+            const remainingValue = totalMoneyPrice - cashAmount;
+            const milesNeeded = Math.ceil(remainingValue * (totalMilesPrice / totalMoneyPrice));
+
+       
+            if (milesAmount < milesNeeded) {
                 await transaction.rollback();
-                return res.status(400).send({ message: "Saldo em dinheiro insuficiente." });
+                return res.status(400).send({ 
+                    success: false,
+                    message: `Milhas insuficientes para cobrir o restante. Necessário: ${milesNeeded} milhas, Fornecido: ${milesAmount} milhas` 
+                });
             }
 
-            if (userWallet.balanceInMiles < milesAmount) {
+  
+            if (userBalance.balanceInCash < cashAmount) {
                 await transaction.rollback();
-                return res.status(400).send({ message: "Saldo em milhas insuficiente." });
+                return res.status(400).send({ 
+                    success: false,
+                    message: `Saldo em dinheiro insuficiente. Necessário: R$ ${cashAmount.toFixed(2)}, Disponível: R$ ${userBalance.balanceInCash.toFixed(2)}` 
+                });
+            }
+
+            if (userBalance.balanceInMiles < milesAmount) {
+                await transaction.rollback();
+                return res.status(400).send({ 
+                    success: false,
+                    message: `Saldo em milhas insuficiente. Necessário: ${milesAmount} milhas, Disponível: ${userBalance.balanceInMiles} milhas` 
+                });
             }
 
             paidInMoney = cashAmount;
             paidInMiles = milesAmount;
+            milesEarned = Math.round(paidInMoney * MILES_EARNED_RATE); 
+
+        } else {
+            await transaction.rollback();
+            return res.status(400).send({ 
+                success: false,
+                message: "paymentChoice inválido. Use: 'cash', 'miles' ou 'mixed'" 
+            });
         }
 
-
+       
         const newPurchase = await Purchase.create({
             userId: user_id,
             travelPackageId: travel_package_id,
@@ -98,30 +189,83 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
             totalMoneyPrice,
             totalMilesPrice,
             paidInMoney,
-            paidInMiles
+            paidInMiles,
+            purchaseDate: new Date()
         }, { transaction });
 
+ 
+        if (paidInMoney > 0) {
+            await Wallet.create({
+                userId: user_id,
+                type: 'PURCHASE',
+                coinType: 'CASH',
+                amount: paidInMoney,
+                description: `Compra do pacote: ${travelPackage.title}`,
+                date: new Date()
+            }, { transaction });
+        }
 
-        await userWallet.update({
-            balanceInCash: userWallet.balanceInCash - paidInMoney,
-            balanceInMiles: userWallet.balanceInMiles - paidInMiles
+  
+        if (paidInMiles > 0) {
+            await Wallet.create({
+                userId: user_id,
+                type: 'PURCHASE',
+                coinType: 'MILES',
+                amount: paidInMiles,
+                description: `Compra do pacote: ${travelPackage.title}`,
+                date: new Date()
+            }, { transaction });
+        }
+
+        if (milesEarned > 0) {
+            await Wallet.create({
+                userId: user_id,
+                type: 'DEPOSIT',
+                coinType: 'MILES',
+                amount: milesEarned,
+                description: `Cashback de ${MILES_EARNED_RATE * 100}% sobre compra`,
+                date: new Date()
+            }, { transaction });
+        }
+
+        await travelPackage.update({
+            availableSlots: travelPackage.availableSlots - quantity
         }, { transaction });
 
         await transaction.commit();
 
         res.status(201).json({
             success: true,
+            message: "Compra realizada com sucesso!",
             data: {
-                purchase: newPurchase,
+                purchase: {
+                    id: newPurchase.id,
+                    status: newPurchase.status,
+                    quantity: newPurchase.quantity,
+                    purchaseDate: newPurchase.purchaseDate
+                },
+                package: {
+                    id: travelPackage.id,
+                    title: travelPackage.title,
+                    destination: travelPackage.destination
+                },
                 payment_summary: {
-                    total_package_value: { money: totalMoneyPrice, miles: totalMilesPrice },
-                    actually_paid: { money: paidInMoney, miles: paidInMiles }
+                    total_package_value: { 
+                        money: totalMoneyPrice, 
+                        miles: totalMilesPrice 
+                    },
+                    actually_paid: { 
+                        money: paidInMoney, 
+                        miles: paidInMiles 
+                    },
+                    miles_earned: milesEarned
                 }
             }
         });
 
     } catch (error) {
         await transaction.rollback();
+        console.error('Erro ao criar compra:', error);
         res.status(500).send({
             success: false,
             message: "Erro ao criar compra.",
@@ -133,33 +277,77 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
 export const cancelPurchase = async (req, res) => {
     const purchaseId = req.params.purchaseId;
     const transaction = await sequelize.transaction();
+    
     try {
         const purchase = await Purchase.findByPk(purchaseId, { transaction });
+        
         if (!purchase) {
             await transaction.rollback();
-            return res.status(404).send({ message: "Compra não encontrada." });
+            return res.status(404).send({ 
+                success: false,
+                message: "Compra não encontrada." 
+            });
         }
+        
         if (purchase.status === 'CANCELLED') {
             await transaction.rollback();
-            return res.status(400).send({ message: "Compra já está cancelada." });
+            return res.status(400).send({ 
+                success: false,
+                message: "Compra já está cancelada." 
+            });
         }
-        purchase.status = 'CANCELLED';
-        await purchase.save({ transaction });
-        const userWallet = await Wallet.findOne({ where: { userId: purchase.userId }, transaction });
-        if (userWallet) {
-            userWallet.balanceInCash += parseFloat(purchase.paidInMoney);
-            userWallet.balanceInMiles += parseFloat(purchase.paidInMiles);
-            await userWallet.save({ transaction });
+
+        // Atualizar status da compra
+        await purchase.update({ status: 'CANCELLED' }, { transaction });
+
+        // Reembolsar dinheiro
+        if (purchase.paidInMoney > 0) {
+            await Wallet.create({
+                userId: purchase.userId,
+                type: 'DEPOSIT',
+                coinType: 'CASH',
+                amount: parseFloat(purchase.paidInMoney),
+                description: `Reembolso da compra #${purchaseId}`,
+                date: new Date()
+            }, { transaction });
         }
+
+        // Reembolsar milhas
+        if (purchase.paidInMiles > 0) {
+            await Wallet.create({
+                userId: purchase.userId,
+                type: 'DEPOSIT',
+                coinType: 'MILES',
+                amount: parseFloat(purchase.paidInMiles),
+                description: `Reembolso da compra #${purchaseId}`,
+                date: new Date()
+            }, { transaction });
+        }
+
+        // Devolver vagas ao pacote
         const travelPackage = await TravelPackage.findByPk(purchase.travelPackageId, { transaction });
         if (travelPackage) {
-            travelPackage.availableSlots += purchase.quantity;
-            await travelPackage.save({ transaction });
+            await travelPackage.update({
+                availableSlots: travelPackage.availableSlots + purchase.quantity
+            }, { transaction });
         }
+
         await transaction.commit();
-        res.status(200).send({ message: "Compra cancelada com sucesso." });
+        
+        res.status(200).send({ 
+            success: true,
+            message: "Compra cancelada e valores reembolsados com sucesso.",
+            data: {
+                refunded: {
+                    money: parseFloat(purchase.paidInMoney),
+                    miles: parseFloat(purchase.paidInMiles)
+                }
+            }
+        });
+        
     } catch (error) {
         await transaction.rollback();
+        console.error('Erro ao cancelar compra:', error);
         res.status(500).send({
             success: false,
             message: "Erro ao cancelar compra.",

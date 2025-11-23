@@ -22,7 +22,7 @@ db.Wallet = walletModel(sequelize, Sequelize.DataTypes);
 db.Purchase = purchaseModel(sequelize, Sequelize.DataTypes);
 
 db.Users.belongsToMany(db.TravelPackage, { through: 'UserTravelPackages', 
-as: 'bookedPackages', foreignKey: 'userId', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+as: 'userTravelPackages', foreignKey: 'userId', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
 db.TravelPackage.belongsToMany(db.Users, { through: 'UserTravelPackages', 
 as: 'users', foreignKey: 'packageId', onDelete: 'CASCADE', onUpdate: 'CASCADE'  });
@@ -51,8 +51,8 @@ db.Users.hasMany(db.TravelPackage, {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE'
 });
-db.Users.hasMany(db.Purchase, { foreignKey: 'user_id' });
-db.Purchase.belongsTo(db.Users, { foreignKey: 'user_id' });
-db.TravelPackage.hasMany(db.Purchase, { foreignKey: 'travel_package_id' });
-db.Purchase.belongsTo(db.TravelPackage, { foreignKey: 'travel_package_id' });
+db.Users.hasMany(db.Purchase, { foreignKey: 'userId', as: 'purchases' });
+db.Purchase.belongsTo(db.Users, { foreignKey: 'userId', as: 'user' });
+db.TravelPackage.hasMany(db.Purchase, { foreignKey: 'packageId', as: 'purchases' });
+db.Purchase.belongsTo(db.TravelPackage, { foreignKey: 'packageId', as: 'travelPackage' });
 export default db;
