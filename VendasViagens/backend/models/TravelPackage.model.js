@@ -6,7 +6,7 @@ class TravelPackage extends Model {
 
             id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false },
             agentId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' }, },
-            title: { type: DataTypes.STRING, allowNull: true },
+            title: { type: DataTypes.STRING, allowNull: false },
             destination: { type: DataTypes.STRING, allowNull: false },
             origin: { type: DataTypes.STRING, allowNull: false },
             departureDate: { type: DataTypes.DATE, allowNull: false },

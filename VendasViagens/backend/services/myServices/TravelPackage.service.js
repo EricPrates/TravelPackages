@@ -129,6 +129,7 @@ export const addPackageComponent = async (req, res) => {
         if (!component || typeof component !== 'object') {
             return res.status(400).json({ success: false, message: 'component é obrigatório no body' });
         }
+       
 
         const payload = {
             packageId,
@@ -165,10 +166,20 @@ export const addPackageComponent = async (req, res) => {
         }
 
         const created = await PackageComponents.create(payload);
-
-        const comps = await PackageComponents.findAll({ where: { packageId } });
-        const totalPrice = comps.reduce((s, c) => s + (c.moneyPrice || 0), 0);
-        const totalMiles = comps.reduce((s, c) => s + (c.milesPrice || 0), 0);
+         const allComponents = await PackageComponents.findAll({ 
+            where: { packageId } 
+        });
+        const totalPrice = allComponents.reduce((sum, comp) => sum + (comp.moneyPrice || 0), 0);
+        const totalMiles = allComponents.reduce((sum, comp) => sum + (comp.milesPrice || 0), 0);
+        
+        
+        await TravelPackage.update({
+            totalMoneyPrice: totalPrice,
+            totalPriceMiles: totalMiles
+        }, {
+            where: { id: packageId }
+        });
+       
 
         return res.status(201).json({
             success: true,
@@ -230,7 +241,9 @@ export const createBasePackage = async (req, res) => {
 
         const travelPackage = await createPackageInDB({
             ...packageData,
-            agentId: agentId
+            agentId: agentId,
+            totalMoneyPrice: 0,
+            totalPriceMiles: 0
         });
 
         res.status(201).json({

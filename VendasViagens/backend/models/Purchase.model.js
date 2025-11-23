@@ -1,28 +1,42 @@
 import { Model } from "sequelize";
 
 class Purchase extends Model {
-static init(sequelize, DataTypes) {
-    return super.init({
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    user_id: { type: DataTypes.INTEGER, allowNull: false },
-    travel_package_id: { type: DataTypes.INTEGER, allowNull: false },
-    status: { 
-        type: DataTypes.ENUM('pending', 'confirmed', 'cancelled'),
-        defaultValue: 'pending'
-    },
-    quantity: { type: DataTypes.INTEGER, defaultValue: 1 },
-    total_price: { type: DataTypes.DECIMAL(10,2) },
-    purchase_date: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
-    
-},{
+    static init(sequelize, DataTypes) {
+        return super.init({
+            id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+            userId: { type: DataTypes.INTEGER, allowNull: false },
+            travelPackageId: { type: DataTypes.INTEGER, allowNull: false },
+            status: { type: DataTypes.ENUM('PENDING', 'CONFIRMED', 'CANCELLED'), defaultValue: 'PENDING' },
+            quantity: { type: DataTypes.INTEGER, defaultValue: 1 },
+            totalMoneyPrice: { type: DataTypes.DECIMAL(10, 2) },
+            totalPriceMiles: { type: DataTypes.DECIMAL(10, 2) },
+            paidInMoney: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
+            paidInMiles: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
+            purchaseDate: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+
+        }, {
             sequelize,
             modelName: 'Purchase',
-            tableName: 'purchases'
+            tableName: 'purchases',
+            hooks: {
+                beforeCreate: async (purchase, options) => {
+                    const travelPackage = await sequelize.models.TravelPackage.findByPk(
+                        purchase.travelPackageId, 
+                        { transaction: options.transaction }
+                    );
+                    if (travelPackage) {
+                        purchase.totalMoneyPrice = travelPackage.totalMoneyPrice * purchase.quantity;
+                        purchase.totalMilesPrice = travelPackage.totalPriceMiles * purchase.quantity;
+                        
+                  
+                    }
+                }
+            }
         });
-}
+    }
 }
 
-export default function(sequelize, DataTypes) {
+export default function (sequelize, DataTypes) {
     Purchase.init(sequelize, DataTypes);
     return Purchase;
 }
