@@ -170,10 +170,12 @@ export const login = async (req, res) => {
                     role: findUser.role,
                     name: findUser.name
                 },
+                token: {
                 accessToken: accessToken,
                 refreshToken: refreshToken,
                 token_type: "Bearer",
                 expiresIn: ACCESS_TOKEN_EXPIRES_IN
+                }
             }
         });
 

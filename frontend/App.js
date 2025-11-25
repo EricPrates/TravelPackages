@@ -1,29 +1,21 @@
-
 import 'react-native-gesture-handler';
 import { StatusBar } from 'react-native';
-import { StyleSheet, Text, View } from 'react-native';
-import 'react-native-gesture-handler';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
-import { Button } from '@react-navigation/elements';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import { AuthProvider, useAuth } from './src/AuthContext';
 import MenuDrawer from './src/navigator/MenuDrawer';
+import LoginScreen from './src/View/LoginScreen';
 
+
+function MainApp() {
+  const { isAuthenticated } = useAuth();
+  
+  return isAuthenticated ? <MenuDrawer /> : <LoginScreen />;
+}
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <MenuDrawer />
-    </NavigationContainer>
+    <AuthProvider>
+      <StatusBar barStyle="dark-content" />
+      <MainApp />
+    </AuthProvider>
   );
 }
-     
- 
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

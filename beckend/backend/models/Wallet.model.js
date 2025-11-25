@@ -25,8 +25,12 @@ class Wallet extends Model {
                     key:'id'
                 }
             },
-            coinType: {
-                type: DataTypes.ENUM('CASH', 'MILES'),
+            miles: {
+                type: DataTypes.DECIMAL(10, 2),
+                allowNull: false
+            },
+            cash: {
+                type: DataTypes.DECIMAL(10, 2),
                 allowNull: false
             },
             amount: {

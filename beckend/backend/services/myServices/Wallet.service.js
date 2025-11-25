@@ -39,7 +39,7 @@ export const cashDeposit = async (req, res) => {
             return badRequestResponse(res, 'O valor do depósito deve ser maior que zero.');
         }
 
-        // Criar transação de depósito
+       
         const deposit = await Wallet.create({
             userId,
             type: 'DEPOSIT',
@@ -49,7 +49,7 @@ export const cashDeposit = async (req, res) => {
             date: new Date()
         });
 
-        // Obter novo saldo
+      
         const balance =  getUserBalance(userId);
 
         return res.status(200).json({
@@ -122,7 +122,7 @@ export const getBalance = async (req, res) => {
             });
         }
         
-        // Calcular saldo real baseado nas transações
+  
         const balance = await getUserBalance(userId);
         
         return res.status(200).json({
