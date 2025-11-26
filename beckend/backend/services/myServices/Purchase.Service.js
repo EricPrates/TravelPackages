@@ -9,23 +9,6 @@ const sequelize = db.sequelize;
 
 const MILES_EARNED_RATE = 0.01;
 
-// Função auxiliar para obter wallet
-async function getWallet(userId, transaction = null) {
-    let wallet = await Wallet.findOne({ 
-        where: { userId },
-        transaction 
-    });
-    
-    if (!wallet) {
-        wallet = await Wallet.create({ 
-            userId, 
-            balanceCash: 0.00,
-            balanceMiles: 0.00
-        }, { transaction });
-    }
-    
-    return wallet;
-}
 
 export const findPurchasesWithFilters = async (req, res) => {
     try {
@@ -144,19 +127,13 @@ export const findPurchaseById = async (req, res) => {
 // FUNÇÕES AUXILIARES
 
 async function getWallet(userId, transaction = null) {
+
     let wallet = await Wallet.findOne({ 
         where: { userId },
         transaction 
     });
     
-    if (!wallet) {
-        wallet = await Wallet.create({ 
-            userId, 
-            balanceCash: 0.00,
-            balanceMiles: 0.00
-        }, { transaction });
-    }
-    
+   
     return wallet;
 }
 

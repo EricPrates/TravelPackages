@@ -10,13 +10,13 @@ const router = express.Router();
 // Criar componente(um por vez)
 router.post('/', tokenValidated, requireAgent, factory.createComponent);
 
-// Criar múltiplos componentes (batch)
+// Criar múltiplos componentes
 router.post('/batch', tokenValidated, requireAgent, factory.createComponents);
 
-// Atualizar componente
+
 router.put('/:id', tokenValidated, requireAgent, baseComponents.update);
 
-// Deletar componente
+
 router.delete('/:id', tokenValidated, requireAgent, baseComponents.remove);
 
 

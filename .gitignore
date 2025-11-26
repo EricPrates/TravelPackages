@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Expo
+.expo/
+*/.expo/
+
+# IDE
+.vscode/
+*/.vscode/
+
+# Environment
+.env
+*/.env
+
+# Database
+*.db
+
+# Assets
+frontend/assets/img/

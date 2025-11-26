@@ -15,8 +15,11 @@ const port = process.env.PORT || 4567;
 
 
 const corsOptions = {
-    origin: "http://localhost:4000"
-}
+    origin: "*",
+    credentials: true
+};
+  
+
 const app = express()
 app.use(cors(corsOptions))
 app.use(express.json());
@@ -37,16 +40,14 @@ purchaseRouter(app);
 
 (async () =>{
     try{
-        await db.sequelize.sync({force:true});
+        await db.sequelize.sync({});
   
         console.log("Banco de dados sincronizados");
       
 
         app.listen(port, () => {
-           console.log(` Aplicação rodando na porta ${port}`);
-         
-           
-        })
+            console.log(`Servidor rodando na porta ${port}`);
+});
        
         
     } catch(error) {

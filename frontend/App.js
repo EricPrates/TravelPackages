@@ -3,19 +3,32 @@ import { StatusBar } from 'react-native';
 import { AuthProvider, useAuth } from './src/AuthContext';
 import MenuDrawer from './src/navigator/MenuDrawer';
 import LoginScreen from './src/View/LoginScreen';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import CallbackScreen from './src/View/CallbackScreen';
 
+const Stack = createStackNavigator();
 
-function MainApp() {
+function AppNavigator() {
   const { isAuthenticated } = useAuth();
-  
-  return isAuthenticated ? <MenuDrawer /> : <LoginScreen />;
+  if(isAuthenticated){
+    return <MenuDrawer />
+  }
+  else {
+    return <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Callback" component={CallbackScreen} options={{ headerShown: false }} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  }
 }
 
 export default function App() {
   return (
     <AuthProvider>
       <StatusBar barStyle="dark-content" />
-      <MainApp />
+      <AppNavigator />
     </AuthProvider>
   );
 }

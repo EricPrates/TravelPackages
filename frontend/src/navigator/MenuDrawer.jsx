@@ -1,6 +1,6 @@
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import HomeScreen from '../View/HomeScreen';
-import TravelListScreen from '../View/TravelListScreen';
+import WalletScreen from '../View/WalletScreen';
 import ProfileScreen from '../View/ProfileScreen';;
 import { useWindowDimensions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';

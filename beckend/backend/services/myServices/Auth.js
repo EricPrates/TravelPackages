@@ -35,6 +35,7 @@ export const generateRefreshToken = (user) => {
 
 
 export const getGoogleUrl = async (req, res) => {
+    console.log(' BACKEND: /auth/google/url chamado');
     const params = new URLSearchParams({
         client_id: GOOGLE_ID,
         redirect_uri: REDIRECT_URL,
@@ -46,7 +47,10 @@ export const getGoogleUrl = async (req, res) => {
 
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
-    res.json({ url: authUrl });
+    res.status(200).json({
+        success: true,
+        data: { authUrl }
+    });
 };
 
 export const handleGoogleCallback = async (req, res) => {
@@ -178,7 +182,8 @@ export const login = async (req, res) => {
                 }
             }
         });
-
+       
+        
     } catch (error) {
         console.error('Erro no login:', error);
         return res.status(500).json({
