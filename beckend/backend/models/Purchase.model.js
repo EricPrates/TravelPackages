@@ -5,7 +5,7 @@ class Purchase extends Model {
         return super.init({
             id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
             userId: { type: DataTypes.INTEGER, allowNull: false },
-            travelPackageId: { type: DataTypes.INTEGER, allowNull: false },
+            packageId: { type: DataTypes.INTEGER, allowNull: false },
             status: { type: DataTypes.ENUM('PENDING', 'CONFIRMED', 'CANCELLED'), defaultValue: 'PENDING' },
             quantity: { type: DataTypes.INTEGER, defaultValue: 1 },
             totalMoneyPrice: { type: DataTypes.DECIMAL(10, 2) },
@@ -21,7 +21,7 @@ class Purchase extends Model {
             hooks: {
                 beforeCreate: async (purchase, options) => {
                     const travelPackage = await sequelize.models.TravelPackage.findByPk(
-                        purchase.travelPackageId, 
+                        purchase.packageId, 
                         { transaction: options.transaction }
                     );
                     if (travelPackage) {

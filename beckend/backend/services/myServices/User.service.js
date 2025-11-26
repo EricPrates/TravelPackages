@@ -14,7 +14,7 @@ export const findOne = async (req, res) => {
             include: [{
                 model: Wallet,
                 as: 'wallet',
-                attributes: ['balanceInCash', 'balanceInMiles']
+                attributes: ['balanceCash', 'balanceMiles']
             }]
         });
 
@@ -38,6 +38,7 @@ export const findOne = async (req, res) => {
     }
 };
 export const register = async (req, res) => {
+    const transaction = await db.sequelize.transaction();
     try {
         const { name, email, password, role = 'agent' } = req.body;
 
@@ -65,14 +66,14 @@ export const register = async (req, res) => {
         }
 
         const hash = await bcrypt.hash(password, 10);
-        const user = await Users.create({ name, email, password: hash, role });
-        await Wallet.create({ userId: user.id, balanceInCash: 0.00, balanceInMiles: 0.00 });
+        const user = await Users.create({ name, email, password: hash, role }, {transaction});
+        await Wallet.create({ userId: user.id, balanceCash: 0.00, balanceMiles: 0.00 }, {transaction});
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
             process.env.JWT_PRIVATE_KEY,
             { expiresIn: '8h', algorithm: 'HS256' }
         );
-
+        await transaction.commit();
         return res.status(201).json({
             success: true,
             message: 'Usuário registrado com sucesso.',
@@ -106,7 +107,7 @@ export const findAll = async (req, res) => {
             },
             {
                 model: Wallet, as: 'wallet',
-                attributes: ['balanceInCash', 'balanceInMiles']
+                attributes: ['balanceCash', 'balanceMiles']
             }],
             attributes: ['id', 'name', 'email', 'role'],
         });
@@ -145,7 +146,7 @@ export const findOneByName = async (req, res) => {
             },
             {
                 model: Wallet, as: 'wallet',
-                attributes: ['balanceInCash', 'balanceInMiles']
+                attributes: ['balanceCash', 'balanceMiles']
             }],
             attributes: ['id', 'name', 'email', 'role'],
         });
@@ -187,7 +188,7 @@ export const create = async (req, res) => {
             });
         }
 
-        await Wallet.create({ userId: user.id, balanceInCash: 0.00, balanceInMiles: 0.00 });
+        await Wallet.create({ userId: user.id, balanceCash: 0.00, balanceMiles: 0.00 });
         return res.status(201).json({
             success: true,
             message: 'Usuário criado com sucesso.',

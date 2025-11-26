@@ -19,12 +19,12 @@ class Wallet extends Model {
                     key:'id'
                 }
             },
-            balanceInCash: {
+            balanceCash: {
                 type: DataTypes.DECIMAL(10, 2),
                 allowNull: false,
                 defaultValue: 0.00
             },
-            balanceInMiles: {
+            balanceMiles: {
                 type: DataTypes.DECIMAL(10, 2),
                 allowNull: false,
                 defaultValue: 0.00

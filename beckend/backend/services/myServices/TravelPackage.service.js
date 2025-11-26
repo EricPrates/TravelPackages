@@ -12,7 +12,7 @@ export const fetchOptions = async (req, res) => {
         const { type, page, limit } = req.query; 
         const travelPackage = await TravelPackage.findByPk(id);
         if (!travelPackage) return res.status(404).json({ success: false, message: 'Pacote não encontrado' });
-
+        
         const offset = (parseInt(page) - 1) * (limit ? parseInt(limit) : 10);
         const formatDate = (date) => {
             if (!date) return null;
@@ -140,7 +140,12 @@ export const findAll = async (req, res) => {
 export const createBasePackage = async (req, res) => {
     try {
         const {id, destination, origin, departureDate, returnDate} = req.body
-        
+        if(returnDate < departureDate){
+            return res.status(400).json({
+                success: false,
+                message: "A data de retorno não pode ser anterior à data de partida."
+            });
+        }
       
         if (!id ) {
             return res.status(401).json({

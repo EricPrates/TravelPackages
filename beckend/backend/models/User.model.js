@@ -21,7 +21,7 @@ class User extends Model {
             },
             password: {
                 type: DataTypes.STRING,
-                allowNull: false
+                allowNull: true
             },
             role: {
                 type: DataTypes.STRING,

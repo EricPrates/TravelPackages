@@ -10,7 +10,7 @@ const WalletTransaction = db.WalletTransaction;
 export async function getOrCreateWallet (userId) {
     let wallet = await Wallet.findOne({ where: { userId } });
     if (!wallet) {
-        wallet = await Wallet.create({ userId, balanceInCash: 0.00, balanceInMiles: 0.00 });
+        wallet = await Wallet.create({ userId, balanceCash: 0.00, balanceMiles: 0.00 });
     }
  
     return wallet;
@@ -18,8 +18,8 @@ export async function getOrCreateWallet (userId) {
 export const cashDeposit = async (req, res) => {
     const transaction = await db.sequelize.transaction()
     try {
-        const { userId, amount, description = 'Depósito em dinheiro' } = req.body;
-        
+        const { amount, description = 'Depósito em dinheiro' } = req.body;
+        const userId = req.user.id;
         const user = await db.Users.findByPk(userId);
         if (!user) {
             return res.status(404).json({ 
@@ -34,7 +34,7 @@ export const cashDeposit = async (req, res) => {
             });
         }
         const wallet = await getOrCreateWallet(userId);
-        wallet.balanceInCash = parseFloat(wallet.balanceInCash) + parseFloat(amount);
+        wallet.balanceCash = parseFloat(wallet.balanceCash) + parseFloat(amount);
         await wallet.save({ transaction });
 
         const transaction = await WalletTransaction.create({
@@ -51,7 +51,7 @@ export const cashDeposit = async (req, res) => {
             message: 'Depósito em dinheiro realizado com sucesso.',
             data: {
                 transaction,
-                newBalance: wallet.balanceInCash
+                newBalance: wallet.balanceCash
             }
         });
     } catch (error) {
@@ -85,8 +85,8 @@ export const getBalance = async (req, res) => {
             data: {
                 userId: parseInt(userId),
                 walletId: wallet.id,
-                balanceInCash: wallet.balanceInCash,
-                balanceInMiles: wallet.balanceInMiles,
+                balanceCash: wallet.balanceCash,
+                balanceMiles: wallet.balanceMiles,
 
             }
         });
@@ -101,7 +101,7 @@ export const getBalance = async (req, res) => {
 
 export const getWalletStatement = async (req, res) => {
     try {
-        const { userId } = req.params;
+        const userId = req.user.id;
         
         const user = await Users.findByPk(userId);
         if (!user) {
@@ -153,14 +153,14 @@ export const getWalletStatement = async (req, res) => {
                 userId: parseInt(userId),
                 walletId: wallet.id,
                 currentBalance: {
-                    balanceInCash: parseFloat(wallet.balanceInCash),
-                    balanceInMiles: parseFloat(wallet.balanceInMiles)
+                    balanceCash: parseFloat(wallet.balanceCash),
+                    balanceMiles: parseFloat(wallet.balanceMiles)
                 },
                 transactions: statement,
                 summary: {
                     totalTransactions: statement.length,
-                    balanceInCash: parseFloat(wallet.balanceInCash),
-                    balanceInMiles: parseFloat(wallet.balanceInMiles)
+                    balanceCash: parseFloat(wallet.balanceCash),
+                    balanceMiles: parseFloat(wallet.balanceMiles)
                 }
             }
         });
