@@ -61,7 +61,26 @@ export const create = async (req, res) => {
     }
    
 };
+export const updatePackageTotals = async (packageId) => {
 
+    const components = await PackageComponents.findAll({
+        where: { packageId }
+    });
+    
+
+    const totalMoneyPrice = components.reduce((sum, comp) => sum + Number(comp.moneyPrice || 0), 0);
+    const totalMilesPrice = components.reduce((sum, comp) => sum + Number(comp.milesPrice || 0), 0);
+    
+
+    await TravelPackage.update({
+        totalMoneyPrice,
+        totalMilesPrice
+    }, {
+        where: { id: packageId }
+    });
+    
+    return { totalMoneyPrice, totalMilesPrice };
+};
 export const update = async (req, res) => {
     const id = req.params.id;
     try{
@@ -112,7 +131,7 @@ export const remove = async (req, res) => {
     }
 };
 
-export const findAlWithPackages = async (req, res) => {
+export const findAllWithPackages = async (req, res) => {
     try {
         const data = await PackageComponents.findAll({
             include: [
@@ -130,3 +149,69 @@ export const findAlWithPackages = async (req, res) => {
         });
     }
 };
+export const createFlightComponent = async (componentData, transaction= null) => {
+
+        const {description, amadeusId, moneyPrice, milesPrice, origin, destination, departureDate, returnDate} = componentData;
+        return  await PackageComponents.create({
+            packageId: componentData.packageId,
+            name: `${origin} to ${destination} flight`,
+            type: 'FLIGHT',
+            description,
+            amadeusId,
+            moneyPrice: Number(moneyPrice ?? 0),
+            milesPrice: Number(milesPrice ?? 0),
+            origin,
+            destination,
+            departureDate,
+            returnDate
+        }, {transaction});
+    
+};
+
+export const createHotelComponent = async (componentData, transaction= null) => {
+    const { checkin, checkout, name, description, amadeusId, moneyPrice, milesPrice } = componentData;
+    
+
+    
+    return await PackageComponents.create({
+        packageId: componentData.packageId,
+        type: 'HOTEL',
+        name: name || `Hotel stay from ${checkin} to ${checkout}`,
+        description: description || `Estadia de ${checkin} a ${checkout}`,
+        amadeusId,
+        moneyPrice: Number(moneyPrice ?? 0),
+        milesPrice: Number(milesPrice ?? 0),
+        checkin,
+        checkout
+    }, {transaction});
+};
+export const createActivityComponent  = async (componentData, transaction= null) => {
+    const { description, amadeusId, moneyPrice, milesPrice, origin, destination, departureDate, returnDate } = componentData;
+    return await PackageComponents.create({
+        packageId: componentData.packageId,
+        name: `Activity in ${destination}`,
+        type: 'ACTIVITY',
+            description,
+            amadeusId,
+           moneyPrice: Number(moneyPrice ?? 0),
+           milesPrice: Number(milesPrice ?? 0),
+            destination,
+        }, {transaction});
+
+
+};
+export const createCarRentalComponent   = async (componentData, transaction= null) => {
+    const {description, amadeusId, moneyPrice, milesPrice, origin, destination, departureDate, returnDate} = componentData;
+    return await PackageComponents.create({
+        packageId: componentData.packageId,
+        name: `Car rental in ${destination}`,
+        type: 'CAR_RENTAL',
+            description,
+            amadeusId,
+            moneyPrice: Number(moneyPrice ?? 0),
+            milesPrice: Number(milesPrice ?? 0),
+            destination,
+        }, {transaction});
+};
+
+

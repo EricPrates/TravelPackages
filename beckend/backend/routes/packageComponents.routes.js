@@ -1,13 +1,24 @@
+// backend/routes/packageComponents.routes.js
+
 import express from 'express';
-import * as package_components from '../services/myServices/packageComponents/BaseComponent.Service.js';
-import { tokenValidated } from '../services/myServices/Auth.js';
-import { requireAgent } from '../services/myServices/Auth.js';
+import * as factory from '../services/myServices/packageComponents/Factory.Service.js';
+import * as baseComponents from '../services/myServices/packageComponents/BaseComponent.Service.js';
+import { tokenValidated, requireAgent } from '../services/myServices/Auth.js';
+
 const router = express.Router();
 
-router.post('/', tokenValidated, requireAgent, package_components.create);
+// Criar componente(um por vez)
+router.post('/', tokenValidated, requireAgent, factory.createComponent);
 
-router.put('/:id', tokenValidated, requireAgent, package_components.update);
-router.delete('/:id', tokenValidated, requireAgent, package_components.remove);
+// Criar múltiplos componentes (batch)
+router.post('/batch', tokenValidated, requireAgent, factory.createComponents);
+
+// Atualizar componente
+router.put('/:id', tokenValidated, requireAgent, baseComponents.update);
+
+// Deletar componente
+router.delete('/:id', tokenValidated, requireAgent, baseComponents.remove);
+
 
 
 export default app => {

@@ -5,6 +5,7 @@ const Users = db.Users;
 const TravelPackage = db.TravelPackage;
 const Purchase = db.Purchase;
 const Wallet = db.Wallet;
+const WalletTransaction = db.WalletTransaction;
 const sequelize = db.sequelize;
 
 
@@ -15,7 +16,7 @@ export const findPurchasesWithFilters = async (req, res) => {
     try {
         const { userId, status, destination, from, to, page = 1, limit = 10 } = req.query;
 
-        // Validar userId obrigatório
+       
         if (!userId) {
             return res.status(400).json({ 
                 success: false, 
@@ -134,26 +135,27 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
         const {
-            user_id,
-            travel_package_id,
+            userId,
+            walletId,
+            travelPackageId,
             quantity = 1,
             paymentChoice,
             cashAmount = 0,
             milesAmount = 0
         } = req.body;
 
-        if (!user_id || !travel_package_id || !paymentChoice) {
+        if (!userId || !travelPackageId || !paymentChoice) {
             await transaction.rollback();
             return res.status(400).send({
                 success: false,
-                message: "Campos obrigatórios: user_id, travel_package_id, paymentChoice"
+                message: "Campos obrigatórios: userId, travelPackageId, paymentChoice"
             });
         }
 
 
         const [user, travelPackage] = await Promise.all([
-            Users.findByPk(user_id, { transaction }),
-            TravelPackage.findByPk(travel_package_id, { transaction })
+            Users.findByPk(userId, { transaction }),
+            TravelPackage.findByPk(travelPackageId, { transaction })
         ]);
 
         if (!user) {
@@ -180,7 +182,7 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
         const totalMilesPrice = parseFloat(travelPackage.totalMilesPrice) * quantity;
 
 
-        const userBalance = await getUserBalance(user_id, transaction);
+        const userBalance = await getUserBalance(userId, transaction);
 
         let paidInMoney = 0;
         let paidInMiles = 0;
@@ -266,8 +268,8 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
 
 
         const newPurchase = await Purchase.create({
-            userId: user_id,
-            travelPackageId: travel_package_id,
+            userId: userId,
+            travelPackageId: travelPackageId,
             quantity,
             status: 'CONFIRMED',
             totalMoneyPrice,
@@ -279,8 +281,9 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
 
 
         if (paidInMoney > 0) {
-            await Wallet.create({
-                userId: user_id,
+            await WalletTransaction.create({
+                relatedPurchaseId: newPurchase.id,
+                walletId: walletId, 
                 type: 'PURCHASE',
                 coinType: 'CASH',
                 amount: paidInMoney,
@@ -291,8 +294,9 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
 
 
         if (paidInMiles > 0) {
-            await Wallet.create({
-                userId: user_id,
+            await WalletTransaction.create({
+                relatedPurchaseId: newPurchase.id,
+                walletId: walletId,
                 type: 'PURCHASE',
                 coinType: 'MILES',
                 amount: paidInMiles,
@@ -302,8 +306,9 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
         }
 
         if (milesEarned > 0) {
-            await Wallet.create({
-                userId: user_id,
+            await WalletTransaction.create({
+                relatedPurchaseId: newPurchase.id,
+                walletId: walletId,
                 type: 'DEPOSIT',
                 coinType: 'MILES',
                 amount: milesEarned,
@@ -382,12 +387,12 @@ export const cancelPurchase = async (req, res) => {
             });
         }
 
-        // Atualizar status da compra
+  
         await purchase.update({ status: 'CANCELLED' }, { transaction });
 
         // Reembolsar dinheiro
         if (purchase.paidInMoney > 0) {
-            await Wallet.create({
+            await WalletTransaction.create({
                 userId: purchase.userId,
                 type: 'DEPOSIT',
                 coinType: 'CASH',
@@ -399,7 +404,7 @@ export const cancelPurchase = async (req, res) => {
 
         // Reembolsar milhas
         if (purchase.paidInMiles > 0) {
-            await Wallet.create({
+            await WalletTransaction.create({
                 userId: purchase.userId,
                 type: 'DEPOSIT',
                 coinType: 'MILES',
@@ -409,16 +414,20 @@ export const cancelPurchase = async (req, res) => {
             }, { transaction });
         }
 
-        // Devolver vagas ao pacote
+    
         const travelPackage = await TravelPackage.findByPk(purchase.travelPackageId, { transaction });
         if (travelPackage) {
             await travelPackage.update({
                 availableSlots: travelPackage.availableSlots + purchase.quantity
             }, { transaction });
         }
-
+        const payBackWallet = await Wallet.findByPk(purchase.walletId, { transaction });
+        payBackWallet.balanceInCash = parseFloat(payBackWallet.balanceInCash) + parseFloat(purchase.paidInMoney);
+        payBackWallet.balanceInMiles = parseFloat(payBackWallet.balanceInMiles) + parseFloat(purchase.paidInMiles);
+        await payBackWallet.save({ transaction });
+        
         await transaction.commit();
-
+        
         res.status(200).send({
             success: true,
             message: "Compra cancelada e valores reembolsados com sucesso.",

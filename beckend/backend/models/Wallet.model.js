@@ -9,51 +9,27 @@ class Wallet extends Model {
                 autoIncrement: true,
                 allowNull: false
             },
-            type: {
-                type: DataTypes.ENUM(
-                    'DEPOSIT',
-                    'WITHDRAWAL',
-                    'PURCHASE'
-                ),
-                allowNull: false
-            },
+           
             userId: {
                 type: DataTypes.INTEGER,
                 allowNull: false,
+                unique: true,
                 references:{
                     model: "users",
                     key:'id'
                 }
             },
-            miles: {
+            balanceInCash: {
                 type: DataTypes.DECIMAL(10, 2),
-                allowNull: false
-            },
-            cash: {
-                type: DataTypes.DECIMAL(10, 2),
-                allowNull: false
-            },
-            amount: {
-                type: DataTypes.DECIMAL(10, 2),
-                allowNull: false
-            },
-            description: {
-                type: DataTypes.STRING,
-                allowNull: true
-            },
-            date: {
-                type: DataTypes.DATE,
                 allowNull: false,
-                defaultValue: DataTypes.NOW
+                defaultValue: 0.00
             },
-            userId: {
-                type: DataTypes.INTEGER,
+            balanceInMiles: {
+                type: DataTypes.DECIMAL(10, 2),
                 allowNull: false,
-                references: {
-                    model: 'users',
-                    key: 'id'
-                }
-            }
+                defaultValue: 0.00
+            },
+          
         }, {
             sequelize,
             modelName: 'Wallet',

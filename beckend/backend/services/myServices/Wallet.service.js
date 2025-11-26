@@ -5,62 +5,57 @@ const Wallet = db.Wallet;
 const Users = db.Users;
 const TravelPackage = db.TravelPackage;
 const Purchase = db.Purchase;
+const WalletTransaction = db.WalletTransaction;
 
-export async function getUserBalance(userId, transaction = null) {
-    const transactions = await Wallet.findAll({
-        where: { userId },
-        transaction
-    });
-
-    let balanceInCash = 0;
-    let balanceInMiles = 0;
-
-    transactions.forEach(t => {
-        const amount = parseFloat(t.amount);
-        if (t.coinType === 'CASH') {
-            balanceInCash += (t.type === 'DEPOSIT' ? amount : -amount);
-        } else if (t.coinType === 'MILES') {
-            balanceInMiles += (t.type === 'DEPOSIT' ? amount : -amount);
-        }
-    });
-
-    return { balanceInCash, balanceInMiles };
+export async function getOrCreateWallet (userId) {
+    let wallet = await Wallet.findOne({ where: { userId } });
+    if (!wallet) {
+        wallet = await Wallet.create({ userId, balanceInCash: 0.00, balanceInMiles: 0.00 });
+    }
+ 
+    return wallet;
 }
 export const cashDeposit = async (req, res) => {
+    const transaction = await db.sequelize.transaction()
     try {
         const { userId, amount, description = 'Depósito em dinheiro' } = req.body;
         
         const user = await db.Users.findByPk(userId);
         if (!user) {
-            return notFoundResponse(res, 'Usuário');
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Usuário não encontrado.' 
+            });
         }
-        
-        if (!amount || amount <= 0) {
-            return badRequestResponse(res, 'O valor do depósito deve ser maior que zero.');
+        if(!amount || amount <= 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'O valor do depósito deve ser maior que zero.' 
+            });
         }
+        const wallet = await getOrCreateWallet(userId);
+        wallet.balanceInCash = parseFloat(wallet.balanceInCash) + parseFloat(amount);
+        await wallet.save({ transaction });
 
-       
-        const deposit = await Wallet.create({
-            userId,
+        const transaction = await WalletTransaction.create({
+            walletId: wallet.id,
             type: 'DEPOSIT',
             coinType: 'CASH',
             amount: parseFloat(amount),
             description,
             date: new Date()
-        });
-
-      
-        const balance =  getUserBalance(userId);
-
+        }, { transaction });
+        await transaction.commit();
         return res.status(200).json({
             success: true,
             message: 'Depósito em dinheiro realizado com sucesso.',
             data: {
-                transaction: deposit,
-                newBalance: balance.balanceInCash
+                transaction,
+                newBalance: wallet.balanceInCash
             }
         });
     } catch (error) {
+        await transaction.rollback();
         return res.status(500).json({ 
             success: false, 
             message: 'Erro ao realizar depósito em dinheiro.', 
@@ -68,48 +63,9 @@ export const cashDeposit = async (req, res) => {
         });
     }
 }
-export const milesDeposit = async (req, res) => {
-    try {
-        const { userId, amount, description = 'Depósito de milhas' } = req.body;
-        
-        const user = await db.Users.findByPk(userId);
-        if (!user) {
-            return notFoundResponse(res, 'Usuário');
-        }
-        
-        if (!amount || amount <= 0) {
-            return badRequestResponse(res, 'O valor do depósito deve ser maior que zero.');
-        }
+       
+       
 
-        // Criar transação de depósito
-        const deposit = await Wallet.create({
-            userId,
-            type: 'DEPOSIT',
-            coinType: 'MILES',
-            amount: parseFloat(amount),
-            description,
-            date: new Date()
-        });
-
-        // Obter novo saldo
-        const balance = await getUserBalance(userId);
-
-        return res.status(200).json({
-            success: true,
-            message: 'Depósito em milhas realizado com sucesso.',
-            data: {
-                transaction: deposit,
-                newBalance: balance.balanceInMiles
-            }
-        });
-    } catch (error) {
-        return res.status(500).json({ 
-            success: false, 
-            message: 'Erro ao realizar depósito em milhas.', 
-            error: error.message 
-        });
-    }
-}
 export const getBalance = async (req, res) => {
     try {
         const userId = req.params.userId;
@@ -123,14 +79,15 @@ export const getBalance = async (req, res) => {
         }
         
   
-        const balance = await getUserBalance(userId);
-        
+        const wallet = await getOrCreateWallet(userId);
         return res.status(200).json({
             success: true,
             data: {
                 userId: parseInt(userId),
-                balanceInCash: balance.balanceInCash,
-                balanceInMiles: balance.balanceInMiles
+                walletId: wallet.id,
+                balanceInCash: wallet.balanceInCash,
+                balanceInMiles: wallet.balanceInMiles,
+
             }
         });
     } catch (error) {
@@ -154,38 +111,56 @@ export const getWalletStatement = async (req, res) => {
             });
         }
 
-        // Buscar todas as transações da carteira
-        const walletTransactions = await Wallet.findAll({
-            where: { userId },
-            order: [['date', 'DESC']]
+        const wallet = await getOrCreateWallet(userId);
+        
+        // Buscar todas as transações
+        const transactions = await WalletTransaction.findAll({
+            where: { walletId: wallet.id },
+            order: [['date', 'DESC']],
+            include: [{
+                model: Purchase,
+                as: 'purchase',
+                attributes: ['id', 'status', 'purchaseDate', 'paidInMiles', 'paidInMoney'],
+                required: false
+            }]
         });
 
-        // Calcular saldo atual
-        const balance = await getUserBalance(userId);
-
-        const statement = walletTransactions.map(transaction => ({
-            id: transaction.id,
-            date: transaction.date,
-            type: transaction.type,
-            coinType: transaction.coinType,
-            amount: parseFloat(transaction.amount),
-            description: transaction.description,
-            // Mostrar como positivo (DEPOSIT) ou negativo (PURCHASE/WITHDRAWAL)
-            displayAmount: transaction.type === 'DEPOSIT' 
-                ? parseFloat(transaction.amount) 
-                : -parseFloat(transaction.amount)
+        const statement = transactions.map(t => ({
+            id: t.id,
+            date: t.date,
+            type: t.type,
+            coinType: t.coinType,
+            paidInMiles: t.purchase ? parseFloat(t.purchase.paidInMiles) : null,
+            paidInMoney: t.purchase ? parseFloat(t.purchase.paidInMoney) : null,
+            amount: parseFloat(t.amount),
+            description: t.description,
+            relatedPurchaseId: t.relatedPurchaseId,
+              purchase: t.purchase ? {
+                id: t.purchase.id,
+                status: t.purchase.status,
+                purchaseDate: t.purchase.purchaseDate,
+                paidInMiles: parseFloat(t.purchase.paidInMiles || 0),  
+                paidInMoney: parseFloat(t.purchase.paidInMoney || 0)
+            } : null,
+            displayAmount: t.type === 'DEPOSIT' 
+                ? parseFloat(t.amount) 
+                : -parseFloat(t.amount)
         }));
 
         return res.status(200).json({
             success: true,
             data: {
                 userId: parseInt(userId),
-                currentBalance: balance,
+                walletId: wallet.id,
+                currentBalance: {
+                    balanceInCash: parseFloat(wallet.balanceInCash),
+                    balanceInMiles: parseFloat(wallet.balanceInMiles)
+                },
                 transactions: statement,
                 summary: {
                     totalTransactions: statement.length,
-                    balanceInCash: balance.balanceInCash,
-                    balanceInMiles: balance.balanceInMiles
+                    balanceInCash: parseFloat(wallet.balanceInCash),
+                    balanceInMiles: parseFloat(wallet.balanceInMiles)
                 }
             }
         });
@@ -196,4 +171,4 @@ export const getWalletStatement = async (req, res) => {
             error: error.message 
         });
     }
-}
+};

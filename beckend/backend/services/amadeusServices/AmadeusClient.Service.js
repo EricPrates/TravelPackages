@@ -292,18 +292,11 @@ export class AmadeusClient {
                     id: activity.id,
                     type: 'activity',
                     name: activity.name,
-                    shortDescription: activity.shortDescription || activity.description?.substring(0, 200),
+                    description: activity.shortDescription || activity.description?.substring(0, 200),
                     moneyPrice: moneyPrice,
                     milesPrice: milesPrice,
-                    displayPrice: moneyPrice.toFixed(2),
-                    displayMiles: milesPrice.toLocaleString(),
-                    price: {
-                        amount: price?.amount,
-                        currencyCode: price?.currencyCode
-                    },
-                    rating: activity.rating,
-                    pictures: activity.pictures?.slice(0, 3), // Apenas 3 imagens
-                    geoCode: activity.geoCode
+                 
+        
                 };
             });
 

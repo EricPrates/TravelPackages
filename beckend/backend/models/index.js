@@ -5,7 +5,7 @@ import packageComponentsModel from "./PackageComponents.model.js";
 import travelPackageModel from "./TravelPackage.model.js";
 import UserModel from "./User.model.js";
 import walletModel from "./Wallet.model.js";
-import walletTransactionModel from "./WalletTransaction.model.js";
+import WalletTransaction from "./WalletTransaction.model.js";
 import purchaseModel from "./Purchase.model.js";
 
 const sequelize = new Sequelize({
@@ -23,7 +23,7 @@ db.Users = UserModel(sequelize, Sequelize.DataTypes);
 db.TravelPackage = travelPackageModel(sequelize, Sequelize.DataTypes);
 db.PackageComponents = packageComponentsModel(sequelize, Sequelize.DataTypes);
 db.Wallet = walletModel(sequelize, Sequelize.DataTypes);
-db.WalletTransaction = walletTransactionModel(sequelize, Sequelize.DataTypes);
+db.WalletTransaction = WalletTransaction(sequelize, Sequelize.DataTypes);
 db.Purchase = purchaseModel(sequelize, Sequelize.DataTypes);
 
 // Relacionamentos User <-> TravelPackage (many-to-many)

@@ -114,89 +114,7 @@ export const fetchOptions = async (req, res) => {
     }
 };
 
-export const addPackageComponent = async (req, res) => {
-    try {
-        const packageId = req.params.id; 
-        const { type, component } = req.body;
 
-        const travelPackage = await TravelPackage.findByPk(packageId);
-        if (!travelPackage) return res.status(404).json({ success: false, message: 'Pacote não encontrado' });
-
-        const ALLOWED = ['FLIGHT', 'HOTEL', 'ACTIVITY', 'CAR_RENTAL'];
-        if (!type || !ALLOWED.includes(type)) {
-            return res.status(400).json({ success: false, message: 'Type inválido. Use FLIGHT|HOTEL|ACTIVITY|CAR_RENTAL' });
-        }
-        if (!component || typeof component !== 'object') {
-            return res.status(400).json({ success: false, message: 'component é obrigatório no body' });
-        }
-       
-
-        const payload = {
-            packageId,
-            type,
-            name: component.name || `${type} component`,
-            description: component.description || null,
-            amadeusId: component.id || component.amadeusId || null,
-            moneyPrice: Number(component.moneyPrice ?? 0),
-            milesPrice: Number(component.milesPrice ?? 0),
-            checkin: component.checkin ? component.checkin : null,
-            checkout: component.checkout ? component.checkout : null,
-            departureDate: component.departureDate ? component.departureDate : null,
-            returnDate: component.returnDate ? component.returnDate : null
-        };
-
-        if (type === 'FLIGHT') {
-            payload.moneyPrice = component.moneyPrice || 0;
-            payload.milesPrice = component.milesPrice || 0;
-            payload.origin = component.origin;
-            payload.destination = component.destination;
-            payload.departureDate = component.departureDate;
-            payload.returnDate = component.returnDate;
-            payload.numberOfTravelers = component.numberOfTravelers? component.numberOfTravelers: 1;
-        } else if (type === 'HOTEL') {
-            payload.moneyPrice = component.moneyPrice || 0;
-            payload.milesPrice = component.milesPrice || 0;
-            payload.checkin = component.checkin || null;
-            payload.checkout = component.checkout || null;
-        } else if (type === 'CAR_RENTAL') {
-            payload.moneyPrice = component.moneyPrice || 0;
-            payload.milesPrice = component.milesPrice || 0;
-            payload.checkin =  component.checkin || null;
-            payload.checkout =  component.checkout || null;
-        }
-
-        const created = await PackageComponents.create(payload);
-         const allComponents = await PackageComponents.findAll({ 
-            where: { packageId } 
-        });
-        const totalPrice = allComponents.reduce((sum, comp) => sum + (comp.moneyPrice || 0), 0);
-        const totalMiles = allComponents.reduce((sum, comp) => sum + (comp.milesPrice || 0), 0);
-        
-        
-        await TravelPackage.update({
-            totalMoneyPrice: totalPrice,
-            totalMilesPrice: totalMiles
-        }, {
-            where: { id: packageId }
-        });
-       
-
-        return res.status(201).json({
-            success: true,
-            component: {
-                id: created.id,
-                type: created.type,
-                name: created.name,
-                moneyPrice: created.moneyPrice,
-                milesPrice: created.milesPrice
-            },
-            totals: { totalPrice, totalMiles }
-        });
-    } catch (error) {
-        console.error('Erro em addPackageComponent:', error);
-        return res.status(500).json({ success: false, error: error.message || 'Erro ao adicionar componente' });
-    }
-};
 export const findAll = async (req, res) => {
     try {
         const data = await TravelPackage.findAll({
@@ -221,29 +139,34 @@ export const findAll = async (req, res) => {
 
 export const createBasePackage = async (req, res) => {
     try {
-        const packageData = req.body;
+        const {id, destination, origin, departureDate, returnDate} = req.body
         
       
-        if (!req.user || !req.user.id) {
+        if (!id ) {
             return res.status(401).json({
                 success: false,
                 message: "Usuário não autenticado"
             });
         }
+        if (!destination || !origin) {
+            return res.status(400).json({
+                success: false,
+                message: "Os campos destino e origem são obrigatórios."
+            });
+        }
         
-        const agentId = req.user.id;
+   
 
-        const validationError = validatePackageData(packageData);
+        const validationError = validatePackageData({ destination, origin });
         if (validationError) {
             return res.status(400).json(validationError);
         }
 
 
-        const travelPackage = await createPackageInDB({
+        const travelPackage = await create({
             ...packageData,
             agentId: agentId,
-            totalMoneyPrice: 0,
-            totalMilesPrice: 0
+            destination: packageData.destination,
         });
 
         res.status(201).json({
@@ -261,9 +184,9 @@ export const createBasePackage = async (req, res) => {
 
 export const validatePackageData = (data) => {
 
-    const { title, destination, origin, departureDate, returnDate, numberOfTravelers } = data;
+    const { title, destination, origin, departureDate, returnDate } = data;
 
-    const requiredFields = ['title', 'destination', 'origin', 'departureDate', 'returnDate', 'numberOfTravelers'];
+    const requiredFields = ['destination', 'origin', 'departureDate', 'returnDate'];
     const missingFields = requiredFields.filter(field => !data[field]);
     
     if (missingFields.length > 0) {
@@ -280,12 +203,7 @@ export const validatePackageData = (data) => {
         };
     }
 
-    if (numberOfTravelers <= 0) {
-        return {
-            success: false,
-            message: "Número de viajantes deve ser maior que zero"
-        };
-    }
+    
 
     return null; 
 };
@@ -296,33 +214,6 @@ export const isValidDate = (dateString) => {
     return date instanceof Date && !isNaN(date) && date > new Date();
 };
 
-export const createPackageInDB = async (packageData) => {
-    const { 
-        title, 
-        destination, 
-        origin, 
-        departureDate, 
-        returnDate,
-        description, 
-        availableSlots, 
-        agentId, 
-        images, 
-        numberOfTravelers 
-    } = packageData;
-
-    return await TravelPackage.create({
-        title, 
-        destination,
-        origin,
-        departureDate,
-        returnDate,
-        description: description || "Descrição padrão",
-        availableSlots: availableSlots || numberOfTravelers,
-        agentId: agentId,
-        images: images || [],
-        numberOfTravelers
-    });
-};
 
 
 
@@ -356,120 +247,7 @@ export const findOne = async (req, res) => {
         });
     }
 };
-export const addPackageComponents = async (req, res) => {
 
-    try {
-        const { packageId } = req.params;
-        const { selectedFlight, selectedHotel, selectedActivities, selectedCarRental } = req.body;
-        if (selectedActivities.checkInDate || selectedActivities.checkOutDate) {
-            res.status(400).json({
-                success: false,
-                message: "As datas de check-in e check-out não são necessárias para atividades."
-            });
-            return;
-        }
-        if (selectedFlight.numberOfTravelers <= 0) {
-            res.status(400).json({
-                success: false,
-                message: "O número de viajantes deve ser maior que zero."
-            });
-            return;
-        }
-        const savedComponents = [];
-        if (selectedFlight) {
-            const airline = selectedFlight.validatingAirlineCodes?.[0] || 'Airline';
-            const flightNumber = selectedFlight.itineraries?.[0]?.segments?.[0]?.number || 'N/A';
-            const origin = selectedFlight.itineraries?.[0]?.segments?.[0]?.departure?.iataCode || selectedFlight.origin;
-            const destination = selectedFlight.itineraries?.[0]?.segments?.[0]?.arrival?.iataCode || selectedFlight.destination;
-            const departureDate = selectedFlight.itineraries?.[0]?.segments?.[0]?.departure?.at || selectedFlight.departureDate;
-            await PackageComponents.create({
-                name: `Voo: ${airline} - ${flightNumber}`,
-                description: `Voo de ${origin} para ${destination} em ${departureDate}`,
-                type: 'FLIGHT',
-                moneyPrice: selectedFlight.moneyPrice,
-                packageId: packageId,
-                milesPrice: selectedFlight.milesPrice,
-                departureDate: departureDate,
-                returnDate: selectedFlight.returnDate,
-                origin: origin,
-                destination: destination,
-                numberOfTravelers: selectedFlight.numberOfTravelers,
-                amadeusId: selectedFlight.id,
-            });
-            savedComponents.push(selectedFlight);
-        }
-        if (selectedHotel) {
-            const hotelName = selectedHotel.hotel?.name || 'Hotel';
-            const amadeusId = selectedHotel.hotel?.hotelId || selectedHotel.amadeusId || null;
-            const checkInDate = selectedHotel.checkInDate || selectedHotel.checkin;
-            const checkOutDate = selectedHotel.checkOutDate || selectedHotel.checkout;
-            const hotelComponent = await PackageComponents.create({
-                name: `Hotel: ${hotelName || 'Hotel'}`,
-                description: `Estadia de ${checkInDate} a ${checkOutDate} em ${hotelName || 'Hotel'}`,
-                type: 'HOTEL',
-                moneyPrice: selectedHotel.moneyPrice,
-                milesPrice: selectedHotel.milesPrice,
-                packageId: packageId,
-                checkin: checkInDate,
-                checkout: checkOutDate,
-                amadeusId: amadeusId,
-            });
-            savedComponents.push(hotelComponent);
-        }
-        if (selectedActivities && Array.isArray(selectedActivities)) {
-            const activityPromises = selectedActivities.map(async (activity) => {
-                const activityName = activity.name || 'Atividade';
-                const amadeusId = activity.id || activity.amadeusId || null;
-                await PackageComponents.create({
-                    name: `Atividade: ${activityName}`,
-                    description: `Atividade em ${activityName}`,
-                    type: 'ACTIVITY',
-                    moneyPrice: activity.moneyPrice,
-                    milesPrice: activity.milesPrice,
-                    packageId: packageId,
-                    amadeusId: amadeusId,
-                });
-
-            });
-            const createdActivities = await Promise.all(activityPromises);
-            savedComponents.push(...createdActivities);
-        }
-        if (selectedCarRental) {
-            const carComponent = await PackageComponents.create({
-                name: `Carro: ${selectedCarRental.vehicle?.name || 'Carro Alugado'}`,
-                description: `Aluguel de carro de ${selectedCarRental.checkInDate} a ${selectedCarRental.checkOutDate}`,
-                type: 'CAR_RENTAL',
-                moneyPrice: selectedCarRental.moneyPrice,
-                milesPrice: selectedCarRental.milesPrice,
-                packageId: packageId,
-                amadeusId: selectedCarRental.id,
-                departureDate: selectedCarRental.checkin,
-                returnDate: selectedCarRental.checkout
-            });
-            savedComponents.push(carComponent);
-        }
-        res.status(201).json({
-            success: true,
-            message: 'Componentes adicionados ao pacote com sucesso!',
-            packageId: packageId,
-            savedComponents: savedComponents.map(comp => ({
-                id: comp.id,
-                type: comp.type,
-                name: comp.name,
-                moneyPrice: comp.moneyPrice
-            })),
-            totalPrice: savedComponents.reduce((total, comp) => total + comp.moneyPrice, 0),
-            totalMiles: savedComponents.reduce((total, comp) => total + comp.milesPrice, 0)
-        });
-
-    } catch (error) {
-        console.error('Erro em createPackageWithSelectedComponents:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message || "Erro ao adicionar componentes ao pacote"
-        });
-    }
-};
 export const update = async (req, res) => {
     const travelPackageId = req.params.id;
     if (!req.body.title) {
