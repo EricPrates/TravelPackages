@@ -121,7 +121,7 @@ export const handleGoogleCallback = async (req, res) => {
         const refreshToken = generateRefreshToken(user);
         console.log('✅ Login completo! Redirecionando...');
 
-        // Redirecionar de volta para o app com os tokens via página HTML
+        // Redirecionar de volta para o app com os tokens
         const deepLink = `minhaapp://auth?token=${accessToken}&refreshToken=${refreshToken}&userId=${user.id}`;
         
         res.send(`

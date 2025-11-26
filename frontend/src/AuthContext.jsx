@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useReducer } from "react";
 import { Text, View } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 import { Linking, Alert, Platform } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 
 const AuthContext = createContext();
 
@@ -116,17 +117,48 @@ export const AuthProvider = ({ children }) => {
     const googleLogin = async () => {
         try {
             const authUrl = await getGoogleAuthUrl();
-            const supported = await Linking.canOpenURL(authUrl);
-            if (supported) {
-                await Linking.openURL(authUrl);
-                // Não dispara LOGIN_REQUEST aqui, será disparado quando o deep link voltar
-            } else {
-                Alert.alert('Erro', 'Não foi possível abrir o navegador');
+            
+            // Usar WebBrowser do Expo em vez de Linking
+            const result = await WebBrowser.openAuthSessionAsync(authUrl, 'minhaapp://auth');
+            
+            console.log('WebBrowser result:', result);
+            
+            if (result.type === 'success' && result.url) {
+                // Processar o deep link retornado
+                const params = extractParamsFromUrl(result.url);
+                
+                if (params.token && params.userId) {
+                    console.log('✅ Login bem-sucedido via Google!');
+                    dispatch({ 
+                        type: 'LOGIN_SUCCESS', 
+                        payload: { 
+                            user: { id: params.userId },
+                            token: params.token 
+                        } 
+                    });
+                } else if (params.error) {
+                    Alert.alert('Erro', 'Falha na autenticação com Google');
+                    dispatch({ type: 'LOGIN_FAILURE', payload: { error: params.error } });
+                }
+            } else if (result.type === 'cancel') {
+                console.log('Usuário cancelou o login');
             }
         } catch (error) {
             console.error('Erro no login Google:', error);
             Alert.alert('Erro', 'Não foi possível iniciar o login com Google');
         }
+    };
+    
+    const extractParamsFromUrl = (url) => {
+        const params = {};
+        const queryString = url.split('?')[1];
+        if (queryString) {
+            queryString.split('&').forEach(param => {
+                const [key, value] = param.split('=');
+                params[key] = decodeURIComponent(value);
+            });
+        }
+        return params;
     };
 
 
