@@ -55,12 +55,15 @@ export const getGoogleUrl = async (req, res) => {
 
 export const handleGoogleCallback = async (req, res) => {
     try {
+        console.log('🔵 Callback recebido');
         const { code } = req.query;
         
         if (!code) {
+            console.log('❌ Código não fornecido');
             return res.status(400).json({ success: false, message: 'Código de autorização não fornecido' });
         }
 
+        console.log('🔵 Trocando código por tokens...');
         // Trocar código por tokens
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
@@ -75,19 +78,34 @@ export const handleGoogleCallback = async (req, res) => {
         });
 
         const tokens = await tokenResponse.json();
+        console.log('🔵 Tokens recebidos:', tokens.access_token ? 'OK' : 'ERRO');
         
         if (!tokens.access_token) {
-            return res.status(400).json({ success: false, message: 'Falha ao obter token do Google' });
+            console.log('❌ Token inválido:', tokens);
+            return res.status(400).send(`
+                <!DOCTYPE html>
+                <html>
+                <head><meta charset="UTF-8"><title>Erro</title></head>
+                <body>
+                    <h2>Erro ao obter token do Google</h2>
+                    <p>${JSON.stringify(tokens)}</p>
+                </body>
+                </html>
+            `);
         }
 
+        console.log('🔵 Buscando informações do usuário...');
         // Buscar informações do usuário
         const userResponse = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokens.access_token}`);
         const userInfo = await userResponse.json();
+        console.log('🔵 User info:', userInfo.email);
 
+        console.log('🔵 Buscando/criando usuário no banco...');
         // Buscar ou criar usuário
         let user = await db.Users.findOne({ where: { email: userInfo.email } });
         
         if (!user) {
+            console.log('🔵 Criando novo usuário...');
             // Criar novo usuário
             user = await db.Users.create({
                 email: userInfo.email,
@@ -97,9 +115,11 @@ export const handleGoogleCallback = async (req, res) => {
             });
         }
 
+        console.log('🔵 Gerando tokens JWT...');
         // Gerar tokens JWT
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
+        console.log('✅ Login completo! Redirecionando...');
 
         // Redirecionar de volta para o app com os tokens via página HTML
         const deepLink = `minhaapp://auth?token=${accessToken}&refreshToken=${refreshToken}&userId=${user.id}`;
