@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useState } from "react";
+import { useAuth } from "../AuthContext";
 
 const inicialWallet = {
     id: null,

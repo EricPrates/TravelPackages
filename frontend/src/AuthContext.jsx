@@ -3,6 +3,9 @@ import { Text, View } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 import { Linking, Alert, Platform } from 'react-native';
 
+
+
+
 const AuthContext = createContext();
 
 const inicialData = {
@@ -46,11 +49,8 @@ function authReducer(state, action) {
     }
 }
 
-// Produção: troque pela URL do servidor online
-const DEV_URL = 'http://192.168.2.101:4567'; // ←r
-const PROD_URL = 'https://seu-servidor-producao.com'; // ← URL do servidor online (quando publicar)
-
-export const URL = __DEV__ ? DEV_URL : PROD_URL;
+//URL do servidor online
+const URL = 'https://vendasviagens-backend.onrender.com';
 
 export const AuthProvider = ({ children }) => {
     const [state, dispatch] = useReducer(authReducer, inicialData);

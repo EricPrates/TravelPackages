@@ -54,81 +54,23 @@ export const getGoogleUrl = async (req, res) => {
 };
 
 export const handleGoogleCallback = async (req, res) => {
-    try {
-        const { code } = req.query;
-        if (!code) {
-            return res.status(400).json({ message: 'Código de autorização não fornecido.' });
-        }
-
-        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-                client_id: GOOGLE_ID,
-                client_secret: GOOGLE_SECRET,
-                code: code,
-                grant_type: 'authorization_code',
-                redirect_uri: REDIRECT_URL,
-            }),
-        });
-        const tokenData = await tokenResponse.json();
-
-        if (tokenData.error) {
-            return res.status(400).json({ message: 'Erro ao obter token do Google.' });
-        }
-
-        const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-            headers: {
-                Authorization: `Bearer ${tokenData.access_token}`,
-            },
-        });
-        if (!userResponse.ok) {
-            return res.status(400).json({ message: 'Erro ao obter informações do usuário do Google.' });
-        }
-
-        const userData = await userResponse.json();
-        let user = await db.Users.findOne({ where: { email: userData.email } });
-
-        if (!user) {
-            user = await db.Users.create({
-                name: userData.name,
-                email: userData.email,
-                googleId: userData.id,
-                role: 'customer',
-
-            });
-        } else if (!user.googleId) {
-            user.googleId = userData.id;
-            await user.save();
-        }
-        const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(user);
-        return res.status(200).json({
-            success: true,
-            data: {
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    role: user.role,
-                    name: user.name
-                },
-                accessToken: accessToken,
-                refreshToken: refreshToken,
-                token_type: "Bearer",
-                expiresIn: ACCESS_TOKEN_EXPIRES_IN
-            }
-        });
+   try {
+        const { accessToken } = req.body;
+        
+        // Verificar token com Google
+        const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+        const userInfo = await response.json();
+        
+        console.log('👤 USER INFO:', userInfo);
+        
+        // Sua lógica de criar/autenticar usuário...
+        
+        res.json({ success: true, user: userInfo });
     } catch (error) {
-        console.error('Erro na autenticação com Google:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Erro ao autenticar com Google.'
-        });
+        console.log('Erro auth Google:', error);
+        res.status(400).json({ success: false, error: error.message });
     }
-}
+};
 
 export const login = async (req, res) => {
     const { email, password } = req.body;
