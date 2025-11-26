@@ -115,17 +115,17 @@ export const AuthProvider = ({ children }) => {
 
     const googleLogin = async () => {
         try {
-            dispatch({ type: 'LOGIN_REQUEST' });
             const authUrl = await getGoogleAuthUrl();
             const supported = await Linking.canOpenURL(authUrl);
             if (supported) {
                 await Linking.openURL(authUrl);
+                // Não dispara LOGIN_REQUEST aqui, será disparado quando o deep link voltar
             } else {
                 Alert.alert('Erro', 'Não foi possível abrir o navegador');
             }
         } catch (error) {
             console.error('Erro no login Google:', error);
-            dispatch({ type: 'LOGIN_FAILURE', payload: { error: 'Erro ao fazer login com Google' } });
+            Alert.alert('Erro', 'Não foi possível iniciar o login com Google');
         }
     };
 
@@ -134,10 +134,14 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const handleDeepLink = (event) => {
             const url = event.url;
+            console.log('🔗 Deep link recebido:', url);
+            
             if (url.includes('minhaapp://auth')) {
                 const params = extractParamsFromUrl(url);
+                console.log('🔗 Parâmetros:', params);
                 
                 if (params.token && params.userId) {
+                    console.log('✅ Login bem-sucedido via Google!');
                     // Login bem-sucedido
                     dispatch({ 
                         type: 'LOGIN_SUCCESS', 
@@ -146,8 +150,8 @@ export const AuthProvider = ({ children }) => {
                             token: params.token 
                         } 
                     });
-                    // Não mostra alert, apenas faz login silenciosamente
                 } else if (params.error) {
+                    console.log('❌ Erro no callback:', params.error);
                     Alert.alert('Erro', 'Falha na autenticação com Google');
                     dispatch({ type: 'LOGIN_FAILURE', payload: { error: params.error } });
                 }
