@@ -94,18 +94,18 @@ export const handleGoogleCallback = async (req, res) => {
             `);
         }
 
-        console.log('🔵 Buscando informações do usuário...');
+        console.log(' Buscando informações do usuário...');
         // Buscar informações do usuário
         const userResponse = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokens.access_token}`);
         const userInfo = await userResponse.json();
-        console.log('🔵 User info:', userInfo.email);
+        console.log(' User info:', userInfo.email);
 
-        console.log('🔵 Buscando/criando usuário no banco...');
+        console.log(' Buscando/criando usuário no banco...');
         // Buscar ou criar usuário
         let user = await db.Users.findOne({ where: { email: userInfo.email } });
         
         if (!user) {
-            console.log('🔵 Criando novo usuário...');
+            console.log(' Criando novo usuário...');
             // Criar novo usuário
             user = await db.Users.create({
                 email: userInfo.email,
@@ -115,7 +115,7 @@ export const handleGoogleCallback = async (req, res) => {
             });
         }
 
-        console.log('🔵 Gerando tokens JWT...');
+        console.log(' Gerando tokens JWT...');
         // Gerar tokens JWT
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
@@ -131,16 +131,20 @@ export const handleGoogleCallback = async (req, res) => {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Login Successful</title>
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                    .btn { display: inline-block; padding: 15px 30px; background: #4285f4; color: white; 
+                           text-decoration: none; border-radius: 5px; margin-top: 20px; font-size: 18px; }
+                </style>
             </head>
             <body>
                 <h2>✅ Login realizado com sucesso!</h2>
-                <p>Redirecionando para o app...</p>
-                <p><small>Se o app não abrir automaticamente, você pode fechar esta janela.</small></p>
+                <p>Clique no botão abaixo para voltar ao app:</p>
+                <a href="${deepLink}" class="btn">Abrir App</a>
+                <p><small>Ou feche esta janela e volte manualmente ao app.</small></p>
                 <script>
+                    // Tenta abrir automaticamente
                     window.location.href = "${deepLink}";
-                    setTimeout(() => {
-                        document.body.innerHTML = '<h2>✅ Sucesso!</h2><p>Você pode fechar esta janela e voltar ao app.</p>';
-                    }, 2000);
                 </script>
             </body>
             </html>
