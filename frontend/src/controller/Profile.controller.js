@@ -42,8 +42,11 @@ function walletReducer(state, action) {
 export default function ProfileController(){
     const { token, URL } = useAuth();
     const [wallet, dispatch] = useReducer(walletReducer,inicialWallet);
-    const {userId} = useAuth;
+    const {userId} = useAuth();
+    
      const fetchWalletData = async () => {
+        console.log('entrei');
+        
         dispatch({type:'FETCH_WALLET_REQUEST'});
         try {
             const response = await fetch(`${URL}/wallet${userId}`, {
@@ -57,6 +60,7 @@ export default function ProfileController(){
             }
 
             const data = await response.json();
+            console.log(data);
             if(data.success){
                 dispatch({type: 'FETCH_WALLET_SUCCESS', payload: data.data});
             } else {
@@ -68,10 +72,9 @@ export default function ProfileController(){
     };
 
     useEffect(() => {
-        if(!token) return;
-        if(token){
-        fetchWalletData();
-       }
+        if (token) {
+            fetchWalletData();
+        }
    
 }, [token]);
 
@@ -82,7 +85,7 @@ export default function ProfileController(){
         balanceMiles: wallet.balanceMiles,
         id: wallet.id,
         userId: wallet.userId,
-        actions: { refetchWallet: fetchWalletData },
+        actions: { fetchWalletData },
       };
 
 }

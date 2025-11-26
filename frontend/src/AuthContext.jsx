@@ -74,9 +74,11 @@ export const AuthProvider = ({ children }) => {
     };
 
     const register = async (name, email, password) => {
+        console.log('chamado');
+        
         dispatch({ type: 'LOGIN_REQUEST' });
         try {
-            const response = await fetch(`${URL}/auth/register`, {
+            const response = await fetch(`${URL}/users/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -84,6 +86,7 @@ export const AuthProvider = ({ children }) => {
                 body: JSON.stringify({ name, email, password }),
             });
             const data = await response.json();
+            console.log(data);
             if (response.ok) {
                 dispatch({ type: 'LOGIN_SUCCESS', payload: { user: data.user, token: data.token } });
             } else {
@@ -94,7 +97,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const getGoogleAuthUrl = async () => {
+   /* const getGoogleAuthUrl = async () => {
        
         try {
             const response = await fetch(`${URL}/auth/google/url`);
@@ -115,38 +118,11 @@ export const AuthProvider = ({ children }) => {
     };
 
     const googleLogin = async () => {
-        try {
-            const authUrl = await getGoogleAuthUrl();
-            
-            // Usar WebBrowser do Expo em vez de Linking
-            const result = await WebBrowser.openAuthSessionAsync(authUrl, 'minhaapp://auth');
-            
-            console.log('WebBrowser result:', result);
-            
-            if (result.type === 'success' && result.url) {
-                // Processar o deep link retornado
-                const params = extractParamsFromUrl(result.url);
-                
-                if (params.token && params.userId) {
-                    console.log('✅ Login bem-sucedido via Google!');
-                    dispatch({ 
-                        type: 'LOGIN_SUCCESS', 
-                        payload: { 
-                            user: { id: params.userId },
-                            token: params.token 
-                        } 
-                    });
-                } else if (params.error) {
-                    Alert.alert('Erro', 'Falha na autenticação com Google');
-                    dispatch({ type: 'LOGIN_FAILURE', payload: { error: params.error } });
-                }
-            } else if (result.type === 'cancel') {
-                console.log('Usuário cancelou o login');
-            }
-        } catch (error) {
-            console.error('Erro no login Google:', error);
-            Alert.alert('Erro', 'Não foi possível iniciar o login com Google');
-        }
+        Alert.alert(
+            'Login com Google',
+            'O login com Google requer um build standalone do app. No Expo Go, use login com email e senha.\n\nPara habilitar Google OAuth, você precisa fazer:\n\n1. eas build\n2. Instalar o APK/IPA gerado\n3. O deep link minhaapp:// vai funcionar perfeitamente',
+            [{ text: 'Entendi' }]
+        );
     };
     
     const extractParamsFromUrl = (url) => {
@@ -214,7 +190,7 @@ export const AuthProvider = ({ children }) => {
             subscription.remove();
         };
     }, []);
-
+*/
     const value = {
         state,
         dispatch,
@@ -227,7 +203,7 @@ export const AuthProvider = ({ children }) => {
         token: state.token,
         user: state.user,
         URL,
-        googleLogin,
+      
     };
 
     return (

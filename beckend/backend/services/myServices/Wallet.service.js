@@ -7,6 +7,28 @@ const TravelPackage = db.TravelPackage;
 const Purchase = db.Purchase;
 const WalletTransaction = db.WalletTransaction;
 
+export  async function getWalletByUserId (req, res) {
+    try {
+        const userId = req.params.userId;
+        const wallet = await Wallet.findOne({ where: { userId } });
+        if (!wallet) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'Carteira não encontrada para o usuário especificado.'
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            data: wallet
+        });
+    } catch (error) {
+        return res.status(500).json({ 
+            success: false,
+            message: 'Erro ao obter carteira.',
+            error: error.message
+        });
+    }
+}
 export async function getOrCreateWallet (userId) {
     let wallet = await Wallet.findOne({ where: { userId } });
     if (!wallet) {

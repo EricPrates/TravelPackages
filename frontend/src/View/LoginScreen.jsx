@@ -4,11 +4,12 @@ import { View } from "react-native";
 import { TextInput } from "react-native-paper";
 import { useAuth } from "../AuthContext";
 import GoogleIcon from '../../assets/img/google-icon.png';
-
+import { useNavigation } from "@react-navigation/native";
 
 export default function LoginScreen() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const navigator = useNavigation();
+    const [email, setEmail] = useState('eric@eric.com');
+    const [password, setPassword] = useState('123');
     const [name, setName] = useState('');
    
     const { login, error, googleLogin, URL } = useAuth();
@@ -18,8 +19,7 @@ export default function LoginScreen() {
         <View style={styles.container}>
             <View style={{ backgroundColor: '#ffffff', padding: 20, borderRadius: 10, elevation: 5, borderWidth: 1, borderColor: '#6796f3ff' }}>
                 <Text style={styles.title}>Login de acesso</Text>
-       
-             
+                  
 
                 <View>
                     <TextInput
@@ -47,14 +47,15 @@ export default function LoginScreen() {
                         style={{ backgroundColor: '#6796f3ff', padding: 10, margin: 10, borderRadius: 5 }}>
                         <Text style={{ color: '#fff', textAlign: 'center' }}>Login</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => {}}
+                    
+                    <TouchableOpacity onPress={() => {navigator.navigate('Register')}}
                         style={{ backgroundColor: '#6796f3ff', padding: 10, margin: 10, borderRadius: 5 }}>
                         <Text style={{ color: '#fff', textAlign: 'center' }}>Registrar</Text>
                     </TouchableOpacity>
                 </View>
                 <View style={{ alignItems: 'center', marginTop: 10 }}>
                     <TouchableOpacity style={{ padding: 10, borderWidth: 1, backgroundColor: '#f3f3f5ff', borderRadius: 5, flexDirection: 'row', alignItems: 'center' }}
-                     onPress={googleLogin}>
+                     onPress={() => {}}>
                         <Image source={GoogleIcon} style={{ width: 24, height: 24 }} />
                         <Text style={{ color: '#1b1918ff', textAlign: 'center', marginLeft: 10 }}>Faça login com o google</Text>
                     </TouchableOpacity>

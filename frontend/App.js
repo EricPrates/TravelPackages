@@ -5,21 +5,28 @@ import MenuDrawer from './src/navigator/MenuDrawer';
 import LoginScreen from './src/View/LoginScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-
+import RegisterScreen from './src/View/RegisterScreen';
 
 const Stack = createStackNavigator();
 
 function AppNavigator() {
   const { isAuthenticated } = useAuth();
+
+  
   if(isAuthenticated){
-    return <MenuDrawer />
+    
+    return <NavigationContainer><MenuDrawer /></NavigationContainer>
   }
   else {
-    return <NavigationContainer>
+
+    return (
+    <NavigationContainer>
       <Stack.Navigator>
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
+    );
   }
 }
 

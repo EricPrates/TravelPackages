@@ -8,7 +8,7 @@ router.post('/add-funds', tokenValidated, wallet.cashDeposit);
 
 router.get('/balance', tokenValidated, wallet.getBalance);
 router.get('/statement', tokenValidated, wallet.getWalletStatement);
-
+router.get('/:userId', tokenValidated, wallet.getWalletByUserId);
 
 export default app =>{
     app.use ('/wallet', router);
