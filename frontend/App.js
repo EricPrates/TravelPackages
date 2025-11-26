@@ -5,7 +5,7 @@ import MenuDrawer from './src/navigator/MenuDrawer';
 import LoginScreen from './src/View/LoginScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import CallbackScreen from './src/View/CallbackScreen';
+
 
 const Stack = createStackNavigator();
 
@@ -18,7 +18,6 @@ function AppNavigator() {
     return <NavigationContainer>
       <Stack.Navigator>
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Callback" component={CallbackScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   }

@@ -121,10 +121,30 @@ export const handleGoogleCallback = async (req, res) => {
         const refreshToken = generateRefreshToken(user);
         console.log('✅ Login completo! Redirecionando...');
 
-        // Redirecionar de volta para o app com os tokens
+        // Redirecionar de volta para o app com os tokens via página HTML
         const deepLink = `minhaapp://auth?token=${accessToken}&refreshToken=${refreshToken}&userId=${user.id}`;
         
-        res.redirect(deepLink);
+        res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Login Successful</title>
+            </head>
+            <body>
+                <h2>✅ Login realizado com sucesso!</h2>
+                <p>Redirecionando para o app...</p>
+                <p><small>Se o app não abrir automaticamente, você pode fechar esta janela.</small></p>
+                <script>
+                    window.location.href = "${deepLink}";
+                    setTimeout(() => {
+                        document.body.innerHTML = '<h2>✅ Sucesso!</h2><p>Você pode fechar esta janela e voltar ao app.</p>';
+                    }, 2000);
+                </script>
+            </body>
+            </html>
+        `);
     } catch (error) {
         console.error('Erro no callback Google:', error);
         res.send(`
