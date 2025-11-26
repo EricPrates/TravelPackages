@@ -54,21 +54,60 @@ export const getGoogleUrl = async (req, res) => {
 };
 
 export const handleGoogleCallback = async (req, res) => {
-   try {
-        const { accessToken } = req.body;
+    try {
+        const { code } = req.query;
         
-        // Verificar token com Google
-        const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
-        const userInfo = await response.json();
+        if (!code) {
+            return res.status(400).json({ success: false, message: 'Código de autorização não fornecido' });
+        }
+
+        // Trocar código por tokens
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                code,
+                client_id: GOOGLE_ID,
+                client_secret: GOOGLE_SECRET,
+                redirect_uri: REDIRECT_URL,
+                grant_type: 'authorization_code'
+            })
+        });
+
+        const tokens = await tokenResponse.json();
         
-        console.log('👤 USER INFO:', userInfo);
+        if (!tokens.access_token) {
+            return res.status(400).json({ success: false, message: 'Falha ao obter token do Google' });
+        }
+
+        // Buscar informações do usuário
+        const userResponse = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokens.access_token}`);
+        const userInfo = await userResponse.json();
+
+        // Buscar ou criar usuário
+        let user = await db.Users.findOne({ where: { email: userInfo.email } });
         
-        // Sua lógica de criar/autenticar usuário...
+        if (!user) {
+            // Criar novo usuário
+            user = await db.Users.create({
+                email: userInfo.email,
+                name: userInfo.name,
+                password: await bcrypt.hash(Math.random().toString(36), 10), // senha aleatória
+                role: 'customer'
+            });
+        }
+
+        // Gerar tokens JWT
+        const accessToken = generateAccessToken(user);
+        const refreshToken = generateRefreshToken(user);
+
+        // Redirecionar de volta para o app com os tokens
+        const deepLink = `minhaapp://auth?token=${accessToken}&refreshToken=${refreshToken}&userId=${user.id}`;
         
-        res.json({ success: true, user: userInfo });
+        res.redirect(deepLink);
     } catch (error) {
-        console.log('Erro auth Google:', error);
-        res.status(400).json({ success: false, error: error.message });
+        console.error('Erro no callback Google:', error);
+        res.redirect(`minhaapp://auth?error=${encodeURIComponent(error.message)}`);
     }
 };
 
