@@ -4,6 +4,8 @@ import { useAuth } from '../AuthContext';
 import WalletScreen from '../View/WalletScreen';
 import { useWindowDimensions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AdminPainelScreen from '../View/AdminPanelScreen';
+import AdminPanelScreen from '../View/AdminPanelScreen';
 
 const Drawer = createDrawerNavigator();
 export default function MenuDrawer() {
@@ -35,14 +37,15 @@ export default function MenuDrawer() {
           <MaterialCommunityIcons name="account-outline" size={size} color={color} />
         )
       }} component={WalletScreen} />
-      user.role === 'admin' && (
+
+      {user.role === 'agent' && (
       <Drawer.Screen name="AdminPanel" options={{
         drawerLabel: 'Painel Admin',
         drawerIcon: ({ color, size }) => (
           <MaterialCommunityIcons name="shield-account-outline" size={size} color={color} />
         )
       }} component={AdminPanelScreen} />
-      )
+      )}
     </Drawer.Navigator>
   );
 }
