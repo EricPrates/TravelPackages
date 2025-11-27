@@ -1,12 +1,14 @@
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import HomeScreen from '../View/HomeScreen';
-
+import { useAuth } from '../AuthContext';
 import WalletScreen from '../View/WalletScreen';
 import { useWindowDimensions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const Drawer = createDrawerNavigator();
 export default function MenuDrawer() {
+  const { user } = useAuth();
+
   const dimensions = useWindowDimensions();
   return (
     <Drawer.Navigator initialRouteName="Home"
@@ -33,6 +35,14 @@ export default function MenuDrawer() {
           <MaterialCommunityIcons name="account-outline" size={size} color={color} />
         )
       }} component={WalletScreen} />
+      user.role === 'admin' && (
+      <Drawer.Screen name="AdminPanel" options={{
+        drawerLabel: 'Painel Admin',
+        drawerIcon: ({ color, size }) => (
+          <MaterialCommunityIcons name="shield-account-outline" size={size} color={color} />
+        )
+      }} component={AdminPanelScreen} />
+      )
     </Drawer.Navigator>
   );
 }

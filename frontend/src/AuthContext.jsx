@@ -47,7 +47,7 @@ function authReducer(state, action) {
     }
 }
 
-const URL = 'https://vendasviagens-backend.onrender.com';
+const URL = 'http://44.219.93.219:4567';
 
 export const AuthProvider = ({ children }) => {
     const [state, dispatch] = useReducer(authReducer, inicialData);
