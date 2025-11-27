@@ -123,7 +123,7 @@ export const findAll = async (req, res) => {
             include: [
                 {
                     model: PackageComponents, as: 'components',
-                    attributes: ['id', 'title', 'name', 'description', 'type', 'moneyPrice', 'milesPrice'],
+                    attributes: ['id', 'name', 'description', 'type', 'moneyPrice', 'milesPrice'],
                 },
                 {
                     model: Users, as: 'users',
@@ -149,50 +149,59 @@ export const findAll = async (req, res) => {
 
 export const createBasePackage = async (req, res) => {
     try {
-        const {id, destination, origin, departureDate, returnDate} = req.body
-        if(returnDate < departureDate){
+        const { title, destination, origin, departureDate, returnDate, description, numberOfTravelers } = req.body;
+        const agentId = req.user.id;
+        
+        if (returnDate < departureDate) {
             return res.status(400).json({
                 success: false,
                 message: "A data de retorno não pode ser anterior à data de partida."
             });
         }
       
-        if (!id ) {
+        if (!agentId) {
             return res.status(401).json({
                 success: false,
                 message: "Usuário não autenticado"
             });
         }
+        
         if (!destination || !origin) {
             return res.status(400).json({
                 success: false,
                 message: "Os campos destino e origem são obrigatórios."
             });
         }
-        
-   
 
-        const validationError = validatePackageData({ destination, origin });
+        const validationError = validatePackageData({ destination, origin, departureDate, returnDate });
         if (validationError) {
             return res.status(400).json(validationError);
         }
 
-
-        const travelPackage = await create({
-            ...packageData,
-            agentId: agentId,
-            destination: packageData.destination,
+        const travelPackage = await TravelPackage.create({
+            agentId,
+            title: title || `${origin} para ${destination}`,
+            destination,
+            origin,
+            departureDate,
+            returnDate,
+            description: description || '',
+            numberOfTravelers: numberOfTravelers || 1,
+            availableSlots: numberOfTravelers || 1,
+            totalMoneyPrice: 0,
+            totalMilesPrice: 0,
+            status: 'available'
         });
 
         res.status(201).json({
             success: true,
-            package: travelPackage
+            data: travelPackage
         });
     } catch (error) {
         console.error('Erro em createBasePackage:', error);
         res.status(500).json({
             success: false,
-            error: "Erro ao criar pacote de viagem"
+            message: "Erro ao criar pacote de viagem"
         });
     }
 };
@@ -239,25 +248,27 @@ export const findOne = async (req, res) => {
             include: [
                 {
                     model: PackageComponents, as: 'components',
-                    attributes: ['id', 'title', 'name', 'description', 'type', 'moneyPrice', 'milesPrice'],
+                    attributes: ['id', 'name', 'description', 'type', 'moneyPrice', 'milesPrice'],
                 },
                 {
                     model: Users, as: 'users',
                     attributes: ['id', 'name', 'email', 'role'],
                 },
             ],
-            attributes: ['id', 'title', 'description', 'price', 'duration', 'destination', 'availableSlots', 'image'],
+            attributes: ['id', 'title', 'description', 'destination', 'origin', 'departureDate', 'returnDate', 'availableSlots', 'totalMoneyPrice', 'totalMilesPrice', 'status', 'images'],
         });
 
         if (data) {
-            res.status(200).send(data);
+            res.status(200).json({ success: true, data });
         } else {
-            res.status(404).send({
+            res.status(404).json({
+                success: false,
                 message: `Pacote de viagem não encontrado.`
             });
         }
     } catch (error) {
-        res.status(500).send({
+        res.status(500).json({
+            success: false,
             message: error.message || "Erro ao buscar pacote de viagem"
         });
     }
@@ -266,10 +277,10 @@ export const findOne = async (req, res) => {
 export const update = async (req, res) => {
     const travelPackageId = req.params.id;
     if (!req.body.title) {
-        res.status(400).send({
+        return res.status(400).json({
+            success: false,
             message: "Dados são obrigatórios para atualização."
-        })
-        return;
+        });
     }
     try {
         const [updated] = await TravelPackage.update(req.body, {
@@ -277,14 +288,16 @@ export const update = async (req, res) => {
         });
         if (updated === 1) {
             const updatedTravelPackage = await TravelPackage.findByPk(travelPackageId);
-            res.status(200).send(updatedTravelPackage);
+            res.status(200).json({ success: true, data: updatedTravelPackage });
         } else {
-            res.status(404).send({
+            res.status(404).json({
+                success: false,
                 message: "Pacote de viagem não encontrado."
             });
         }
     } catch (error) {
-        res.status(500).send({
+        res.status(500).json({
+            success: false,
             message: error.message || "Erro ao atualizar pacote de viagem"
         });
     }
@@ -298,15 +311,17 @@ export const remove = async (req, res) => {
         });
 
         if (deleted == 1) {
-            res.sendStatus(204);
+            res.status(200).json({ success: true, message: "Pacote deletado com sucesso" });
         } else {
-            res.status(404).send({
+            res.status(404).json({
+                success: false,
                 message: `Não foi possível encontrar o pacote de viagem com id=${id}.`
             });
         }
     } catch (error) {
-        res.status(500).send({
+        res.status(500).json({
+            success: false,
             message: "Erro ao deletar o pacote de viagem com id=" + id
-        })
+        });
     }
 };

@@ -67,7 +67,7 @@ class TravelPackage extends Model {
         const components = this.components || [];
         
         this.totalMoneyPrice = components.reduce((total, component) => {
-            return total + (component.moneyPrice || component.price || 0);
+            return total + (component.moneyPrice || 0);
         }, 0);
         
         this.totalMilesPrice = components.reduce((total, component) => {

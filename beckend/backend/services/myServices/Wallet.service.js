@@ -38,7 +38,7 @@ export async function getOrCreateWallet (userId) {
     return wallet;
 }
 export const cashDeposit = async (req, res) => {
-    const transaction = await db.sequelize.transaction()
+    const dbTransaction = await db.sequelize.transaction()
     try {
         const { amount, description = 'Depósito em dinheiro' } = req.body;
         const userId = req.user.id;
@@ -57,27 +57,27 @@ export const cashDeposit = async (req, res) => {
         }
         const wallet = await getOrCreateWallet(userId);
         wallet.balanceCash = parseFloat(wallet.balanceCash) + parseFloat(amount);
-        await wallet.save({ transaction });
+        await wallet.save({ transaction: dbTransaction });
 
-        const transaction = await WalletTransaction.create({
+        const walletTransaction = await WalletTransaction.create({
             walletId: wallet.id,
             type: 'DEPOSIT',
             coinType: 'CASH',
             amount: parseFloat(amount),
             description,
             date: new Date()
-        }, { transaction });
-        await transaction.commit();
+        }, { transaction: dbTransaction });
+        await dbTransaction.commit();
         return res.status(200).json({
             success: true,
             message: 'Depósito em dinheiro realizado com sucesso.',
             data: {
-                transaction,
+                transaction: walletTransaction,
                 newBalance: wallet.balanceCash
             }
         });
     } catch (error) {
-        await transaction.rollback();
+        await dbTransaction.rollback();
         return res.status(500).json({ 
             success: false, 
             message: 'Erro ao realizar depósito em dinheiro.', 

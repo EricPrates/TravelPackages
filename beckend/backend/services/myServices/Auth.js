@@ -174,7 +174,8 @@ export const login = async (req, res) => {
 
 
         if (!email || !password) {
-            return res.status(400).send({
+            return res.status(400).json({
+                success: false,
                 message: "Email e senha são obrigatórios."
             });
         }
@@ -183,18 +184,18 @@ export const login = async (req, res) => {
 
 
         if (!findUser) {
-            return res.status(401).send({ message: "Usuário ou senha inválidos." });
+            return res.status(401).json({ success: false, message: "Usuário ou senha inválidos." });
         }
 
         const isPasswordValid = await bcrypt.compare(password, findUser.password);
 
         if (!isPasswordValid) {
-            return res.status(401).send({ message: "Usuário ou senha inválidos." });
+            return res.status(401).json({ success: false, message: "Usuário ou senha inválidos." });
         }
 
 
         if (!JWT_PRIVATE_KEY) {
-            return res.status(500).send({ message: "Erro de configuração do servidor" });
+            return res.status(500).json({ success: false, message: "Erro de configuração do servidor" });
         }
 
 
@@ -297,10 +298,10 @@ export async function refreshToken(req, res) {
 
     export const requireAgent = (req, res, next) => {
         if (!req.user) {
-            return res.status(401).send({ message: "Token de acesso requerido." });
+            return res.status(401).json({ success: false, message: "Token de acesso requerido." });
         }
         if (req.user.role !== 'agent') {
-            return res.status(403).send({ message: "Acesso negado. Permissão de agente requerida." });
+            return res.status(403).json({ success: false, message: "Acesso negado. Permissão de agente requerida." });
         }
         next();
     }
