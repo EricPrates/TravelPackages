@@ -116,7 +116,6 @@ export const fetchOptions = async (req, res) => {
 
 
 export const findAll = async (req, res) => {
-    
     try {
         const data = await TravelPackage.findAll({
             include: [
@@ -130,9 +129,14 @@ export const findAll = async (req, res) => {
                 },
             ],
         });
-        res.send(data);
+        res.status(200).json({
+            success: true,
+            data: data
+        });
     } catch (error) {
-        res.status(500).send({
+        console.error('Erro ao buscar pacotes:', error);
+        res.status(500).json({
+            success: false,
             message: error.message || "Erro ao buscar pacotes de viagem"
         });
     }

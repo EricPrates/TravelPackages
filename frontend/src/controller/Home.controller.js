@@ -61,8 +61,6 @@ export default function HomeController() {
         dispatch({ type: 'FETCH_PACKAGES_REQUEST' });
         console.log('🔵 Iniciando fetch de pacotes...');
         console.log('🔵 URL:', `${URL}/travel-packages`);
-        isLoading = true
-        
         
         try {
             console.log('🔵 Fazendo fetch...');
@@ -70,7 +68,7 @@ export default function HomeController() {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
+             
                 },
             });
             console.log('🔵 Response:', response.status, response.ok);
@@ -99,7 +97,6 @@ export default function HomeController() {
                 payload: { error: error.message } 
             });
         }
-        isLoading = false
     };
 
     
