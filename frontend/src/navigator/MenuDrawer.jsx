@@ -1,7 +1,7 @@
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import HomeScreen from '../View/HomeScreen';
+
 import WalletScreen from '../View/WalletScreen';
-import ProfileScreen from '../View/ProfileScreen';;
 import { useWindowDimensions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -27,12 +27,12 @@ export default function MenuDrawer() {
       }}
         component={HomeScreen} />
       
-      <Drawer.Screen name="Perfil" options={{
-        drawerLabel: 'Perfil',
+      <Drawer.Screen name="Carteira" options={{
+        drawerLabel: 'Carteira',
         drawerIcon: ({ color, size }) => (
           <MaterialCommunityIcons name="account-outline" size={size} color={color} />
         )
-      }} component={ProfileScreen} />
+      }} component={WalletScreen} />
     </Drawer.Navigator>
   );
 }

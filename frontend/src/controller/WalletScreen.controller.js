@@ -39,17 +39,15 @@ function walletReducer(state, action) {
             return state;
     }
 }
-export default function ProfileController(){
-    const { token, URL } = useAuth();
+export default function WalletScreenController(){
+    const { token, URL, user } = useAuth();
     const [wallet, dispatch] = useReducer(walletReducer,inicialWallet);
-    const {userId} = useAuth();
+    const userId = user?.id;
     
      const fetchWalletData = async () => {
-        console.log('entrei');
-        
         dispatch({type:'FETCH_WALLET_REQUEST'});
         try {
-            const response = await fetch(`${URL}/wallet${userId}`, {
+            const response = await fetch(`${URL}/wallet/${userId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -60,7 +58,6 @@ export default function ProfileController(){
             }
 
             const data = await response.json();
-            console.log(data);
             if(data.success){
                 dispatch({type: 'FETCH_WALLET_SUCCESS', payload: data.data});
             } else {

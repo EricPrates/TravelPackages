@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
             });
             const data = await response.json();
             if (response.ok) {
-                dispatch({ type: 'LOGIN_SUCCESS', payload: { user: data.user, token: data.token } });
+                dispatch({ type: 'LOGIN_SUCCESS', payload: { user: data.data.user, token: data.data.token.accessToken } });
             } else {
                 dispatch({ type: 'LOGIN_FAILURE', payload: { error: data.message } });
             }
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
             console.log(data);
             if (response.ok) {
-                dispatch({ type: 'LOGIN_SUCCESS', payload: { user: data.user, token: data.token } });
+                dispatch({ type: 'LOGIN_SUCCESS', payload: { user: data.data.user, token: data.data.token.accessToken } });
             } else {
                 dispatch({ type: 'LOGIN_FAILURE', payload: { error: data.message } });
             }
