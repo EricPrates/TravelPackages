@@ -1,111 +1,151 @@
-import { useReducer, useState } from 'react';
-import { useAuth } from './AuthContext';
-
-const inicialPackage = {
-    title: '',
-    destination: '',
-    origin: '',
-    departureDate: '',
-    returnDate: '',
-    description: '',
-    numberOfTravelers: '',
-    availableSlots: '',
-    totalMilesPrice: '',
-    totalMoneyPrice: '',
-    status: '',
-    images: [],
-    isLoading: false,
-    error: null,
-};
-
-function packageReduce(state, action) {
-    switch (action.type) {
-        case 'FETCH_PACKAGE_REQUEST':
-            return {
-                ...state,
-                isLoading: true,
-                error: null,
-            };
-        case 'FETCH_PACKAGE_SUCCESS':
-            return {
-                ...state,
-                isLoading: false,
-                title: action.payload.title || '',
-                destination: action.payload.destination || '',
-                origin: action.payload.origin || '',
-                departureDate: action.payload.departureDate || '',
-                returnDate: action.payload.returnDate || '',
-                description: action.payload.description || '',
-                numberOfTravelers: action.payload.numberOfTravelers || '',
-                availableSlots: action.payload.availableSlots || '',
-                totalMilesPrice: action.payload.totalMilesPrice || '',
-                totalMoneyPrice: action.payload.totalMoneyPrice || '',
-                status: action.payload.status || '',
-                images: action.payload.images || [],
-            };
-        case 'FETCH_PACKAGE_FAILURE':
-            return {
-                ...state,
-                isLoading: false,
-                error: action.payload.error,
-            };
-        case 'RESET_PACKAGE':
-            return inicialPackage;
-        default:
-            return state;
-    }
-}
+import { useState } from 'react';
+import { useAuth } from '../AuthContext';
 
 export default function AdminPanelController() {
     const { token, URL, user } = useAuth();
-    const [tela, setTela] = useState('');
-    
-    // ✅ CORRIGIDO: Nome correto para o estado
-    const [packageState, dispatch] = useReducer(packageReduce, inicialPackage);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    // ✅ CORRIGIDO: Função com nome diferente e body correto
+
     async function createBasicPackage(packageData) {
-        dispatch({ type: 'FETCH_PACKAGE_REQUEST' });
+        setIsLoading(true);
+        setError(null);
+        console.log('Creating package with data:', packageData);
         
         try {
             const response = await fetch(`${URL}/travel-packages`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json', // ✅ ADICIONADO
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(packageData), // ✅ ADICIONADO
+                body: JSON.stringify(packageData),
             });
+            console.log('Response received:', response.status, response.ok);
+            console.log(user);
+            
+            const data = await response.json();
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Erro ao criar pacote');
+                throw new Error(data.message || 'Erro ao criar pacote');
             }
 
-            const data = await response.json();
-            
             if (data.success) {
-                dispatch({ type: 'FETCH_PACKAGE_SUCCESS', payload: data.data });
                 return { success: true, data: data.data };
             } else {
                 throw new Error(data.message || 'Erro ao criar pacote');
             }
-        } catch (error) {
-            dispatch({ type: 'FETCH_PACKAGE_FAILURE', payload: { error: error.message } });
-            return { success: false, error: error.message };
+        } catch (err) {
+            setError(err.message);
+            return { success: false, error: err.message };
+        } finally {
+            setIsLoading(false);
         }
     }
 
-    // ✅ Função para resetar o formulário
-    function resetPackage() {
-        dispatch({ type: 'RESET_PACKAGE' });
+
+    async function fetchAllPackages() {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`${URL}/travel-packages`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Erro ao buscar pacotes');
+            }
+
+            if (data.success) {
+                return { success: true, data: data.data };
+            } else {
+                throw new Error(data.message || 'Erro ao buscar pacotes');
+            }
+        } catch (err) {
+            setError(err.message);
+            return { success: false, error: err.message };
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+
+    async function fetchPackageById(packageId) {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`${URL}/travel-packages/${packageId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Erro ao buscar pacote');
+            }
+
+            if (data.success) {
+                return { success: true, data: data.data };
+            } else {
+                throw new Error(data.message || 'Erro ao buscar pacote');
+            }
+        } catch (err) {
+            setError(err.message);
+            return { success: false, error: err.message };
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+
+    async function deletePackage(packageId) {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`${URL}/travel-packages/${packageId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Erro ao deletar pacote');
+            }
+
+            if (data.success) {
+                return { success: true, message: data.message };
+            } else {
+                throw new Error(data.message || 'Erro ao deletar pacote');
+            }
+        } catch (err) {
+            setError(err.message);
+            return { success: false, error: err.message };
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     return {
-        packageState,
         createBasicPackage,
-        resetPackage,
-        tela,
-        setTela,
+        fetchAllPackages,
+        fetchPackageById,
+        deletePackage,
+        isLoading,
+        error,
+        user,
     };
 }

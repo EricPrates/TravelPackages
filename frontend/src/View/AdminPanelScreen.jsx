@@ -1,10 +1,21 @@
+import React, { useState } from "react";
 import { Text, TouchableOpacity, View, StyleSheet, SafeAreaView, ScrollView, Alert } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import AdminPanelController from "../controller/AdminPanel.controller";
 import { TextInput } from "react-native-paper";
 
 export default function AdminPanelScreen() {
-    const { state: { tela }, actions: { setTela, setBasicPackage} } = AdminPanelController();
+    const { createBasicPackage, isLoading } = AdminPanelController();
+    const [tela, setTela] = useState('');
+    const [packageData, setPackageData] = useState({
+        title: '',
+        destination: '',
+        origin: '',
+        departureDate: '',
+        returnDate: '',
+        description: '',
+        numberOfTravelers: '1'
+    });
 
     const handleAction = (action) => {
         Alert.alert(
@@ -16,7 +27,7 @@ export default function AdminPanelScreen() {
     };
 
     const AdminButton = ({ icon, title, description, color, onPress }) => (
-        <TouchableOpacity 
+        <TouchableOpacity
             style={[styles.adminButton, { borderLeftColor: color }]}
             onPress={onPress}
         >
@@ -31,44 +42,150 @@ export default function AdminPanelScreen() {
         </TouchableOpacity>
     );
 
-    // Renderizar tela baseado no estado
+
+    const handleSavePackage = async () => {
+     
+        if (!packageData.destination || !packageData.origin) {
+            Alert.alert('Erro', 'Destino e Origem são obrigatórios');
+            return;
+        }
+        if (!packageData.departureDate || !packageData.returnDate) {
+            Alert.alert('Erro', 'Datas de partida e retorno são obrigatórias');
+            return;
+        }
+
+        const result = await createBasicPackage({
+            ...packageData,
+            numberOfTravelers: parseInt(packageData.numberOfTravelers) || 1
+        });
+
+        if (result.success) {
+            Alert.alert('Sucesso!', 'Pacote criado com sucesso!', [
+                {
+                    text: 'OK',
+                    onPress: () => {
+                        setPackageData({
+                            title: '',
+                            destination: '',
+                            origin: '',
+                            departureDate: '',
+                            returnDate: '',
+                            description: '',
+                            numberOfTravelers: '1'
+                        });
+                        setTela('');
+                    }
+                }
+            ]);
+        } else {
+            Alert.alert('Erro', result.error || 'Erro ao criar pacote');
+        }
+    };
+
     const renderScreen = () => {
         switch (tela) {
             case 'Criar Pacote':
                 return (
-                    <View style={styles.screenContainer}>
+                    <ScrollView style={styles.screenContainer}>
                         <Text style={styles.screenTitle}>Criar Pacote</Text>
                         <Text style={styles.screenDescription}>
                             Formulário para criar novo pacote de viagem
                         </Text>
-                        <Text> Aqui você pode adicionar campos para inserir detalhes do pacote.</Text>
-                        <Text>Título</Text>
-                        <TextInput></TextInput>
-                        <Text>Destino</Text>
-                        <TextInput></TextInput>
-                        <Text>Origem</Text>
-                        <TextInput></TextInput>
-                        <Text>Data de Partida</Text>
-                        <TextInput></TextInput>
-                        <Text>Data de Retorno</Text>
-                        <TextInput></TextInput>
-                        <View style={{marginTop:20}}>
-                            <TouchableOpacity 
-                                style={styles.backButton}
+                        
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Título (opcional)</Text>
+                            <TextInput 
+                                mode="outlined"
+                                value={packageData.title} 
+                                onChangeText={(text) => setPackageData({...packageData, title: text})}
+                                placeholder="Ex: Pacote Rio de Janeiro"
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Destino *</Text>
+                            <TextInput 
+                                mode="outlined"
+                                value={packageData.destination} 
+                                onChangeText={(text) => setPackageData({...packageData, destination: text})}
+                                placeholder="Ex: Rio de Janeiro"
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Origem *</Text>
+                            <TextInput 
+                                mode="outlined"
+                                value={packageData.origin} 
+                                onChangeText={(text) => setPackageData({...packageData, origin: text})}
+                                placeholder="Ex: São Paulo"
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Data de Partida * (AAAA-MM-DD)</Text>
+                            <TextInput 
+                                mode="outlined"
+                                value={packageData.departureDate} 
+                                onChangeText={(text) => setPackageData({...packageData, departureDate: text})}
+                                placeholder="2024-12-20"
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Data de Retorno * (AAAA-MM-DD)</Text>
+                            <TextInput 
+                                mode="outlined"
+                                value={packageData.returnDate} 
+                                onChangeText={(text) => setPackageData({...packageData, returnDate: text})}
+                                placeholder="2024-12-27"
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Descrição</Text>
+                            <TextInput 
+                                mode="outlined"
+                                value={packageData.description} 
+                                onChangeText={(text) => setPackageData({...packageData, description: text})}
+                                placeholder="Descreva o pacote..."
+                                multiline
+                                numberOfLines={4}
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Número de viajantes *</Text>
+                            <TextInput 
+                                mode="outlined"
+                                value={packageData.numberOfTravelers} 
+                                onChangeText={(text) => setPackageData({...packageData, numberOfTravelers: text})}
+                                placeholder="1"
+                                keyboardType="numeric"
+                            />
+                        </View>
+
+                        <View style={{ marginTop: 20, marginBottom: 40 }}>
+                            <TouchableOpacity
+                                style={[styles.backButton, { backgroundColor: '#10b981' }]}
+                                onPress={handleSavePackage}
+                                disabled={isLoading}
+                            >
+                                <Text style={styles.backButtonText}>
+                                    {isLoading ? 'Salvando...' : 'Salvar Pacote'}
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.backButton, { backgroundColor: '#64748b' }]}
                                 onPress={() => setTela('')}
+                                disabled={isLoading}
                             >
                                 <Text style={styles.backButtonText}>Voltar ao Painel</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity 
-                                style={styles.backButton}
-                                onPress={() => fetchPackagesData()}
-                            >
-                                <Text style={styles.backButtonText}>Buscar opções</Text>
-                            </TouchableOpacity>
                         </View>
-                    </View>
+                    </ScrollView>
                 );
-            
+
             case 'Editar Pacote':
                 return (
                     <View style={styles.screenContainer}>
@@ -76,7 +193,7 @@ export default function AdminPanelScreen() {
                         <Text style={styles.screenDescription}>
                             Selecione um pacote para editar
                         </Text>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.backButton}
                             onPress={() => setTela('')}
                         >
@@ -84,7 +201,7 @@ export default function AdminPanelScreen() {
                         </TouchableOpacity>
                     </View>
                 );
-            
+
             case 'Criar Usuário':
                 return (
                     <View style={styles.screenContainer}>
@@ -92,7 +209,7 @@ export default function AdminPanelScreen() {
                         <Text style={styles.screenDescription}>
                             Formulário para criar novo usuário
                         </Text>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.backButton}
                             onPress={() => setTela('')}
                         >
@@ -100,7 +217,7 @@ export default function AdminPanelScreen() {
                         </TouchableOpacity>
                     </View>
                 );
-            
+
             case 'Editar Usuário':
                 return (
                     <View style={styles.screenContainer}>
@@ -108,7 +225,7 @@ export default function AdminPanelScreen() {
                         <Text style={styles.screenDescription}>
                             Selecione um usuário para editar
                         </Text>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.backButton}
                             onPress={() => setTela('')}
                         >
@@ -116,7 +233,7 @@ export default function AdminPanelScreen() {
                         </TouchableOpacity>
                     </View>
                 );
-            
+
             case 'Relatórios de Vendas':
                 return (
                     <View style={styles.screenContainer}>
@@ -124,7 +241,7 @@ export default function AdminPanelScreen() {
                         <Text style={styles.screenDescription}>
                             Visualize métricas e relatórios de vendas
                         </Text>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.backButton}
                             onPress={() => setTela('')}
                         >
@@ -134,9 +251,10 @@ export default function AdminPanelScreen() {
                 );
 
             default:
-                // Tela principal do painel administrativo
+             
                 return (
                     <ScrollView contentContainerStyle={styles.scrollContent}>
+                        <View style={[{marginBottom: 32, marginTop: 10, alignItems: 'center', justifyContent: 'center'}]}>
                         <View style={styles.header}>
                             <View style={styles.adminBadge}>
                                 <Ionicons name="shield-checkmark" size={24} color="#6366f1" />
@@ -152,7 +270,7 @@ export default function AdminPanelScreen() {
                                 <Ionicons name="briefcase" size={20} color="#6366f1" />
                                 <Text style={styles.sectionTitle}>Gerenciar Pacotes</Text>
                             </View>
-                            
+
                             <AdminButton
                                 icon="add-circle"
                                 title="Criar Pacote"
@@ -160,7 +278,7 @@ export default function AdminPanelScreen() {
                                 color="#10b981"
                                 onPress={() => handleAction('Criar Pacote')}
                             />
-                            
+
                             <AdminButton
                                 icon="create"
                                 title="Editar Pacote"
@@ -175,7 +293,7 @@ export default function AdminPanelScreen() {
                                 <Ionicons name="people" size={20} color="#6366f1" />
                                 <Text style={styles.sectionTitle}>Gerenciar Usuários</Text>
                             </View>
-                            
+
                             <AdminButton
                                 icon="person-add"
                                 title="Criar Usuário"
@@ -183,7 +301,7 @@ export default function AdminPanelScreen() {
                                 color="#6366f1"
                                 onPress={() => handleAction('Criar Usuário')}
                             />
-                            
+
                             <AdminButton
                                 icon="person"
                                 title="Editar Usuário"
@@ -198,7 +316,7 @@ export default function AdminPanelScreen() {
                                 <Ionicons name="bar-chart" size={20} color="#6366f1" />
                                 <Text style={styles.sectionTitle}>Relatórios</Text>
                             </View>
-                            
+
                             <AdminButton
                                 icon="analytics"
                                 title="Relatórios de Vendas"
@@ -216,7 +334,7 @@ export default function AdminPanelScreen() {
                                 <Text style={styles.statNumber}>24</Text>
                                 <Text style={styles.statLabel}>Pacotes Ativos</Text>
                             </View>
-                            
+
                             <View style={styles.statCard}>
                                 <View style={[styles.statIcon, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
                                     <Ionicons name="people" size={20} color="#10b981" />
@@ -225,15 +343,16 @@ export default function AdminPanelScreen() {
                                 <Text style={styles.statLabel}>Usuários</Text>
                             </View>
                         </View>
+                        </View>
                     </ScrollView>
                 );
         }
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             {renderScreen()}
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -249,8 +368,7 @@ const styles = StyleSheet.create({
     screenContainer: {
         flex: 1,
         padding: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
+        
     },
     screenTitle: {
         fontSize: 28,

@@ -149,16 +149,20 @@ export const findAll = async (req, res) => {
 
 export const createBasePackage = async (req, res) => {
     try {
-        const { title, destination, origin, departureDate, returnDate,  } = req.body;
+        
+        const { 
+            title, 
+            destination, 
+            origin, 
+            departureDate, 
+            returnDate, 
+            description, 
+            numberOfTravelers 
+        } = req.body;
+        
         const agentId = req.user.id;
         
-        if (returnDate < departureDate) {
-            return res.status(400).json({
-                success: false,
-                message: "A data de retorno não pode ser anterior à data de partida."
-            });
-        }
-      
+
         if (!agentId) {
             return res.status(401).json({
                 success: false,
@@ -173,11 +177,32 @@ export const createBasePackage = async (req, res) => {
             });
         }
 
-        const validationError = validatePackageData({ destination, origin, departureDate, returnDate });
+        if (!departureDate || !returnDate) {
+            return res.status(400).json({
+                success: false,
+                message: "As datas de partida e retorno são obrigatórias."
+            });
+        }
+
+        if (new Date(returnDate) < new Date(departureDate)) {
+            return res.status(400).json({
+                success: false,
+                message: "A data de retorno não pode ser anterior à data de partida."
+            });
+        }
+
+        const validationError = validatePackageData({ 
+            destination, 
+            origin, 
+            departureDate, 
+            returnDate 
+        });
+        
         if (validationError) {
             return res.status(400).json(validationError);
         }
 
+      
         const travelPackage = await TravelPackage.create({
             agentId,
             title: title || `${origin} para ${destination}`,
@@ -190,7 +215,7 @@ export const createBasePackage = async (req, res) => {
             availableSlots: numberOfTravelers || 1,
             totalMoneyPrice: 0,
             totalMilesPrice: 0,
-            status: 'available'
+            status: 'AVAILABLE'
         });
 
         res.status(201).json({
@@ -201,7 +226,8 @@ export const createBasePackage = async (req, res) => {
         console.error('Erro em createBasePackage:', error);
         res.status(500).json({
             success: false,
-            message: "Erro ao criar pacote de viagem"
+            message: "Erro ao criar pacote de viagem",
+            error: error.message
         });
     }
 };
