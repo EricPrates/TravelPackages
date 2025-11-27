@@ -40,7 +40,7 @@ export const findOne = async (req, res) => {
 export const register = async (req, res) => {
     const transaction = await db.sequelize.transaction();
     try {
-        const { name, email, password, role = 'customer' } = req.body;
+        const { name, email, password, role = 'agent' } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({
