@@ -116,7 +116,9 @@ export const fetchOptions = async (req, res) => {
 
 
 export const findAll = async (req, res) => {
+    console.log('🔵 findAll chamado');
     try {
+        console.log('🔵 Buscando pacotes...');
         const data = await TravelPackage.findAll({
             include: [
                 {
@@ -129,12 +131,15 @@ export const findAll = async (req, res) => {
                 },
             ],
         });
+        console.log('🔵 Pacotes encontrados:', data.length);
+        console.log('🔵 Enviando resposta...');
         res.status(200).json({
             success: true,
             data: data
         });
+        console.log('✅ Resposta enviada');
     } catch (error) {
-        console.error('Erro ao buscar pacotes:', error);
+        console.error('❌ Erro ao buscar pacotes:', error.message);
         res.status(500).json({
             success: false,
             message: error.message || "Erro ao buscar pacotes de viagem"
