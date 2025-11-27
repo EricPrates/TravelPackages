@@ -1,15 +1,18 @@
 import { Text, TouchableOpacity, View, StyleSheet, SafeAreaView, ScrollView, Alert } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
+import AdminPanelController from "../controller/AdminPanel.controller";
+import { TextInput } from "react-native-paper";
 
 export default function AdminPanelScreen() {
-    
+    const { state: { tela }, actions: { setTela, setBasicPackage} } = AdminPanelController();
+
     const handleAction = (action) => {
         Alert.alert(
             'Ação Administrativa',
             `Você selecionou: ${action}`,
             [{ text: 'OK', style: 'default' }]
         );
-      
+        setTela(action);
     };
 
     const AdminButton = ({ icon, title, description, color, onPress }) => (
@@ -28,104 +31,209 @@ export default function AdminPanelScreen() {
         </TouchableOpacity>
     );
 
+    // Renderizar tela baseado no estado
+    const renderScreen = () => {
+        switch (tela) {
+            case 'Criar Pacote':
+                return (
+                    <View style={styles.screenContainer}>
+                        <Text style={styles.screenTitle}>Criar Pacote</Text>
+                        <Text style={styles.screenDescription}>
+                            Formulário para criar novo pacote de viagem
+                        </Text>
+                        <Text> Aqui você pode adicionar campos para inserir detalhes do pacote.</Text>
+                        <Text>Título</Text>
+                        <TextInput></TextInput>
+                        <Text>Destino</Text>
+                        <TextInput></TextInput>
+                        <Text>Origem</Text>
+                        <TextInput></TextInput>
+                        <Text>Data de Partida</Text>
+                        <TextInput></TextInput>
+                        <Text>Data de Retorno</Text>
+                        <TextInput></TextInput>
+                        <View style={{marginTop:20}}>
+                            <TouchableOpacity 
+                                style={styles.backButton}
+                                onPress={() => setTela('')}
+                            >
+                                <Text style={styles.backButtonText}>Voltar ao Painel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                style={styles.backButton}
+                                onPress={() => fetchPackagesData()}
+                            >
+                                <Text style={styles.backButtonText}>Buscar opções</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                );
+            
+            case 'Editar Pacote':
+                return (
+                    <View style={styles.screenContainer}>
+                        <Text style={styles.screenTitle}>Editar Pacote</Text>
+                        <Text style={styles.screenDescription}>
+                            Selecione um pacote para editar
+                        </Text>
+                        <TouchableOpacity 
+                            style={styles.backButton}
+                            onPress={() => setTela('')}
+                        >
+                            <Text style={styles.backButtonText}>Voltar ao Painel</Text>
+                        </TouchableOpacity>
+                    </View>
+                );
+            
+            case 'Criar Usuário':
+                return (
+                    <View style={styles.screenContainer}>
+                        <Text style={styles.screenTitle}>Criar Usuário</Text>
+                        <Text style={styles.screenDescription}>
+                            Formulário para criar novo usuário
+                        </Text>
+                        <TouchableOpacity 
+                            style={styles.backButton}
+                            onPress={() => setTela('')}
+                        >
+                            <Text style={styles.backButtonText}>Voltar ao Painel</Text>
+                        </TouchableOpacity>
+                    </View>
+                );
+            
+            case 'Editar Usuário':
+                return (
+                    <View style={styles.screenContainer}>
+                        <Text style={styles.screenTitle}>Editar Usuário</Text>
+                        <Text style={styles.screenDescription}>
+                            Selecione um usuário para editar
+                        </Text>
+                        <TouchableOpacity 
+                            style={styles.backButton}
+                            onPress={() => setTela('')}
+                        >
+                            <Text style={styles.backButtonText}>Voltar ao Painel</Text>
+                        </TouchableOpacity>
+                    </View>
+                );
+            
+            case 'Relatórios de Vendas':
+                return (
+                    <View style={styles.screenContainer}>
+                        <Text style={styles.screenTitle}>Relatórios de Vendas</Text>
+                        <Text style={styles.screenDescription}>
+                            Visualize métricas e relatórios de vendas
+                        </Text>
+                        <TouchableOpacity 
+                            style={styles.backButton}
+                            onPress={() => setTela('')}
+                        >
+                            <Text style={styles.backButtonText}>Voltar ao Painel</Text>
+                        </TouchableOpacity>
+                    </View>
+                );
+
+            default:
+                // Tela principal do painel administrativo
+                return (
+                    <ScrollView contentContainerStyle={styles.scrollContent}>
+                        <View style={styles.header}>
+                            <View style={styles.adminBadge}>
+                                <Ionicons name="shield-checkmark" size={24} color="#6366f1" />
+                                <Text style={styles.adminTitle}>Painel Administrativo</Text>
+                            </View>
+                            <Text style={styles.subtitle}>
+                                Gerencie pacotes e usuários do sistema
+                            </Text>
+                        </View>
+
+                        <View style={styles.section}>
+                            <View style={styles.sectionHeader}>
+                                <Ionicons name="briefcase" size={20} color="#6366f1" />
+                                <Text style={styles.sectionTitle}>Gerenciar Pacotes</Text>
+                            </View>
+                            
+                            <AdminButton
+                                icon="add-circle"
+                                title="Criar Pacote"
+                                description="Adicionar novo pacote de viagem"
+                                color="#10b981"
+                                onPress={() => handleAction('Criar Pacote')}
+                            />
+                            
+                            <AdminButton
+                                icon="create"
+                                title="Editar Pacote"
+                                description="Modificar pacotes existentes"
+                                color="#f59e0b"
+                                onPress={() => handleAction('Editar Pacote')}
+                            />
+                        </View>
+
+                        <View style={styles.section}>
+                            <View style={styles.sectionHeader}>
+                                <Ionicons name="people" size={20} color="#6366f1" />
+                                <Text style={styles.sectionTitle}>Gerenciar Usuários</Text>
+                            </View>
+                            
+                            <AdminButton
+                                icon="person-add"
+                                title="Criar Usuário"
+                                description="Cadastrar novo usuário"
+                                color="#6366f1"
+                                onPress={() => handleAction('Criar Usuário')}
+                            />
+                            
+                            <AdminButton
+                                icon="person"
+                                title="Editar Usuário"
+                                description="Gerenciar usuários existentes"
+                                color="#8b5cf6"
+                                onPress={() => handleAction('Editar Usuário')}
+                            />
+                        </View>
+
+                        <View style={styles.section}>
+                            <View style={styles.sectionHeader}>
+                                <Ionicons name="bar-chart" size={20} color="#6366f1" />
+                                <Text style={styles.sectionTitle}>Relatórios</Text>
+                            </View>
+                            
+                            <AdminButton
+                                icon="analytics"
+                                title="Relatórios de Vendas"
+                                description="Visualizar métricas e relatórios"
+                                color="#ef4444"
+                                onPress={() => handleAction('Relatórios de Vendas')}
+                            />
+                        </View>
+
+                        <View style={styles.statsContainer}>
+                            <View style={styles.statCard}>
+                                <View style={[styles.statIcon, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
+                                    <Ionicons name="briefcase" size={20} color="#6366f1" />
+                                </View>
+                                <Text style={styles.statNumber}>24</Text>
+                                <Text style={styles.statLabel}>Pacotes Ativos</Text>
+                            </View>
+                            
+                            <View style={styles.statCard}>
+                                <View style={[styles.statIcon, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                                    <Ionicons name="people" size={20} color="#10b981" />
+                                </View>
+                                <Text style={styles.statNumber}>156</Text>
+                                <Text style={styles.statLabel}>Usuários</Text>
+                            </View>
+                        </View>
+                    </ScrollView>
+                );
+        }
+    };
+
     return (
-        <View style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-   
-                <View style={styles.header}>
-                    <View style={styles.adminBadge}>
-                        <Ionicons name="shield-checkmark" size={24} color="#6366f1" />
-                        <Text style={styles.adminTitle}>Painel Administrativo</Text>
-                    </View>
-                    <Text style={styles.subtitle}>
-                        Gerencie pacotes e usuários do sistema
-                    </Text>
-                </View>
-
-                
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Ionicons name="briefcase" size={20} color="#6366f1" />
-                        <Text style={styles.sectionTitle}>Gerenciar Pacotes</Text>
-                    </View>
-                    
-                    <AdminButton
-                        icon="add-circle"
-                        title="Criar Pacote"
-                        description="Adicionar novo pacote de viagem"
-                        color="#10b981"
-                        onPress={() => handleAction('Criar Pacote')}
-                    />
-                    
-                    <AdminButton
-                        icon="create"
-                        title="Editar Pacote"
-                        description="Modificar pacotes existentes"
-                        color="#f59e0b"
-                        onPress={() => handleAction('Editar Pacote')}
-                    />
-                </View>
-
-                
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Ionicons name="people" size={20} color="#6366f1" />
-                        <Text style={styles.sectionTitle}>Gerenciar Usuários</Text>
-                    </View>
-                    
-                    <AdminButton
-                        icon="person-add"
-                        title="Criar Usuário"
-                        description="Cadastrar novo usuário"
-                        color="#6366f1"
-                        onPress={() => handleAction('Criar Usuário')}
-                    />
-                    
-                    <AdminButton
-                        icon="person"
-                        title="Editar Usuário"
-                        description="Gerenciar usuários existentes"
-                        color="#8b5cf6"
-                        onPress={() => handleAction('Editar Usuário')}
-                    />
-                </View>
-
-       
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Ionicons name="bar-chart" size={20} color="#6366f1" />
-                        <Text style={styles.sectionTitle}>Relatórios</Text>
-                    </View>
-                    
-                    <AdminButton
-                        icon="analytics"
-                        title="Relatórios de Vendas"
-                        description="Visualizar métricas e relatórios"
-                        color="#ef4444"
-                        onPress={() => handleAction('Relatórios de Vendas')}
-                    />
-                </View>
-
-                {/* Quick Stats */}
-                <View style={styles.statsContainer}>
-                    <View style={styles.statCard}>
-                        <View style={[styles.statIcon, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
-                            <Ionicons name="briefcase" size={20} color="#6366f1" />
-                        </View>
-                        <Text style={styles.statNumber}>24</Text>
-                        <Text style={styles.statLabel}>Pacotes Ativos</Text>
-                    </View>
-                    
-                    <View style={styles.statCard}>
-                        <View style={[styles.statIcon, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-                            <Ionicons name="people" size={20} color="#10b981" />
-                        </View>
-                        <Text style={styles.statNumber}></Text>
-                        <Text style={styles.statLabel}></Text>
-                    </View>
-                </View>
-            </ScrollView>
-        </View>
+        <SafeAreaView style={styles.container}>
+            {renderScreen()}
+        </SafeAreaView>
     );
 }
 
@@ -137,6 +245,38 @@ const styles = StyleSheet.create({
     scrollContent: {
         flexGrow: 1,
         padding: 20,
+    },
+    screenContainer: {
+        flex: 1,
+        padding: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    screenTitle: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#1e293b',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    screenDescription: {
+        fontSize: 16,
+        color: '#64748b',
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 22,
+    },
+    backButton: {
+        backgroundColor: '#6366f1',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 12,
+        marginTop: 20,
+    },
+    backButtonText: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '600',
     },
     header: {
         marginBottom: 32,
@@ -152,12 +292,10 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#1e293b',
         marginLeft: 8,
-        fontFamily: 'System',
     },
     subtitle: {
         fontSize: 16,
         color: '#64748b',
-        fontFamily: 'System',
         lineHeight: 22,
     },
     section: {
@@ -173,7 +311,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#1e293b',
         marginLeft: 8,
-        fontFamily: 'System',
     },
     adminButton: {
         flexDirection: 'row',
@@ -208,12 +345,10 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#1e293b',
         marginBottom: 4,
-        fontFamily: 'System',
     },
     buttonDescription: {
         fontSize: 14,
         color: '#64748b',
-        fontFamily: 'System',
     },
     statsContainer: {
         flexDirection: 'row',
@@ -248,13 +383,11 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         color: '#1e293b',
-        fontFamily: 'System',
         marginBottom: 4,
     },
     statLabel: {
         fontSize: 12,
         color: '#64748b',
         textAlign: 'center',
-        fontFamily: 'System',
     },
 });

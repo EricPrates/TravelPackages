@@ -149,7 +149,7 @@ export const findAll = async (req, res) => {
 
 export const createBasePackage = async (req, res) => {
     try {
-        const { title, destination, origin, departureDate, returnDate, description, numberOfTravelers } = req.body;
+        const { title, destination, origin, departureDate, returnDate,  } = req.body;
         const agentId = req.user.id;
         
         if (returnDate < departureDate) {

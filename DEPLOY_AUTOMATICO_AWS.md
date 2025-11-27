@@ -21,7 +21,17 @@ cd ~/trabalho2
 git pull origin main
 cd beckend
 npm install
-pm2 restart vendasviagens
+
+# Verifica se o processo existe antes de reiniciar
+if pm2 list | grep -q "vendasviagens"; then
+    echo "♻️ Reiniciando processo existente..."
+    pm2 restart vendasviagens
+else
+    echo "🆕 Iniciando novo processo..."
+    pm2 start backend/server.js --name vendasviagens
+    pm2 save
+fi
+
 echo "✅ Deploy concluído!"
 ```
 

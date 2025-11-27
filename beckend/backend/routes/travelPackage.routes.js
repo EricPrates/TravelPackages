@@ -12,6 +12,7 @@ router.get('/:id', travels.findOne);
 router.put('/:id', tokenValidated, requireAgent, travels.update);
 router.delete('/:id', tokenValidated, requireAgent, travels.remove);
 
+
 export default app =>{
     app.use ('/travel-packages', router);
 }
