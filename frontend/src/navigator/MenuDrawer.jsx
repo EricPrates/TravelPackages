@@ -4,7 +4,6 @@ import { useAuth } from '../AuthContext';
 import WalletScreen from '../View/WalletScreen';
 import { useWindowDimensions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import AdminPainelScreen from '../View/AdminPanelScreen';
 import AdminPanelScreen from '../View/AdminPanelScreen';
 
 const Drawer = createDrawerNavigator();

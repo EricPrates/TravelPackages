@@ -116,6 +116,7 @@ export const fetchOptions = async (req, res) => {
 
 
 export const findAll = async (req, res) => {
+    
     try {
         const data = await TravelPackage.findAll({
             include: [

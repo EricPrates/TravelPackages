@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../AuthContext";
 
 const inicialPackage = {
     title: '',
@@ -56,18 +57,57 @@ function packageReduce(state, action) {
 
 
 export default function HomeController() {
-
+    const { token, URL, user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
-    const [wallet, dispatch] = useReducer(packageReduce, inicialPackage);
-    useEffect(() => {
-        const response = async () => {
+    const [travelPackage, dispatch] = useReducer(packageReduce, inicialPackage);
+    
 
+     const fetchPackageData = async () => {
+        dispatch({type:'FETCH_PACKAGE_REQUEST'});
+        try {
+            const response = await fetch(`${URL}/travel-packages/${searchQuery}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch Travel-Package data');
+            }
 
+            const data = await response.json();
+            if(data.success){
+                dispatch({type: 'FETCH_PACKAGE_SUCCESS', payload: data.data});
+            } else {
+                dispatch({type: 'FETCH_PACKAGE_FAILURE', payload: data.message});
+            }
+        } catch (error) {
+            dispatch({type: 'FETCH_PACKAGE_FAILURE', payload: error});
         }
-    }, [searchQuery]);
-    return {
-        state: { searchQuery },
-        actions: { setSearchQuery },
     };
 
+    useEffect(() => {
+        if (token) {
+            fetchPackageData();
+        }
+   
+}, [token]);
+return {
+        state: { searchQuery },
+        actions: { setSearchQuery },
+        error: travelPackage.error,
+        isLoading: travelPackage.isLoading,
+        title: travelPackage.title,
+        destination: travelPackage.destination,
+        origin: travelPackage.origin,
+        departureDate: travelPackage.departureDate,
+        returnDate: travelPackage.returnDate,
+        description: travelPackage.description,
+        numberOfTravelers: travelPackage.numberOfTravelers,
+        availableSlots: travelPackage.availableSlots,
+        totalMilesPrice: travelPackage.totalMilesPrice,
+        totalMoneyPrice: travelPackage.totalMoneyPrice,
+        status: travelPackage.status,
+        images: travelPackage.images,
+    };
 }

@@ -54,7 +54,7 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredPackages, setFilteredPackages] = useState(TRAVEL_PACKAGES);
 
-  // Filtrar pacotes baseado na busca
+
   const handleSearch = (query) => {
     setSearchQuery(query);
     if (query) {
