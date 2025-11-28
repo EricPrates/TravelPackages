@@ -41,3 +41,5 @@ export default function(sequelize, DataTypes) {
     PackageComponents.init(sequelize, DataTypes);
     return PackageComponents;
 }
+
+ 

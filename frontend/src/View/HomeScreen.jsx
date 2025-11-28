@@ -37,16 +37,16 @@ export default function HomeScreen() {
                         ✅ {item.availableSlots} vagas de {item.numberOfTravelers}
                     </Text>
                     <Text style={[styles.status, 
-                        item.status === 'available' ? styles.statusAvailable : styles.statusUnavailable
+                        item.status?.toUpperCase() === 'AVAILABLE' ? styles.statusAvailable : styles.statusUnavailable
                     ]}>
-                        {item.status === 'available' ? 'Disponível' : 'Esgotado'}
+                        {item.status?.toUpperCase() === 'AVAILABLE' ? 'Disponível' : 'Esgotado'}
                     </Text>
                 </View>
             </View>
         </TouchableOpacity>
     );
 
-    // Estado de loading
+    
     if (isLoading) {
         return (
             <View style={styles.centerContainer}>
@@ -73,7 +73,7 @@ export default function HomeScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
-                {/* Header */}
+               
                 <View style={styles.header}>
                     <Text style={styles.greeting}>Descubra Seu Próximo Destino! 🌎</Text>
                     <Text style={styles.subtitle}>
@@ -81,7 +81,7 @@ export default function HomeScreen() {
                     </Text>
                 </View>
 
-                {/* Barra de Pesquisa */}
+               
                 <Searchbar
                     placeholder="Buscar por destino, origem, título..."
                     onChangeText={setSearchQuery}
@@ -89,14 +89,14 @@ export default function HomeScreen() {
                     style={styles.searchBar}
                 />
 
-                {/* Botão para limpar busca */}
+                
                 {searchQuery ? (
                     <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
                         <Text style={styles.clearButtonText}>Limpar busca</Text>
                     </TouchableOpacity>
                 ) : null}
 
-                {/* Lista de Pacotes */}
+               
                 <FlatList
                     data={packages}
                     renderItem={renderPackageItem}

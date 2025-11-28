@@ -5,6 +5,9 @@ import WalletScreen from '../View/WalletScreen';
 import { useWindowDimensions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AdminPanelScreen from '../View/AdminPanelScreen';
+import CreatePackageScreen from '../View/CreatePackageScreen';
+import AddComponentsScreen from '../View/AddComponentsScreen';
+import SelectComponentScreen from '../View/SelectComponentScreen';
 
 const Drawer = createDrawerNavigator();
 export default function MenuDrawer() {
@@ -38,12 +41,37 @@ export default function MenuDrawer() {
       }} component={WalletScreen} />
 
       {user.role === 'agent' && (
-      <Drawer.Screen name="AdminPanel" options={{
-        drawerLabel: 'Painel Admin',
-        drawerIcon: ({ color, size }) => (
-          <MaterialCommunityIcons name="shield-account-outline" size={size} color={color} />
-        )
-      }} component={AdminPanelScreen} />
+        <>
+          <Drawer.Screen name="AdminPanel" options={{
+            drawerLabel: 'Painel Admin',
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="shield-account-outline" size={size} color={color} />
+            )
+          }} component={AdminPanelScreen} />
+          
+          <Drawer.Screen name="CriarPacote" options={{
+            drawerLabel: 'Criar Pacote',
+            drawerItemStyle: { display: 'none' },
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="package-variant-plus" size={size} color={color} />
+            )
+          }} component={CreatePackageScreen} />
+          
+          <Drawer.Screen name="AdicionarComponentes" options={{
+            drawerLabel: 'Adicionar Componentes',
+            drawerItemStyle: { display: 'none' },
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="puzzle-plus" size={size} color={color} />
+            )
+          }} component={AddComponentsScreen} />
+          <Drawer.Screen name="SelecionarComponentes" options={{
+            drawerLabel: 'Selecionar Componentes',
+            
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="puzzle-plus" size={size} color={color} />
+            )
+          }} component={SelectComponentScreen} />
+        </>
       )}
     </Drawer.Navigator>
   );

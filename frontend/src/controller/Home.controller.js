@@ -5,6 +5,7 @@ import { useAuth } from "../AuthContext";
 const initialState = {
     allPackages: [], 
     filteredPackages: [], 
+    isLoading: false,
     error: null,
     searchQuery: ''
 };
@@ -21,14 +22,14 @@ function packagesReducer(state, action) {
         case 'FETCH_PACKAGES_SUCCESS':
             return {
                 ...state,
-            
+                isLoading: false,
                 allPackages: action.payload.packages || [],
                 filteredPackages: action.payload.packages || [], 
             };
         case 'FETCH_PACKAGES_FAILURE':
             return {
                 ...state,
-         
+                isLoading: false,
                 error: action.payload.error,
             };
         case 'SET_SEARCH_QUERY':
@@ -121,6 +122,7 @@ export default function HomeController() {
         state: {
             packages: state.filteredPackages,
             allPackages: state.allPackages, 
+            isLoading: state.isLoading,
             error: state.error,
             searchQuery: state.searchQuery
         },

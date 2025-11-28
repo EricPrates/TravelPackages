@@ -9,18 +9,16 @@ const PackageComponents = db.PackageComponents;
 export const fetchOptions = async (req, res) => {
     try {
         const { id } = req.params;
-        const { type, page, limit } = req.query; 
+        const { type } = req.query; 
         const travelPackage = await TravelPackage.findByPk(id);
         if (!travelPackage) return res.status(404).json({ success: false, message: 'Pacote não encontrado' });
         
-        const offset = (parseInt(page) - 1) * (limit ? parseInt(limit) : 10);
         const formatDate = (date) => {
             if (!date) return null;
             const d = new Date(date);
             return d.toISOString().split('T')[0];
         };
 
-    
         if (type) {
             const ALLOWED = ['FLIGHT', 'HOTEL', 'ACTIVITY', 'CAR_RENTAL'];
             if (!ALLOWED.includes(type)) {
@@ -31,7 +29,6 @@ export const fetchOptions = async (req, res) => {
             switch (type) {
                 case 'FLIGHT':
                     options = await travelDataService.searchFlights({
-                       
                         origin: travelPackage.origin,
                         destination: travelPackage.destination,
                         departureDate: formatDate(travelPackage.departureDate),
@@ -61,25 +58,13 @@ export const fetchOptions = async (req, res) => {
                     break;
             }
 
-
-            const totalItems = options.length;
-            const totalPages = Math.ceil(totalItems / limit);
-            const paginatedOptions = options.slice(offset, offset + parseInt(limit));
             return res.status(200).json({ 
-               success: true, 
+                success: true, 
                 type, 
-                options: paginatedOptions,
-                pagination: {
-                    currentPage: page,
-                    totalPages,
-                    totalItems,
-                    itemsPerPage: limit,
-                    hasNextPage: page < totalPages,
-                    hasPrevPage: page > 1
-            }});
+                options: options
+            });
         }
 
-   
         const options = await travelDataService.searchAllOptions({
             origin: travelPackage.origin,
             destination: travelPackage.destination,
@@ -90,22 +75,13 @@ export const fetchOptions = async (req, res) => {
             numberOfTravelers: travelPackage.numberOfTravelers || 1
         });
 
-        const maxLimit = parseInt(limit);
-
         return res.status(200).json({ 
             success: true, 
             options: {
-                flights: options.flights.slice(0, maxLimit),
-                hotels: options.hotels.slice(0, maxLimit),
-                activities: options.activities.slice(0, maxLimit),
-                carRentals: options.cars.slice(0, maxLimit)
-            },
-            summary: {
-                totalFlights: options.flights.length,
-                totalHotels: options.hotels.length,
-                totalActivities: options.activities.length,
-                totalCars: options.cars.length,
-                showingLimit: maxLimit
+                flights: options.flights,
+                hotels: options.hotels,
+                activities: options.activities,
+                carRentals: options.cars
             }
         });
     } catch (error) {

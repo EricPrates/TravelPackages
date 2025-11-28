@@ -1,11 +1,31 @@
 import { useState } from 'react';
 import { useAuth } from '../AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
 export default function AdminPanelController() {
     const { token, URL, user } = useAuth();
+    const navigation = useNavigation();
+    const [isCreating, setIsCreating] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [packageData, setPackageData] = useState({
+            id : null,
+            title: '',
+            destination: '',
+            origin: '',
+            departureDate: '',
+            returnDate: '',
+            description: '',
+            numberOfTravelers: '1'
+        });
+        
 
+    const handleChangeBasicPackage = (field, value) => {
+        setPackageData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
 
     async function createBasicPackage(packageData) {
         setIsLoading(true);
@@ -107,7 +127,33 @@ export default function AdminPanelController() {
         }
     }
 
-
+    const handleSavePackage = async () => {
+        
+        if (!packageData.destination || !packageData.origin) {
+            setError('Destino e Origem são obrigatórios');
+            return { success: false };
+        }
+        if (!packageData.departureDate || !packageData.returnDate) {
+            setError('Datas de partida e retorno são obrigatórias');
+            return { success: false };
+        }
+        setIsLoading(true);
+        const result = await createBasicPackage({
+            ...packageData,
+            numberOfTravelers: parseInt(packageData.numberOfTravelers) || 1
+        });
+        setIsLoading(false);
+        
+        if (result.success) {
+            handleChangeBasicPackage('id', result.data.id);
+            return { success: true, data: result.data };
+        } else {
+            setError(result.error);
+            return { success: false, error: result.error };
+        }
+        
+    };
+   
     async function deletePackage(packageId) {
         setIsLoading(true);
         setError(null);
@@ -140,12 +186,15 @@ export default function AdminPanelController() {
     }
 
     return {
-        createBasicPackage,
+        deletePackage,
+        error,
+        setError,
+        handleSavePackage,
         fetchAllPackages,
         fetchPackageById,
-        deletePackage,
         isLoading,
-        error,
         user,
+        packageData,
+        handleChangeBasicPackage,
     };
 }
