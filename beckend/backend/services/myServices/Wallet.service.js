@@ -37,6 +37,62 @@ export async function getOrCreateWallet (userId) {
  
     return wallet;
 }
+/**
+ * Adicionar milhas por promoção
+ */
+export const addMilesPromo = async (req, res) => {
+    const dbTransaction = await db.sequelize.transaction();
+    
+    try {
+        const { amount, description } = req.body;
+        const userId = req.user.id;
+        
+        if (!amount || amount <= 0) {
+            await dbTransaction.rollback();
+            return res.status(400).json({
+                success: false,
+                message: 'O valor de milhas deve ser maior que zero.'
+            });
+        }
+        
+        const wallet = await getOrCreateWallet(userId);
+        
+        // Adicionar milhas
+        wallet.balanceMiles = parseFloat(wallet.balanceMiles) + parseFloat(amount);
+        await wallet.save({ transaction: dbTransaction });
+        
+        // Registrar transação
+        const walletTransaction = await WalletTransaction.create({
+            walletId: wallet.id,
+            type: 'DEPOSIT',
+            coinType: 'MILES',
+            amount: parseFloat(amount),
+            description: description || `Promoção de ${amount} milhas`,
+            date: new Date()
+        }, { transaction: dbTransaction });
+        
+        await dbTransaction.commit();
+        
+        return res.status(200).json({
+            success: true,
+            message: 'Milhas adicionadas com sucesso!',
+            data: {
+                transaction: walletTransaction,
+                newBalance: parseFloat(wallet.balanceMiles)
+            }
+        });
+        
+    } catch (error) {
+        await dbTransaction.rollback();
+        console.error('Erro ao adicionar milhas promocionais:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Erro ao adicionar milhas promocionais.',
+            error: error.message
+        });
+    }
+};
+
 export const cashDeposit = async (req, res) => {
     const dbTransaction = await db.sequelize.transaction()
     try {

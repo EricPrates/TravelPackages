@@ -5,6 +5,7 @@ import { tokenValidated } from '../services/myServices/Auth.js';
 const router = express.Router();
 
 router.post('/add-funds', tokenValidated, wallet.cashDeposit);
+router.post('/add-miles-promo', tokenValidated, wallet.addMilesPromo);
 
 router.get('/balance', tokenValidated, wallet.getBalance);
 router.get('/statement', tokenValidated, wallet.getWalletStatement);

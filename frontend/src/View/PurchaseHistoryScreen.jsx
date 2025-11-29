@@ -35,7 +35,7 @@ export default function PurchaseHistoryScreen() {
     const renderPurchaseItem = ({ item }) => {
         const purchaseDate = new Date(item.purchaseDate);
         return (
-            <TouchableOpacity style={styles.purchaseCard} onPress={() => showSnackbar(`Compra #${item.id}`)}>
+            <TouchableOpacity style={styles.purchaseCard} onPress={() => navigation.navigate('PurchaseDetails', { purchaseId: item.id })}>
                 <View style={styles.cardHeader}>
                     <View>
                         <Text style={styles.purchaseId}>Compra #{item.id}</Text>

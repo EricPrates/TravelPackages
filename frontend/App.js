@@ -11,6 +11,8 @@ import CreatePackageScreen from './src/View/CreatePackageScreen';
 import AddComponentScreen from './src/View/AddComponentsScreen';
 import SelectComponentScreen from './src/View/SelectComponentScreen';
 import PackageDetailsScreen from './src/View/PackageDetailsScreen';
+import StatementScreen from './src/View/StatementScreen';
+import PurchaseDetailsScreen from './src/View/PurchaseDetailsScreen';
 const Stack = createStackNavigator();
 
 function AppNavigator() {
@@ -33,6 +35,8 @@ function AppNavigator() {
         <Stack.Screen name="AdicionarComponentes" component={AddComponentScreen} options={{ headerShown: false }} />
         <Stack.Screen name="SelecionarComponentes" component={SelectComponentScreen} options={{ headerShown: false }} />
         <Stack.Screen name="PackageDetails" component={PackageDetailsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Extrato" component={StatementScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="PurchaseDetails" component={PurchaseDetailsScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
     );

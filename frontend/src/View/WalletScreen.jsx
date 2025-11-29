@@ -2,8 +2,9 @@ import { Text, View, TouchableOpacity, ActivityIndicator, StyleSheet, ScrollView
 import { useAuth } from "../AuthContext";
 import WalletScreenController from "../controller/WalletScreen.controller";
 import { TextInput } from "react-native-gesture-handler";
-
+import { useNavigation } from "@react-navigation/native";
 export default function Carteira() {
+    const navigation = useNavigation();
     const { user } = useAuth();
     const {
         error,
@@ -71,7 +72,7 @@ export default function Carteira() {
                             <Text style={styles.cardIcon}>💵</Text>
                             <Text style={styles.cardTitle}>Saldo em Dinheiro</Text>
                         </View>
-                        <Text style={styles.balanceAmount}>${balanceCash}</Text>
+                        <Text style={styles.balanceAmount}>${balanceCash.toFixed(2)}</Text>
                         <Text style={styles.balanceLabel}>Disponível para uso</Text>
                     </View>
 
@@ -84,8 +85,11 @@ export default function Carteira() {
                         <Text style={styles.balanceAmount}>{balanceMiles}</Text>
                         <Text style={styles.balanceLabel}>Milhas acumuladas</Text>
                     </View>
+                    
                 </View>
-
+                <TouchableOpacity onPress={() => navigation.navigate('Extrato')} style={styles.refreshButton}>
+                        <Text style={styles.refreshButtonText}>Verificar Extrato</Text>
+                    </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleDeposit(amount)} style={styles.refreshButton}>
                     <Text style={styles.refreshButtonText}>Realizar Depósito</Text>
                 </TouchableOpacity>

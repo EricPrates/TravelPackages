@@ -194,12 +194,36 @@ export const AuthProvider = ({ children }) => {
         };
     }, []);
 */
+    const logout = async () => {
+        try {
+            // Chamar endpoint de logout no backend
+            if (state.token) {
+                await fetch(`${URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${state.token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        refreshToken: state.refreshToken // Se você armazenar o refresh token
+                    })
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao fazer logout no backend:', error);
+            // Continua com logout local mesmo se o backend falhar
+        } finally {
+            // Limpar estado local
+            dispatch({ type: 'LOGOUT' });
+        }
+    };
+
     const value = {
         state,
         dispatch,
         login,
         register,
-        logout: () => dispatch({ type: 'LOGOUT' }),
+        logout,
         isAuthenticated: state.isAuthenticated,
         isLoading: state.isLoading,
         error: state.error,

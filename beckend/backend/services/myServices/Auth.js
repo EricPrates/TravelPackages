@@ -316,3 +316,139 @@ export async function refreshToken(req, res) {
         }
         next();
     }
+
+
+// Blacklist de tokens (em produção, use Redis)
+const tokenBlacklist = new Set();
+
+/**
+ * Refresh Token - Gera novo access token a partir do refresh token
+ */
+export const refreshToken = async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+        
+        if (!refreshToken) {
+            return res.status(400).json({
+                success: false,
+                message: 'Refresh token é obrigatório'
+            });
+        }
+        
+        // Verificar se o token está na blacklist
+        if (tokenBlacklist.has(refreshToken)) {
+            return res.status(401).json({
+                success: false,
+                message: 'Refresh token inválido ou revogado'
+            });
+        }
+        
+        // Verificar e decodificar o refresh token
+        try {
+            const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_KEY);
+            
+            // Buscar usuário
+            const user = await db.Users.findByPk(decoded.id);
+            
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Usuário não encontrado'
+                });
+            }
+            
+            // Gerar novos tokens
+            const newAccessToken = generateAccessToken(user);
+            const newRefreshToken = generateRefreshToken(user);
+            
+            // Adicionar o refresh token antigo na blacklist
+            tokenBlacklist.add(refreshToken);
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Token renovado com sucesso',
+                data: {
+                    accessToken: newAccessToken,
+                    refreshToken: newRefreshToken,
+                    user: {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role
+                    }
+                }
+            });
+            
+        } catch (error) {
+            if (error.name === 'TokenExpiredError') {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Refresh token expirado. Faça login novamente.'
+                });
+            }
+            
+            return res.status(401).json({
+                success: false,
+                message: 'Refresh token inválido'
+            });
+        }
+        
+    } catch (error) {
+        console.error('Erro ao renovar token:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Erro ao renovar token',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Logout - Invalida os tokens do usuário
+ */
+export const logout = async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+        const accessToken = req.headers.authorization?.replace('Bearer ', '');
+        
+        // Adicionar tokens na blacklist
+        if (accessToken) {
+            tokenBlacklist.add(accessToken);
+        }
+        
+        if (refreshToken) {
+            tokenBlacklist.add(refreshToken);
+        }
+        
+        console.log(`✅ Logout realizado para usuário ${req.user.email}`);
+        
+        return res.status(200).json({
+            success: true,
+            message: 'Logout realizado com sucesso'
+        });
+        
+    } catch (error) {
+        console.error('Erro ao fazer logout:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Erro ao fazer logout',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Middleware para verificar se o token está na blacklist
+ */
+export const checkBlacklist = (req, res, next) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (token && tokenBlacklist.has(token)) {
+        return res.status(401).json({
+            success: false,
+            message: 'Token inválido ou revogado. Faça login novamente.'
+        });
+    }
+    
+    next();
+};
