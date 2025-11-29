@@ -40,7 +40,7 @@ export async function getOrCreateWallet (userId) {
 export const cashDeposit = async (req, res) => {
     const dbTransaction = await db.sequelize.transaction()
     try {
-        const { amount, description = 'Depósito em dinheiro' } = req.body;
+        const { amount } = req.body;
         const userId = req.user.id;
         const user = await db.Users.findByPk(userId);
         if (!user) {
