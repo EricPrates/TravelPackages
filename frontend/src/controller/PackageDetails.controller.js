@@ -1,50 +1,72 @@
-export default function PackageDetailsController() {
+import { useState, useEffect } from 'react';
+import { useAuth } from '../AuthContext';
 
-     const verifyType = (item) => {
-            if (item.type === 'FLIGHT') {
-                return '✈️ Voo';
-            } else if (item.type === 'HOTEL') {
-                return '🏨 Hotel';
-            } else if (item.type === 'CAR_RENTAL') {
-                return '🚗 Aluguel de Carro';
-            } else if (item.type === 'ACTIVITY') {
-                return '🎯 Atividade';
+export default function PurchaseHistoryController() {
+    const [purchases, setPurchases] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [refreshing, setRefreshing] = useState(false);
+    const { user, token, URL } = useAuth();
+
+    const userId = user?.id;
+
+    const fetchPurchaseHistory = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            if (!token || !userId) {
+                throw new Error('Usuário não autenticado');
             }
-            return item.type;
-        };
-    
-        const getStatusColor = (status) => {
-            switch (status?.toUpperCase()) {
-                case 'AVAILABLE':
-                    return '#10B981';
-                case 'CONFIRMED':
-                    return '#3B82F6';
-                case 'CANCELLED':
-                    return '#EF4444';
-                case 'PENDING':
-                    return '#F59E0B';
-                default:
-                    return '#6B7280';
+
+            const response = await fetch(`${URL}/purchases/${userId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+       
+            if (!response.ok) {
+                throw new Error(`Erro ${response.status}: ${response.statusText}`);
             }
-        };
-    
-        const getTypeColor = (type) => {
-            switch (type) {
-                case 'FLIGHT':
-                    return '#3B82F6';
-                case 'HOTEL':
-                    return '#8B5CF6';
-                case 'CAR_RENTAL':
-                    return '#F59E0B';
-                case 'ACTIVITY':
-                    return '#10B981';
-                default:
-                    return '#6B7280';
+
+            const data = await response.json();
+            console.log('Resposta da API:', data); 
+            
+          
+            if (data.success && data.data) {
+                setPurchases(data.data);
+            } else if (Array.isArray(data)) {
+            
+                setPurchases(data);
+            } else {
+                throw new Error(data.message || 'Estrutura de dados inválida');
             }
-        };
-        return {
-            verifyType,
-            getStatusColor,
-            getTypeColor,
-        };
+        } catch (err) {
+            console.error('Erro ao buscar histórico:', err);
+            setError(err.message || 'Erro ao carregar histórico');
+        } finally {
+            setIsLoading(false);
+            setRefreshing(false);
+        }
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchPurchaseHistory();
+    };
+
+    useEffect(() => {
+        fetchPurchaseHistory();
+    }, [token, userId]); 
+
+    return {
+        purchases,
+        isLoading,
+        error,
+        refreshing,
+        fetchPurchaseHistory,
+        onRefresh
+    };
 }

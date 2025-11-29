@@ -61,6 +61,19 @@ export const findPurchasesWithFilters = async (req, res) => {
             offset
         });
 
+        // Formatar purchases para garantir que os valores apareçam
+        const formattedPurchases = purchases.map(p => ({
+            id: p.id,
+            purchaseDate: p.purchaseDate,
+            status: p.status,
+            quantity: p.quantity,
+            totalMoneyPrice: parseFloat(p.totalMoneyPrice || 0),
+            totalMilesPrice: parseFloat(p.totalMilesPrice || 0),
+            paidInMoney: parseFloat(p.paidInMoney || 0),
+            paidInMiles: parseFloat(p.paidInMiles || 0),
+            travelPackage: p.travelPackage
+        }));
+
         return res.status(200).json({
             success: true,
             data: {
@@ -76,7 +89,7 @@ export const findPurchasesWithFilters = async (req, res) => {
                     totalItems: count,
                     itemsPerPage: parseInt(limit)
                 },
-                purchases
+                purchases: formattedPurchases
             }
         });
     } catch (error) {

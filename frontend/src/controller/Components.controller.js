@@ -42,7 +42,7 @@ export default function ComponentsController() {
     const [error, setError] = useState(null);
     const addComponentToPackage = async (type, packageId, item) => {
         try {
-            console.log('➕ Adding component to package:', { type, packageId, item });
+           
 
 
             const componentData = {

@@ -9,6 +9,7 @@ import CreatePackageScreen from '../View/CreatePackageScreen';
 import AddComponentsScreen from '../View/AddComponentsScreen';
 import SelectComponentScreen from '../View/SelectComponentScreen';
 import PackageDetailsScreen from '../View/PackageDetailsScreen';
+import PurchaseHistoryScreen from '../View/PurchaseHistoryScreen';
 const Drawer = createDrawerNavigator();
 export default function MenuDrawer() {
   const { user } = useAuth();
@@ -78,6 +79,13 @@ export default function MenuDrawer() {
               <MaterialCommunityIcons name="puzzle-plus" size={size} color={color} />
             )
           }} component={PackageDetailsScreen} />
+          <Drawer.Screen name="PurchaseHistory" options={{
+            drawerLabel: 'Histórico de Compras',
+       
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="puzzle-plus" size={size} color={color} />
+            )
+          }} component={PurchaseHistoryScreen} />
         </>
       )}
     </Drawer.Navigator>

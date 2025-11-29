@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../AuthContext";
 import { useNavigation } from "@react-navigation/native";
-import { FlatList, Text, View, StyleSheet, TouchableOpacity, TextInput, ScrollView } from "react-native";
+import { FlatList, Text, View, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 import PackageDetailsController from "../controller/PackageDetails.controller";
 
@@ -9,8 +9,34 @@ export default function PackageDetailsScreen({ route }) {
     const navigation = useNavigation();
     const { travelPackage } = route.params;
     const [isLoading, setIsLoading] = useState(false);
+    const [cashAmount, setCashAmount] = useState('');
+    const [milesAmount, setMilesAmount] = useState('');
     const { components, id, title, departureDate, returnDate, status, description, totalMoneyPrice, totalMilesPrice } = travelPackage;
-    const { verifyType, getStatusColor, getTypeColor } = PackageDetailsController();
+    const { verifyType, getStatusColor, getTypeColor, purchasePackageWithMoney, purchasePackageWithMiles, purchasePackageMixed } = PackageDetailsController();
+
+    const handlePurchase = async (type) => {
+        try {
+            setIsLoading(true);
+            let response;
+
+            if (type === 'cash') {
+                response = await purchasePackageWithMoney({ packageId: id, quantity: 1 });
+            } else if (type === 'miles') {
+                response = await purchasePackageWithMiles({ packageId: id, quantity: 1 });
+            } else if (type === 'mixed') {
+                const cash = parseFloat(cashAmount) || 0;
+                const miles = Math.floor(parseFloat(milesAmount) || 0);
+                response = await purchasePackageMixed({ packageId: id, quantity: 1, cashAmount: cash, milesAmount: miles });
+            }
+
+            Alert.alert('Sucesso', response?.message || 'Compra realizada com sucesso!');
+             navigation.goBack();
+        } catch (err) {
+            Alert.alert('Erro', err.message || 'Não foi possível realizar a compra.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -87,6 +113,27 @@ export default function PackageDetailsScreen({ route }) {
                     </View>
                 )}
 
+            
+                <View style={styles.descriptionContainer}>
+                    <Text style={styles.descriptionLabel}>💳 Compra mista (Dinheiro + Milhas)</Text>
+                    <View style={{ gap: 12 }}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Valor em dinheiro (R$)"
+                            keyboardType="decimal-pad"
+                            value={cashAmount}
+                            onChangeText={setCashAmount}
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Valor em milhas"
+                            keyboardType="number-pad"
+                            value={milesAmount}
+                            onChangeText={setMilesAmount}
+                        />
+                    </View>
+                </View>
+
                 <View style={styles.componentsSection}>
                     <Text style={styles.componentsTitle}>🧩 Componentes do Pacote</Text>
 
@@ -108,19 +155,19 @@ export default function PackageDetailsScreen({ route }) {
                 </View>
             </ScrollView>
 
-         
+      
             <View style={styles.buttonContainer}>
-                <TouchableOpacity onPress={() => { }} style={styles.buyButton}>
+                <TouchableOpacity onPress={() => handlePurchase('miles')} style={styles.buyButton}>
                     <Text style={styles.buyButtonText}>Comprar pacote com milhas</Text>
                 </TouchableOpacity>
             </View>
             <View style={styles.buttonContainer}>
-                <TouchableOpacity onPress={() => { }} style={styles.buyButton}>
-                    <Text style={styles.buyButtonText}>Comprar pacote com dnheiro</Text>
+                <TouchableOpacity onPress={() => handlePurchase('cash')} style={styles.buyButton}>
+                    <Text style={styles.buyButtonText}>Comprar pacote com dinheiro</Text>
                 </TouchableOpacity>
             </View>
             <View style={styles.buttonContainer}>
-                <TouchableOpacity onPress={() => { }} style={styles.buyButton}>
+                <TouchableOpacity onPress={() => handlePurchase('mixed')} style={styles.buyButton}>
                     <Text style={styles.buyButtonText}>Comprar pacote misto (dinheiro + milhas)</Text>
                 </TouchableOpacity>
             </View>
@@ -176,56 +223,6 @@ const styles = StyleSheet.create({
         fontSize: 28,
         fontWeight: 'bold',
         color: '#059669',
-        marginBottom: 4,
-    },
-    milesPriceTotal: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#dc2626',
-        marginBottom: 16,
-    },
-    statusBadge: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-    },
-    statusText: {
-        color: '#FFFFFF',
-        fontSize: 12,
-        fontWeight: 'bold',
-    },
-    packageInfo: {
-        backgroundColor: '#FFFFFF',
-        padding: 20,
-        borderRadius: 12,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    dateContainer: {
-        alignItems: 'center',
-        flex: 1,
-    },
-    dateLabel: {
-        fontSize: 14,
-        color: '#64748B',
-        marginBottom: 4,
-        fontWeight: '500',
-    },
-    dateValue: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#1E293B',
-    },
-    descriptionContainer: {
-        backgroundColor: '#FFFFFF',
-        padding: 20,
-        borderRadius: 12,
         marginBottom: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -367,5 +364,14 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         fontSize: 16,
         fontWeight: '600',
+    },
+    input: {
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        color: '#1E293B',
     },
 });
