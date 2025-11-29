@@ -10,7 +10,7 @@ import travelPackageRouter from "./routes/travelPackage.routes.js";
 import packageComponentsRouter from "./routes/packageComponents.routes.js";
 import walletRouter from "./routes/wallet.routes.js";
 import purchaseRouter from "./routes/purchase.routes.js";
-import citiesRouter from "./routes/cities.routes.js";
+
 
 const port = process.env.PORT || 4567;
 
@@ -38,7 +38,7 @@ walletRouter(app);
 travelPackageRouter(app);
 packageComponentsRouter(app);
 purchaseRouter(app);
-citiesRouter(app);
+
 
 (async () =>{
     try{
