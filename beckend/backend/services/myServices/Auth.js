@@ -243,40 +243,7 @@ export const login = async (req, res) => {
     }
 };
 
-export async function refreshToken(req, res) {
-    const { refreshToken } = req.body;
-    if (!refreshToken) {
-        return res.status(400).json({
-            success: false,
-            message: "Token de atualização é obrigatório."
-        });
-    }
-    try {
-        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_KEY, { algorithms: ['HS256'] });
-        const user = await db.Users.findByPk(decoded.id);
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "Usuário não encontrado."
-            });
-        }
-        const newAccessToken = generateAccessToken(user);
-        return res.status(200).json({
-            success: true,
-            data: {
-                accessToken: newAccessToken,
-                token_type: "Bearer",
-                expiresIn: ACCESS_TOKEN_EXPIRES_IN
-            }
-        });
-    }catch (error) {
-       
-        return res.status(401).json({
-            success: false,
-            message: "Token de atualização inválido ou expirado."
-        });
-    }
-}
+
 
 
     export const tokenValidated = (req, res, next) => {
