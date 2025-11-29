@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import db from "../../models/index.js";
 import bcrypt from "bcrypt";
 
+
 dotenv.config();
 const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY;
 const GOOGLE_ID = process.env.GOOGLE_ID;
@@ -11,6 +12,7 @@ const GOOGLE_SECRET = process.env.GOOGLE_SECRET;
 const REDIRECT_URL = process.env.GOOGLE_REDIRECT_URI;
 const ACCESS_TOKEN_EXPIRES_IN = "15m";
 const REFRESH_TOKEN_EXPIRES_IN = "7d";
+const Wallet = db.Wallet;
 
 export const generateAccessToken = (user) => {
     return jwt.sign({
@@ -64,7 +66,7 @@ export const handleGoogleCallback = async (req, res) => {
         }
 
         console.log('🔵 Trocando código por tokens...');
-        // Trocar código por tokens
+      
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -199,7 +201,11 @@ export const login = async (req, res) => {
         }
 
 
-
+        const wallatUser = await Wallet.findOne({ where: { userId: findUser.id },
+        attributes: ['id', 'balanceCash', 'balanceMiles'] });
+        if (!wallatUser) {
+            await Wallet.create({ userId: findUser.id, balanceCash: 0, balanceMiles: 0 });
+        }
         const accessToken = generateAccessToken(findUser);
         const refreshToken = generateRefreshToken(findUser);
 
@@ -218,6 +224,11 @@ export const login = async (req, res) => {
                 refreshToken: refreshToken,
                 token_type: "Bearer",
                 expiresIn: ACCESS_TOKEN_EXPIRES_IN
+                },
+                wallet: {
+                    id: wallatUser.id,
+                    balanceCash: wallatUser.balanceCash,
+                    balanceMiles: wallatUser.balanceMiles
                 }
             }
         });
