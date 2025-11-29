@@ -160,62 +160,106 @@ export const findAllWithPackages = async (req, res) => {
 };
 
 export const createFlightComponent = async (componentData, transaction = null) => {
-    const {description, amadeusId, moneyPrice, milesPrice, origin, destination, departureDate, returnDate} = componentData;
-    return await PackageComponents.create({
+    console.log('✈️ Criando componente de voo:', componentData);
+    
+    // Extrair dados do formato Amadeus
+    const origin = componentData.departure?.iataCode || componentData.origin;
+    const destination = componentData.arrival?.iataCode || componentData.destination;
+    const departureDate = componentData.departure?.at || componentData.departureDate;
+    const returnDate = componentData.arrival?.at || componentData.returnDate;
+    const airline = componentData.airline || 'N/A';
+    const flightNumber = componentData.flightNumber || '';
+    const duration = componentData.duration || '';
+    const numberOfStops = componentData.numberOfStops || 0;
+    
+    // Descrição detalhada
+    const description = componentData.description || 
+        `Voo ${airline} ${flightNumber} - ${origin} → ${destination} - Duração: ${duration} - Paradas: ${numberOfStops}`;
+    
+    const component = await PackageComponents.create({
         packageId: componentData.packageId,
-        name: `${origin} to ${destination} flight`,
+        name: `${airline} ${flightNumber} - ${origin} → ${destination}`,
         type: 'FLIGHT',
         description,
-        amadeusId,
-        moneyPrice: Number(moneyPrice ?? 0),
-        milesPrice: Number(milesPrice ?? 0),
+        amadeusId: componentData.id || componentData.amadeusId,
+        moneyPrice: Number(componentData.moneyPrice ?? 0),
+        milesPrice: Number(componentData.milesPrice ?? 0),
         origin,
         destination,
         departureDate,
         returnDate
     }, {transaction});
+    
+    console.log('✅ Voo criado:', component.toJSON());
+    return component;
 };
 
 export const createHotelComponent = async (componentData, transaction = null) => {
-    const { checkin, checkout, name, description, amadeusId, moneyPrice, milesPrice } = componentData;
+    console.log('🏨 Criando componente de hotel:', componentData);
     
-    return await PackageComponents.create({
+    const name = componentData.hotel?.name || componentData.name || 'Hotel';
+    const checkin = componentData.checkin;
+    const checkout = componentData.checkout;
+    const description = componentData.description || `Estadia de ${checkin} a ${checkout}`;
+    
+    const component = await PackageComponents.create({
         packageId: componentData.packageId,
         type: 'HOTEL',
-        name: name || `Hotel stay from ${checkin} to ${checkout}`,
-        description: description || `Estadia de ${checkin} a ${checkout}`,
-        amadeusId,
-        moneyPrice: Number(moneyPrice ?? 0),
-        milesPrice: Number(milesPrice ?? 0),
+        name: name,
+        description: description,
+        amadeusId: componentData.id || componentData.amadeusId,
+        moneyPrice: Number(componentData.moneyPrice ?? 0),
+        milesPrice: Number(componentData.milesPrice ?? 0),
         checkin,
         checkout
     }, {transaction});
+    
+    console.log('✅ Hotel criado:', component.toJSON());
+    return component;
 };
 
 export const createActivityComponent = async (componentData, transaction = null) => {
-    const { description, amadeusId, moneyPrice, milesPrice, destination } = componentData;
-    return await PackageComponents.create({
+    console.log('🎯 Criando componente de atividade:', componentData);
+    
+    const name = componentData.name || `Atividade`;
+    const description = componentData.description || componentData.shortDescription || '';
+    const destination = componentData.destination;
+    
+    const component = await PackageComponents.create({
         packageId: componentData.packageId,
-        name: `Activity in ${destination}`,
+        name: name,
         type: 'ACTIVITY',
         description,
-        amadeusId,
-        moneyPrice: Number(moneyPrice ?? 0),
-        milesPrice: Number(milesPrice ?? 0),
+        amadeusId: componentData.id || componentData.amadeusId,
+        moneyPrice: Number(componentData.moneyPrice ?? 0),
+        milesPrice: Number(componentData.milesPrice ?? 0),
         destination,
     }, {transaction});
+    
+    console.log('✅ Atividade criada:', component.toJSON());
+    return component;
 };
 
 export const createCarRentalComponent = async (componentData, transaction = null) => {
-    const {description, amadeusId, moneyPrice, milesPrice, destination} = componentData;
-    return await PackageComponents.create({
+    console.log('🚗 Criando componente de carro:', componentData);
+    
+    const vehicleInfo = componentData.vehicle || {};
+    const name = `${vehicleInfo.make || 'Carro'} ${vehicleInfo.model || ''}`.trim() || 'Aluguel de Carro';
+    const description = componentData.description || 
+        `${vehicleInfo.category || ''} - ${vehicleInfo.transmission || ''}`.trim();
+    const destination = componentData.destination;
+    
+    const component = await PackageComponents.create({
         packageId: componentData.packageId,
-        name: `Car rental in ${destination}`,
+        name: name,
         type: 'CAR_RENTAL',
         description,
-        amadeusId,
-        moneyPrice: Number(moneyPrice ?? 0),
-        milesPrice: Number(milesPrice ?? 0),
+        amadeusId: componentData.id || componentData.amadeusId,
+        moneyPrice: Number(componentData.moneyPrice ?? 0),
+        milesPrice: Number(componentData.milesPrice ?? 0),
         destination,
     }, {transaction});
+    
+    console.log('✅ Carro criado:', component.toJSON());
+    return component;
 };

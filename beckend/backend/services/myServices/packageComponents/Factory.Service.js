@@ -15,10 +15,10 @@ export const createComponent = async (req, res) => {
     const transaction = await db.sequelize.transaction();
     
     try {
-      
-        const { type, packageId, ...componentData } = req.body;
+        console.log('📦 Criando componente:', JSON.stringify(req.body, null, 2));
         
-      
+        const { type, packageId, item, ...componentData } = req.body;
+        
         if (!type) {
             await transaction.rollback();
             return res.status(400).json({
@@ -35,7 +35,6 @@ export const createComponent = async (req, res) => {
             });
         }
         
-       
         const travelPackage = await TravelPackage.findByPk(packageId, { transaction });
         if (!travelPackage) {
             await transaction.rollback();
@@ -45,18 +44,13 @@ export const createComponent = async (req, res) => {
             });
         }
         
-
-        if (travelPackage.agentId !== req.user.id) {
-            await transaction.rollback();
-            return res.status(403).json({
-                success: false,
-                message: 'Você não tem permissão para adicionar componentes a este pacote'
-            });
-        }
+        // Se os dados vêm dentro de 'item', usa item, senão usa componentData
+        const actualData = item || componentData;
         
-   
+        console.log('📦 Dados do componente:', actualData);
+        
         const componentDataWithPackage = {
-            ...componentData,
+            ...actualData,
             packageId  
         };
         
@@ -108,7 +102,7 @@ export const createComponent = async (req, res) => {
     }
 };
 
-//criar em batch
+
 export const createComponents = async (req, res) => {
     const transaction = await db.sequelize.transaction();
     

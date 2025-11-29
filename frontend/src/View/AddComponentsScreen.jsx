@@ -57,7 +57,7 @@ export default function AddComponentsScreen({ route }) {
                     title="Adicionar Voo"
                     description="Adicione voos ao pacote"
                     color="#3b82f6"
-                    onPress={() => navigation.navigate('SelecionarComponentes', { travelPackage, type: 'flights' })}
+                    onPress={() => navigation.navigate('SelecionarComponentes', { travelPackage: travelPackage, type: 'FLIGHT' })}
                 />
 
                 <ComponentButton
@@ -65,7 +65,7 @@ export default function AddComponentsScreen({ route }) {
                     title="Adicionar Hotel"
                     description="Adicione hospedagem ao pacote"
                     color="#8b5cf6"
-                    onPress={() => navigation.navigate('SelecionarComponentes', { travelPackage, type: 'hotels' })}
+                    onPress={() => navigation.navigate('SelecionarComponentes', { travelPackage: travelPackage, type: 'HOTEL' })}
                 />
 
                 <ComponentButton
@@ -73,7 +73,7 @@ export default function AddComponentsScreen({ route }) {
                     title="Adicionar Atividade"
                     description="Adicione passeios e atividades"
                     color="#f59e0b"
-                    onPress={() => navigation.navigate('SelecionarComponentes', { travelPackage, type: 'activities' })}
+                    onPress={() => navigation.navigate('SelecionarComponentes', { travelPackage: travelPackage, type: 'ACTIVITY' })}
                 />
 
                 <ComponentButton
@@ -81,7 +81,7 @@ export default function AddComponentsScreen({ route }) {
                     title="Adicionar Carro"
                     description="Adicione aluguel de carro"
                     color="#10b981"
-                    onPress={() => navigation.navigate('SelecionarComponentes', { travelPackage, type: 'cars' })}
+                    onPress={() => navigation.navigate('SelecionarComponentes', { travelPackage: travelPackage, type: 'CAR_RENTAL' })}
                 />
 
                 <View style={styles.infoBox}>

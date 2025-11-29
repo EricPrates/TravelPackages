@@ -1,19 +1,21 @@
 import { FlatList, View, StyleSheet, SafeAreaView, Text, TouchableOpacity, Image } from "react-native";
 import { Searchbar } from "react-native-paper";
 import HomeController from "../controller/Home.controller";
+import { useNavigation } from "@react-navigation/native";
 
 export default function HomeScreen() {
     const {
         state: { packages, isLoading, error, searchQuery },
         actions: { setSearchQuery, clearSearch, fetchPackagesData }
     } = HomeController();
+    const navigation = useNavigation();
 
     const renderPackageItem = ({ item }) => (
-        <TouchableOpacity style={styles.packageCard}>
-            <Image 
-                source={{ uri: item.images?.[0] || 'https://via.placeholder.com/300' }} 
+        <TouchableOpacity style={styles.packageCard} onPress={() => navigation.navigate('PackageDetails', { travelPackage: item })}>
+            <Image
+                source={{ uri: item.images?.[0] || null }}
                 style={styles.cardImage}
-                defaultSource={{ uri: 'https://via.placeholder.com/300' }}
+                defaultSource={{ uri: null }}
             />
             <View style={styles.cardContent}>
                 <Text style={styles.packageTitle}>{item.title}</Text>
@@ -24,7 +26,7 @@ export default function HomeScreen() {
                     {item.description}
                 </Text>
                 <View style={styles.priceContainer}>
-                    <Text style={styles.packagePrice}>${item.totalMoneyPrice}</Text>
+                    <Text style={styles.packagePrice}>${item.totalMoneyPrice.toFixed(2)}</Text>
                     <Text style={styles.packageMiles}>{item.totalMilesPrice} milhas</Text>
                 </View>
                 <View style={styles.datesContainer}>
@@ -36,8 +38,8 @@ export default function HomeScreen() {
                     <Text style={styles.availableSlots}>
                         ✅ {item.availableSlots} vagas de {item.numberOfTravelers}
                     </Text>
-                    <Text style={[styles.status, 
-                        item.status?.toUpperCase() === 'AVAILABLE' ? styles.statusAvailable : styles.statusUnavailable
+                    <Text style={[styles.status,
+                    item.status?.toUpperCase() === 'AVAILABLE' ? styles.statusAvailable : styles.statusUnavailable
                     ]}>
                         {item.status?.toUpperCase() === 'AVAILABLE' ? 'Disponível' : 'Esgotado'}
                     </Text>
@@ -46,7 +48,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
     );
 
-    
+
     if (isLoading) {
         return (
             <View style={styles.centerContainer}>
@@ -60,7 +62,7 @@ export default function HomeScreen() {
             <View style={styles.centerContainer}>
                 <Text style={styles.errorText}>Erro ao carregar pacotes</Text>
                 <Text style={styles.errorMessage}>{error}</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.retryButton}
                     onPress={fetchPackagesData}
                 >
@@ -73,7 +75,7 @@ export default function HomeScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
-               
+
                 <View style={styles.header}>
                     <Text style={styles.greeting}>Descubra Seu Próximo Destino! 🌎</Text>
                     <Text style={styles.subtitle}>
@@ -81,7 +83,7 @@ export default function HomeScreen() {
                     </Text>
                 </View>
 
-               
+
                 <Searchbar
                     placeholder="Buscar por destino, origem, título..."
                     onChangeText={setSearchQuery}
@@ -89,16 +91,17 @@ export default function HomeScreen() {
                     style={styles.searchBar}
                 />
 
-                
+
                 {searchQuery ? (
                     <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
                         <Text style={styles.clearButtonText}>Limpar busca</Text>
                     </TouchableOpacity>
                 ) : null}
 
-               
+
                 <FlatList
                     data={packages}
+                    onPress={() => { }}
                     renderItem={renderPackageItem}
                     keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
                     contentContainerStyle={styles.listContent}
@@ -110,7 +113,7 @@ export default function HomeScreen() {
                                 {searchQuery ? 'Nenhum pacote encontrado' : 'Nenhum pacote disponível'}
                             </Text>
                             <Text style={styles.emptyStateText}>
-                                {searchQuery 
+                                {searchQuery
                                     ? 'Tente ajustar os termos da sua busca'
                                     : 'Volte mais tarde para novos pacotes'
                                 }

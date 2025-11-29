@@ -10,6 +10,7 @@ import AdminPanelScreen from './src/View/AdminPanelScreen';
 import CreatePackageScreen from './src/View/CreatePackageScreen';
 import AddComponentScreen from './src/View/AddComponentsScreen';
 import SelectComponentScreen from './src/View/SelectComponentScreen';
+import PackageDetailsScreen from './src/View/PackageDetailsScreen';
 const Stack = createStackNavigator();
 
 function AppNavigator() {
@@ -31,6 +32,7 @@ function AppNavigator() {
         <Stack.Screen name="CriarPacote" component={CreatePackageScreen} options={{ headerShown: false }} />
         <Stack.Screen name="AdicionarComponentes" component={AddComponentScreen} options={{ headerShown: false }} />
         <Stack.Screen name="SelecionarComponentes" component={SelectComponentScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="PackageDetails" component={PackageDetailsScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
     );

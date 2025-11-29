@@ -1,90 +1,142 @@
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { View, Text, TouchableOpacity, FlatList, StyleSheet } from "react-native";
-import { useAuth } from "../AuthContext";
-
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import ComponentsController from "../controller/Components.controller";
+import { Snackbar, Provider as PaperProvider } from 'react-native-paper';
+import { useState } from "react";
+import { useNavigation } from '@react-navigation/native';
 export default function SelectedComponentScreen() {
-    const { travelPackage, type, fetchComponents, allComponents, isLoading } = ComponentsController();
+    const { travelPackage, fetchComponents, allComponents, isLoading, error, addComponentToPackage } = ComponentsController();
+    const [visible, setVisible] = useState(false);
+    const [message, setMessage] = useState('');
+    const navigation = useNavigation();
+    const showSnackbar = (msg) => {
+        if (error) {
+            msg = error;
+        }
+        setMessage(msg);
+        setVisible(true);
+    };
 
-    const renderPackageItem = ({ item }) => (
-        <TouchableOpacity style={styles.packageCard}>
-            <View style={styles.cardImagePlaceholder}>
-                <Text style={styles.cardImageText}>
-                    {item.type === 'FLIGHT' ? '✈️' :
-                        item.type === 'HOTEL' ? '🏨' :
-                            item.type === 'ACTIVITY' ? '🎯' : '🚗'}
-                </Text>
-            </View>
+    const renderPackageItem = ({ item }) => {
 
-            <View style={styles.cardContent}>
-                {/* Nome e Tipo */}
-                <Text style={styles.packageTitle}>{item.name}</Text>
-                <Text style={styles.packageType}>
-                    {item.type === 'FLIGHT' ? 'Voo' :
-                        item.type === 'HOTEL' ? 'Hotel' :
-                            item.type === 'ACTIVITY' ? 'Atividade' : 'Aluguel de Carro'}
-                </Text>
+        const itemType = item.type?.includes('flight') ? 'FLIGHT' :
+            item.type?.includes('hotel') ? 'HOTEL' :
+                item.type?.includes('activity') ? 'ACTIVITY' :
+                    item.type?.includes('car') ? 'CAR_RENTAL' : item.type;
 
-                {/* Informações específicas por tipo */}
-                {item.type === 'FLIGHT' && (
-                    <Text style={styles.packageDestination}>
-                        🛫 {item.origin} → 🛬 {item.destination}
+        return (
+            <TouchableOpacity style={styles.packageCard} onPress={() => { addComponentToPackage(itemType, travelPackage.id, item);
+             showSnackbar('Componente adicionado ao pacote!')
+             navigation.navigate('AdicionarComponentes', { travelPackage: travelPackage });
+             }}>
+                <View style={styles.cardImagePlaceholder}>
+                    <Text style={styles.cardImageText}>
+                        {itemType === 'FLIGHT' ? '✈️' :
+                            itemType === 'HOTEL' ? '🏨' :
+                                itemType === 'ACTIVITY' ? '🎯' : '🚗'}
                     </Text>
-                )}
-
-                {item.type === 'HOTEL' && (
-                    <Text style={styles.packageDates}>
-                        🏨 Check-in: {new Date(item.checkin).toLocaleDateString()}
-                        {' → '}Check-out: {new Date(item.checkout).toLocaleDateString()}
-                    </Text>
-                )}
-
-                {item.type === 'CAR_RENTAL' && (
-                    <Text style={styles.packageDates}>
-                        🚗 Período: {new Date(item.departureDate).toLocaleDateString()}
-                        {' → '}{new Date(item.returnDate).toLocaleDateString()}
-                    </Text>
-                )}
-
-                {/* Descrição */}
-                <Text style={styles.packageDescription} numberOfLines={2}>
-                    {item.description || 'Sem descrição'}
-                </Text>
-
-                {/* Preços */}
-                <View style={styles.priceContainer}>
-                    {item.moneyPrice > 0 && (
-                        <Text style={styles.packagePrice}>R$ {item.moneyPrice.toFixed(2)}</Text>
-                    )}
-                    {item.milesPrice > 0 && (
-                        <Text style={styles.packageMiles}>{item.milesPrice} milhas</Text>
-                    )}
                 </View>
 
-                {/* Datas para voos e atividades */}
-                {(item.type === 'FLIGHT' || item.type === 'ACTIVITY') && item.departureDate && (
-                    <View style={styles.datesContainer}>
-                        <Text style={styles.packageDates}>
-                            📅 {new Date(item.departureDate).toLocaleDateString()}
-                            {item.returnDate && ` - ${new Date(item.returnDate).toLocaleDateString()}`}
-                        </Text>
-                    </View>
-                )}
+                <View style={styles.cardContent}>
 
-                {/* ID da Amadeus (se existir) */}
-                {item.amadeusId && (
-                    <Text style={styles.amadeusId}>ID: {item.amadeusId}</Text>
-                )}
-            </View>
-        </TouchableOpacity>
-    );
+                    <Text style={styles.packageTitle}>
+                        {item.airline ? `${item.airline} ${item.flightNumber}` :
+                            item.name || 'Sem nome'}
+                    </Text>
+                    <Text style={styles.packageType}>
+                        {itemType === 'FLIGHT' ? 'Voo' :
+                            itemType === 'HOTEL' ? 'Hotel' :
+                                itemType === 'ACTIVITY' ? 'Atividade' : 'Aluguel de Carro'}
+                    </Text>
+
+
+                    {itemType === 'FLIGHT' && (
+                        <>
+                            <Text style={styles.packageDestination}>
+                                🛫 {item.departure?.iataCode || item.origin} → 🛬 {item.arrival?.iataCode || item.destination}
+                            </Text>
+                            <Text style={styles.packageDates}>
+                                📅 {item.departure?.at ? new Date(item.departure.at).toLocaleString('pt-BR', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                }) : 'Data não disponível'}
+                            </Text>
+                            <Text style={styles.packageDescription}>
+                                ⏱️ Duração: {item.duration || 'N/A'} | Paradas: {item.numberOfStops || 0}
+                            </Text>
+                        </>
+                    )}
+
+                    {itemType === 'HOTEL' && (
+                        <Text style={styles.packageDates}>
+                            🏨 Check-in: {new Date(item.checkin).toLocaleDateString()}
+                            {' → '}Check-out: {new Date(item.checkout).toLocaleDateString()}
+                        </Text>
+                    )}
+
+                    {itemType === 'CAR_RENTAL' && (
+                        <Text style={styles.packageDates}>
+                            🚗 Período: {new Date(item.departureDate).toLocaleDateString()}
+                            {' → '}{new Date(item.returnDate).toLocaleDateString()}
+                        </Text>
+                    )}
+
+
+                    {itemType !== 'FLIGHT' && (
+                        <Text style={styles.packageDescription} numberOfLines={2}>
+                            {item.description || 'Sem descrição'}
+                        </Text>
+                    )}
+
+
+                    <View style={styles.priceContainer}>
+                        {item.moneyPrice > 0 && (
+                            <Text style={styles.packagePrice}>R$ {item.moneyPrice.toFixed(2)}</Text>
+                        )}
+                        {item.milesPrice > 0 && (
+                            <Text style={styles.packageMiles}>{item.milesPrice.toLocaleString('pt-BR')} milhas</Text>
+                        )}
+                    </View>
+
+
+                    {item.id && (
+                        <Text style={styles.amadeusId}>ID: {item.id}</Text>
+                    )}
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
+
     if (isLoading) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text>Carregando componentes...</Text>
+            <View style={{
+                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)'
+            }}>
+                <ActivityIndicator size="large" color="#6366f1" />
+                <Text style={{ color: '#1e293b', marginTop: 10, fontSize: 16 }}>Carregando opções...</Text>
             </View>
         );
     }
+
+    if (error) {
+        return (
+            <View style={styles.centerContainer}>
+                <Text style={styles.errorEmoji}>⚠️</Text>
+                <Text style={styles.errorTitle}>Erro ao buscar componentes</Text>
+                <Text style={styles.errorMessage}>{error}</Text>
+                <TouchableOpacity
+                    style={styles.retryButton}
+                    onPress={fetchComponents}
+                >
+                    <Text style={styles.retryButtonText}>🔄 Tentar Novamente</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
     return (
         <FlatList
             data={allComponents}
@@ -116,23 +168,35 @@ export default function SelectedComponentScreen() {
                 allComponents.length > 0 ? (
                     <View style={styles.listHeader}>
                         <Text style={styles.listHeaderTitle}>
-                            {allComponents.length} componente{allComponents.length !== 1 ? 's' : ''} no pacote
+                            {allComponents.length} opç{allComponents.length !== 1 ? 'ões' : 'ão'} disponível{allComponents.length !== 1 ? 'is' : ''}
                         </Text>
                         <View style={styles.componentsSummary}>
                             <Text style={styles.summaryText}>
-                                ✈️ {allComponents.filter(item => item.type === 'FLIGHT').length} voos
+                                ✈️ {allComponents.filter(item => item.type?.includes('flight')).length} voos
                             </Text>
                             <Text style={styles.summaryText}>
-                                🏨 {allComponents.filter(item => item.type === 'HOTEL').length} hotéis
+                                🏨 {allComponents.filter(item => item.type?.includes('hotel')).length} hotéis
                             </Text>
                             <Text style={styles.summaryText}>
-                                🎯 {allComponents.filter(item => item.type === 'ACTIVITY').length} atividades
+                                🎯 {allComponents.filter(item => item.type?.includes('activity')).length} atividades
                             </Text>
                             <Text style={styles.summaryText}>
-                                🚗 {allComponents.filter(item => item.type === 'CAR_RENTAL').length} carros
+                                🚗 {allComponents.filter(item => item.type?.includes('car')).length} carros
                             </Text>
                         </View>
+                        <Snackbar
+                            visible={visible}
+                            onDismiss={(() => setVisible(false))}
+                            duration={3000}
+                            action={{
+                                label: 'Fechar',
+                                onPress: (() => setVisible(false)),
+                            }}
+                        >
+                            {message}
+                        </Snackbar>
                     </View>
+                    
                 ) : null
             }
         />
@@ -142,6 +206,51 @@ export default function SelectedComponentScreen() {
 
 
 const styles = StyleSheet.create({
+
+    centerContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f8fafc',
+        padding: 20,
+    },
+    errorEmoji: {
+        fontSize: 64,
+        marginBottom: 16,
+    },
+    errorTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#dc2626',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    errorMessage: {
+        fontSize: 14,
+        color: '#64748b',
+        textAlign: 'center',
+        marginBottom: 24,
+        paddingHorizontal: 20,
+        lineHeight: 20,
+    },
+    retryButton: {
+        backgroundColor: '#6366f1',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 12,
+        shadowColor: '#6366f1',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    retryButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+
+    // Cards
     packageCard: {
         backgroundColor: '#fff',
         borderRadius: 12,
@@ -274,7 +383,7 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
         borderRadius: 12,
     },
-    // Mantenha os estilos anteriores do renderPackageItem...
+
     packageCard: {
         backgroundColor: '#fff',
         borderRadius: 12,

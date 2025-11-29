@@ -30,6 +30,7 @@ function authReducer(state, action) {
                 isAuthenticated: true,
                 isLoading: false,
                 error: null,
+             
             };
         case 'LOGIN_FAILURE':
             return {
@@ -64,6 +65,8 @@ export const AuthProvider = ({ children }) => {
             });
             const data = await response.json();
             if (response.ok) {
+                console.log(data.data.token.accessToken);
+                
                 dispatch({ type: 'LOGIN_SUCCESS', payload: { user: data.data.user, token: data.data.token.accessToken } });
             } else {
                 dispatch({ type: 'LOGIN_FAILURE', payload: { error: data.message } });

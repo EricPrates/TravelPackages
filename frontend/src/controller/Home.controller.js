@@ -116,7 +116,7 @@ export default function HomeController() {
         } else {
             console.log('❌ Token não existe');
         }
-    }, [token]);
+    }, []);
 
     return {
         state: {

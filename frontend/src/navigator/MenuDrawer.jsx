@@ -8,7 +8,7 @@ import AdminPanelScreen from '../View/AdminPanelScreen';
 import CreatePackageScreen from '../View/CreatePackageScreen';
 import AddComponentsScreen from '../View/AddComponentsScreen';
 import SelectComponentScreen from '../View/SelectComponentScreen';
-
+import PackageDetailsScreen from '../View/PackageDetailsScreen';
 const Drawer = createDrawerNavigator();
 export default function MenuDrawer() {
   const { user } = useAuth();
@@ -71,6 +71,13 @@ export default function MenuDrawer() {
               <MaterialCommunityIcons name="puzzle-plus" size={size} color={color} />
             )
           }} component={SelectComponentScreen} />
+          <Drawer.Screen name="PackageDetails" options={{
+            drawerLabel: 'Detalhes do Pacote',
+            drawerItemStyle: { display: 'none' },
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="puzzle-plus" size={size} color={color} />
+            )
+          }} component={PackageDetailsScreen} />
         </>
       )}
     </Drawer.Navigator>

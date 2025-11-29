@@ -9,7 +9,13 @@ const PackageComponents = db.PackageComponents;
 export const fetchOptions = async (req, res) => {
     try {
         const { id } = req.params;
-        const { type } = req.query; 
+        const { type } = req.query;
+        
+        console.log('🔍 fetchOptions chamado:');
+        console.log('   Package ID:', id);
+        console.log('   Type recebido:', type);
+        console.log('   Type uppercase:', type?.toUpperCase());
+        
         const travelPackage = await TravelPackage.findByPk(id);
         if (!travelPackage) return res.status(404).json({ success: false, message: 'Pacote não encontrado' });
         
@@ -21,13 +27,17 @@ export const fetchOptions = async (req, res) => {
 
         if (type) {
             const ALLOWED = ['FLIGHT', 'HOTEL', 'ACTIVITY', 'CAR_RENTAL'];
-            if (!ALLOWED.includes(type)) {
+            if (!ALLOWED.includes(type.toUpperCase())) {
                 return res.status(400).json({ success: false, message: 'Type inválido. Use FLIGHT|HOTEL|ACTIVITY|CAR_RENTAL' });
             }
 
             let options = [];
-            switch (type) {
+            const typeUpper = type.toUpperCase();
+            console.log('   Entrando no switch com:', typeUpper);
+            
+            switch (typeUpper) {
                 case 'FLIGHT':
+                    console.log('   ✈️ Buscando FLIGHTS...');
                     options = await travelDataService.searchFlights({
                         origin: travelPackage.origin,
                         destination: travelPackage.destination,
@@ -35,32 +45,41 @@ export const fetchOptions = async (req, res) => {
                         returnDate: formatDate(travelPackage.returnDate),
                         numberOfTravelers: travelPackage.numberOfTravelers || 1
                     });
+                    console.log('   ✈️ Flights encontrados:', options?.length || 0);
                     break;
                 case 'HOTEL':
+                    console.log('   🏨 Buscando HOTELS...');
                     options = await travelDataService.searchHotels({
                         destination: travelPackage.destination,
                         checkin: formatDate(travelPackage.departureDate),
                         checkout: formatDate(travelPackage.returnDate),
                         numberOfTravelers: travelPackage.numberOfTravelers || 1
                     });
+                    console.log('   🏨 Hotels encontrados:', options?.length || 0);
                     break;
                 case 'ACTIVITY':
+                    console.log('   🎯 Buscando ACTIVITIES...');
                     options = await travelDataService.searchActivities({
                         destination: travelPackage.destination
                     });
+                    console.log('   🎯 Activities encontradas:', options?.length || 0);
                     break;
                 case 'CAR_RENTAL':
+                    console.log('   🚗 Buscando CAR_RENTALS...');
                     options = await travelDataService.searchCarRentals({
                         destination: travelPackage.destination,
                         checkin: formatDate(travelPackage.departureDate),
                         checkout: formatDate(travelPackage.returnDate)
                     });
+                    console.log('   🚗 Cars encontrados:', options?.length || 0);
                     break;
             }
 
+            console.log('   📦 Retornando', options?.length || 0, 'opções do tipo', typeUpper);
+            
             return res.status(200).json({ 
                 success: true, 
-                type, 
+                type: typeUpper, 
                 options: options
             });
         }

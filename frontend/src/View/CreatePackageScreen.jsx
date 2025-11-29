@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 export default function CreatePackageScreen() {
     const navigation = useNavigation();
     const { handleSavePackage, isLoading, handleChangeBasicPackage, packageData, error, deletePackage } = AdminPanelController();
-
+  
     const handleCreatePackage = async () => {
         const result = await handleSavePackage();
 

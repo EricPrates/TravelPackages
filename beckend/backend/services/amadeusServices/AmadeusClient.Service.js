@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { getCityCode, analyzeCode } from '../../utils/airportToCityMapping.js';
 dotenv.config();
 
 export class AmadeusClient {
@@ -200,10 +201,16 @@ export class AmadeusClient {
     async searchHotels(params) {
         const { destination, checkin, checkout, numberOfTravelers } = params;
         try {
-         
-            
             const token = await this.getAccessToken();
-            const cityCode = destination;
+            
+            // Converter código de aeroporto para código de cidade
+            const cityCode = getCityCode(destination);
+            const codeInfo = analyzeCode(destination);
+            
+            console.log(`🏨 Buscando hotéis em ${destination}...`);
+            if (codeInfo.needsConversion) {
+                console.log(`   ℹ️  Convertido: ${destination} (aeroporto) → ${cityCode} (cidade)`);
+            }
 
             const url = new URL(`${this.baseURL}/v2/shopping/hotel-offers`);
             url.searchParams.append('cityCode', cityCode);
@@ -311,10 +318,16 @@ export class AmadeusClient {
     async searchCarRentals(params) {
         const { destination, checkin, checkout } = params;
         try {
-            console.log(`🚗 Buscando carros em ${destination}...`);
-            
             const token = await this.getAccessToken();
-            const cityCode = destination;
+            
+            // Converter código de aeroporto para código de cidade
+            const cityCode = getCityCode(destination);
+            const codeInfo = analyzeCode(destination);
+            
+            console.log(`🚗 Buscando carros em ${destination}...`);
+            if (codeInfo.needsConversion) {
+                console.log(`   ℹ️  Convertido: ${destination} (aeroporto) → ${cityCode} (cidade)`);
+            }
 
             const url = new URL(`${this.baseURL}/v1/shopping/car-rental-offers`);
             url.searchParams.append('cityCode', cityCode);
