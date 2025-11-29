@@ -139,6 +139,12 @@ export default function DashboardScreen() {
                 <Text style={styles.sectionTitle}>📈 Status das Compras</Text>
                 <View style={styles.statusContainer}>
                     <View style={styles.statusItem}>
+                        <Text style={[styles.statusValue, { color: '#f59e0b' }]}>
+                            {periodStats.purchasesByStatus.pending}
+                        </Text>
+                        <Text style={styles.statusLabel}>Pendentes</Text>
+                    </View>
+                    <View style={styles.statusItem}>
                         <Text style={styles.statusValue}>{periodStats.purchasesByStatus.confirmed}</Text>
                         <Text style={styles.statusLabel}>Confirmadas</Text>
                     </View>
@@ -147,12 +153,6 @@ export default function DashboardScreen() {
                             {periodStats.purchasesByStatus.cancelled}
                         </Text>
                         <Text style={styles.statusLabel}>Canceladas</Text>
-                    </View>
-                    <View style={styles.statusItem}>
-                        <Text style={[styles.statusValue, { color: '#f59e0b' }]}>
-                            {periodStats.purchasesByStatus.refunded}
-                        </Text>
-                        <Text style={styles.statusLabel}>Reembolsadas</Text>
                     </View>
                 </View>
             </View>
