@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../AuthContext";
 import { useNavigation } from "@react-navigation/native";
-import { FlatList, Text, View, StyleSheet } from "react-native";
+import { FlatList, Text, View, StyleSheet, TouchableOpacity, TextInput } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
-
+import PackageDetailsController from "../controller/PackageDetails.controller";
 export default function PackageDetailsScreen({ route }) {
     const navigation = useNavigation();
     const { travelPackage } = route.params;
     const [isLoading, setIsLoading] = useState(false);
-    const { components, title, departureDate, returnDate, status, description } = travelPackage;
-    
+    const { components, id, title, departureDate, returnDate, status, description } = travelPackage;
+    const { verifyType, getStatusColor, getTypeColor } = PackageDetailsController();
+
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>
@@ -19,48 +20,7 @@ export default function PackageDetailsScreen({ route }) {
         );
     }
 
-    const verifyType = (item) => {
-        if (item.type === 'FLIGHT') {
-            return '✈️ Voo';
-        } else if (item.type === 'HOTEL') {
-            return '🏨 Hotel';
-        } else if (item.type === 'CAR_RENTAL') {
-            return '🚗 Aluguel de Carro';
-        } else if (item.type === 'ACTIVITY') {
-            return '🎯 Atividade';
-        }
-        return item.type;
-    };
-
-    const getStatusColor = (status) => {
-        switch (status?.toUpperCase()) {
-            case 'AVAILABLE':
-                return '#10B981'; 
-            case 'CONFIRMED':
-                return '#3B82F6';
-            case 'CANCELLED':
-                return '#EF4444'; 
-            case 'PENDING':
-                return '#F59E0B';
-            default:
-                return '#6B7280'; 
-        }
-    };
-
-    const getTypeColor = (type) => {
-        switch (type) {
-            case 'FLIGHT':
-                return '#3B82F6';
-            case 'HOTEL':
-                return '#8B5CF6';
-            case 'CAR_RENTAL':
-                return '#F59E0B';
-            case 'ACTIVITY':
-                return '#10B981'; 
-            default:
-                return '#6B7280'; 
-        }
-    };
+   
 
     const renderDetails = ({ item }) => (
         <View style={styles.componentCard}>
@@ -70,11 +30,11 @@ export default function PackageDetailsScreen({ route }) {
                     <Text style={styles.typeText}>{verifyType(item)}</Text>
                 </View>
             </View>
-            
+
             {item.description && (
                 <Text style={styles.componentDescription}>{item.description}</Text>
             )}
-            
+
             <View style={styles.priceContainer}>
                 {item.moneyPrice > 0 && (
                     <Text style={styles.moneyPrice}>R$ {item.moneyPrice.toFixed(2)}</Text>
@@ -83,7 +43,7 @@ export default function PackageDetailsScreen({ route }) {
                     <Text style={styles.milesPrice}>{item.milesPrice.toLocaleString()} milhas</Text>
                 )}
             </View>
-            
+
             {item.details && (
                 <Text style={styles.componentDetails}>Detalhes: {item.details}</Text>
             )}
@@ -92,28 +52,29 @@ export default function PackageDetailsScreen({ route }) {
 
     return (
         <View style={styles.container}>
-           
+
             <View style={styles.header}>
                 <Text style={styles.title}>{title}</Text>
+                <Text>{id}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(status) }]}>
                     <Text style={styles.statusText}>{status?.toUpperCase() || 'NÃO DEFINIDO'}</Text>
                 </View>
             </View>
 
-           
+
             <View style={styles.packageInfo}>
                 <View style={styles.dateContainer}>
                     <Text style={styles.dateLabel}>🛫 Partida</Text>
                     <Text style={styles.dateValue}>{new Date(departureDate).toLocaleDateString('pt-BR')}</Text>
                 </View>
-                
+
                 <View style={styles.dateContainer}>
                     <Text style={styles.dateLabel}>🛬 Retorno</Text>
                     <Text style={styles.dateValue}>{new Date(returnDate).toLocaleDateString('pt-BR')}</Text>
                 </View>
             </View>
 
-        
+
             {description && (
                 <View style={styles.descriptionContainer}>
                     <Text style={styles.descriptionLabel}>📝 Descrição</Text>
@@ -123,7 +84,7 @@ export default function PackageDetailsScreen({ route }) {
 
             <View style={styles.componentsSection}>
                 <Text style={styles.componentsTitle}>🧩 Componentes do Pacote</Text>
-                
+
                 {components && components.length > 0 ? (
                     <FlatList
                         data={components}
@@ -135,19 +96,48 @@ export default function PackageDetailsScreen({ route }) {
                 ) : (
                     <View style={styles.emptyState}>
                         <Text style={styles.emptyStateEmoji}>📦</Text>
-                        <Text style={styles.emptyStateText}>Nenhum componente adicionado</Text>
+                        <Text style={styles.emptyStateText}>Nenhum componente</Text>
                         <Text style={styles.emptyStateSubtext}>Adicione voos, hotéis e outros componentes ao pacote</Text>
+
                     </View>
+
+
                 )}
+                <View>
+                    <TouchableOpacity onPress={() => { }} style={styles.refreshButton}>
+                        <Text style={styles.refreshButtonText}>Comprar pacote</Text>
+                    </TouchableOpacity>
+                    
+                </View>
             </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
+    refreshButtonText: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '600',
+        fontFamily: 'System',
+    },
     container: {
         flex: 1,
         backgroundColor: '#F8FAFC',
+    },
+    refreshButton: {
+        backgroundColor: '#6366f1',
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        shadowColor: '#6366f1',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        }, shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 5,
+        marginBottom: 20,
     },
     loadingContainer: {
         position: 'absolute',

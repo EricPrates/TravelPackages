@@ -5,6 +5,7 @@ const TravelPackage = db.TravelPackage;
 const Purchase = db.Purchase;
 const Wallet = db.Wallet;
 const WalletTransaction = db.WalletTransaction;
+const PackageComponents = db.PackageComponents;
 const sequelize = db.sequelize;
 
 const MILES_EARNED_RATE = 0.01;
@@ -140,12 +141,36 @@ async function getWallet(userId, transaction = null) {
 async function validatePurchaseData(userId, packageId, paymentChoice, transaction) {
     const [user, travelPackage, wallet] = await Promise.all([
         Users.findByPk(userId, { transaction }),
-        TravelPackage.findByPk(packageId, { transaction }),
+        TravelPackage.findByPk(packageId, { 
+            include: [{
+                model: PackageComponents,
+                as: 'components'
+            }],
+            transaction 
+        }),
         getWallet(userId, transaction)
     ]);
 
     if (!user) throw new Error('Usuário não encontrado.');
     if (!travelPackage) throw new Error('Pacote não encontrado.');
+    
+    // Recalcular preços com base nos componentes
+    if (travelPackage.components && travelPackage.components.length > 0) {
+        travelPackage.totalMoneyPrice = travelPackage.components.reduce((sum, comp) => 
+            sum + parseFloat(comp.moneyPrice || 0), 0
+        );
+        travelPackage.totalMilesPrice = travelPackage.components.reduce((sum, comp) => 
+            sum + parseFloat(comp.milesPrice || 0), 0
+        );
+    }
+    
+    console.log('📦 Pacote carregado:', {
+        id: travelPackage.id,
+        title: travelPackage.title,
+        components: travelPackage.components?.length || 0,
+        totalMoneyPrice: travelPackage.totalMoneyPrice,
+        totalMilesPrice: travelPackage.totalMilesPrice
+    });
     
     return { user, travelPackage, wallet };
 }

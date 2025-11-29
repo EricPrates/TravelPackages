@@ -1,6 +1,7 @@
 import { Text, View, TouchableOpacity, ActivityIndicator, StyleSheet, ScrollView } from "react-native";
 import { useAuth } from "../AuthContext";
 import WalletScreenController from "../controller/WalletScreen.controller";
+import { TextInput } from "react-native-gesture-handler";
 
 export default function Carteira() {
     const { user } = useAuth();
@@ -11,9 +12,12 @@ export default function Carteira() {
         balanceMiles,
         id,
         userId,
-        actions: { fetchWalletData },
+        amount,
+        setAmount,
+        handleDeposit,
+        fetchWalletData,
     } = WalletScreenController();
-   
+
 
     if (isLoading) {
         return (
@@ -46,7 +50,7 @@ export default function Carteira() {
     return (
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
-               
+
                 <View style={styles.header}>
                     <View style={styles.avatar}>
                         <Text style={styles.avatarText}>
@@ -59,9 +63,9 @@ export default function Carteira() {
                     <Text style={styles.subtitle}>Gerencie sua conta e visualize seus saldos</Text>
                 </View>
 
-      
+
                 <View style={styles.balancesContainer}>
-                  
+
                     <View style={[styles.balanceCard, styles.cashCard]}>
                         <View style={styles.cardHeader}>
                             <Text style={styles.cardIcon}>💵</Text>
@@ -71,7 +75,7 @@ export default function Carteira() {
                         <Text style={styles.balanceLabel}>Disponível para uso</Text>
                     </View>
 
-             
+
                     <View style={[styles.balanceCard, styles.milesCard]}>
                         <View style={styles.cardHeader}>
                             <Text style={styles.cardIcon}>✈️</Text>
@@ -82,29 +86,27 @@ export default function Carteira() {
                     </View>
                 </View>
 
-            
-                <View style={styles.infoContainer}>
-                    <View style={styles.infoItem}>
-                        <Text style={styles.infoLabel}>ID da Carteira</Text>
-                        <Text style={styles.infoValue}>{id}</Text>
-                    </View>
-                    <View style={styles.separator} />
-                    <View style={styles.infoItem}>
-                        <Text style={styles.infoLabel}>ID do Usuário</Text>
-                        <Text style={styles.infoValue}>{userId}</Text>
-                    </View>
-                </View>
-
-        
-                <TouchableOpacity onPress={fetchWalletData} style={styles.refreshButton}>
-                    <Text style={styles.refreshButtonText}>Atualizar Saldos</Text>
+                <TouchableOpacity onPress={() => handleDeposit(amount)} style={styles.refreshButton}>
+                    <Text style={styles.refreshButtonText}>Realizar Depósito</Text>
                 </TouchableOpacity>
+                <TextInput value={amount} onChangeText={setAmount} placeholder="Valor do Depósito em Dinheiro" keyboardType="numeric" style={styles.inputDeposit} />
+
             </ScrollView>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
+    inputDeposit: {
+        backgroundColor: '#ffffffff',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: '#162be2ff',
+        width: 250,
+        alignSelf: 'center',
+    },
     container: {
         flex: 1,
         backgroundColor: '#f8fafc',
