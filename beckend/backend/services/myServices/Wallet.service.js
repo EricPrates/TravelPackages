@@ -64,7 +64,7 @@ export const cashDeposit = async (req, res) => {
             type: 'DEPOSIT',
             coinType: 'CASH',
             amount: parseFloat(amount),
-            description,
+            description: `Depósito em dinheiro de R$ ${amount}`,
             date: new Date()
         }, { transaction: dbTransaction });
         await dbTransaction.commit();
