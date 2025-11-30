@@ -2,12 +2,15 @@ import { FlatList, View, StyleSheet, SafeAreaView, Text, TouchableOpacity, Image
 import { Searchbar } from "react-native-paper";
 import HomeController from "../controller/Home.controller";
 import { useNavigation } from "@react-navigation/native";
-
+import { useAuth } from "../AuthContext";
 export default function HomeScreen() {
     const {
         state: { packages, isLoading, error, searchQuery },
         actions: { setSearchQuery, clearSearch, fetchPackagesData }
     } = HomeController();
+    const { user } = useAuth();
+    const typeUser = user.type;
+
     const navigation = useNavigation();
 
     const renderPackageItem = ({ item }) => (
@@ -75,13 +78,21 @@ export default function HomeScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
-
-                <View style={styles.header}>
-                    <Text style={styles.greeting}>Descubra Seu Próximo Destino! 🌎</Text>
-                    <Text style={styles.subtitle}>
-                        {packages.length} {packages.length === 1 ? 'pacote encontrado' : 'pacotes encontrados'}
-                    </Text>
-                </View>
+                {!typeUser === 'agent' ? (
+                    <View style={styles.header}>
+                        <Text style={styles.greeting}>Descubra Seu Próximo Destino! 🌎</Text>
+                        <Text style={styles.subtitle}>
+                            {packages.length} {packages.length === 1 ? 'pacote encontrado' : 'pacotes encontrados'}
+                        </Text>
+                    </View>
+                ) : (
+                    <View style={styles.header}>
+                        <Text style={styles.greeting}>Bem Vindo Agente de Viagens ✈️</Text>
+                        <Text style={styles.subtitle}>
+                            Clique para ver detalhes e editar pacotes
+                        </Text>
+                    </View>
+                )}
 
 
                 <Searchbar

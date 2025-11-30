@@ -56,7 +56,7 @@ export default function AdminPanelScreen() {
                     title="Meus Pacotes"
                     description="Ver e editar pacotes criados"
                     color="#f59e0b"
-                    onPress={() => navigation.navigate('MyPackages')}
+                    onPress={() => navigation.navigate('Home')}
                 />
             </View>
 

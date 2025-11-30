@@ -13,6 +13,7 @@ import SelectComponentScreen from './src/View/SelectComponentScreen';
 import PackageDetailsScreen from './src/View/PackageDetailsScreen';
 import StatementScreen from './src/View/StatementScreen';
 import PurchaseDetailsScreen from './src/View/PurchaseDetailsScreen';
+import HomeScreen from './src/View/HomeScreen';
 const Stack = createStackNavigator();
 
 function AppNavigator() {
@@ -37,6 +38,7 @@ function AppNavigator() {
         <Stack.Screen name="PackageDetails" component={PackageDetailsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Extrato" component={StatementScreen} options={{ headerShown: false }} />
         <Stack.Screen name="PurchaseDetails" component={PurchaseDetailsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
     );

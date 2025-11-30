@@ -297,12 +297,7 @@ export const findOne = async (req, res) => {
 
 export const update = async (req, res) => {
     const travelPackageId = req.params.id;
-    if (!req.body.title) {
-        return res.status(400).json({
-            success: false,
-            message: "Dados são obrigatórios para atualização."
-        });
-    }
+    
     try {
         const [updated] = await TravelPackage.update(req.body, {
             where: { id: travelPackageId }

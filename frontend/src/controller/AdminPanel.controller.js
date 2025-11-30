@@ -2,30 +2,73 @@ import { useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
-export default function AdminPanelController() {
+export default function AdminPanelController(updatePackage) {
     const { token, URL, user } = useAuth();
     const navigation = useNavigation();
     const [isCreating, setIsCreating] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [packageData, setPackageData] = useState({
-            id : null,
-            title: '',
-            destination: '',
-            origin: '',
-            departureDate: '',
-            returnDate: '',
-            description: '',
-            numberOfTravelers: '1'
+            id : updatePackage ? updatePackage.id : null,
+            title: updatePackage ? updatePackage.title :    '',
+            destination: updatePackage ? updatePackage.destination : '',
+            origin: updatePackage ? updatePackage.origin : '',
+            departureDate: updatePackage ? updatePackage.departureDate : '',
+            returnDate: updatePackage ? updatePackage.returnDate : '',
+            description: updatePackage ? updatePackage.description : '',
+            numberOfTravelers: updatePackage ? updatePackage.numberOfTravelers : '1'
         });
+    
+    const updatePackageInDB = async () => {
+        setIsLoading(true);
+        setError(null);
+        console.log('Updating package with data:', packageData);
         
+        try {
+            const response = await fetch(`${URL}/travel-packages/${packageData.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(packageData),
+            });
+            
+            
+            const data = await response.json();
+            console.log('Response received:', response.status, response.ok);
+           
+            if (!response.ok) {
+                throw new Error(data.message || 'Erro ao atualizar pacote');
+            }
+            if (data.success) {
+                return { success: true, data: data.data };
+            } else {
+                throw new Error(data.message || 'Erro ao atualizar pacote');
+            }
+        } catch (err) {
+            setError(err.message);
+            return { success: false, error: err.message };
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleChangeBasicPackage = (field, value) => {
-        setPackageData(prev => ({
-            ...prev,
-            [field]: value
-        }));
+  setPackageData(prev => {
+
+    const newData = {
+      ...prev,
+      [field]: value
     };
+    
+    if (prev.id && !newData.id) {
+      newData.id = prev.id;
+    }
+    
+    return newData;
+  });
+};
 
     async function createBasicPackage(packageData) {
         setIsLoading(true);
@@ -196,5 +239,6 @@ export default function AdminPanelController() {
         user,
         packageData,
         handleChangeBasicPackage,
+        updatePackageInDB
     };
 }

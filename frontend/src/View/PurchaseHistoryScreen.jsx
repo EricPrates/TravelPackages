@@ -58,15 +58,11 @@ export default function PurchaseHistoryScreen() {
                         <Text style={styles.destination}>📍 {item.travelPackage.destination}</Text>
                     )}
                     <View style={styles.priceContainer}>
-                        <Text style={styles.totalPrice}>💰 R$ {Number(item.totalMoneyPrice || 0).toFixed(2)}</Text>
-                        <Text style={styles.totalMiles}>✈️ {Number(item.totalMilesPrice || 0).toLocaleString('pt-BR')} milhas</Text>
+                        <Text style={styles.totalPrice}>💰 R$ {Number(item.paidInMoney || 0).toFixed(2)}</Text>
+                        <Text style={styles.totalMiles}>✈️ {Number(item.paidInMiles || 0).toLocaleString('pt-BR')} milhas</Text>
                         
                     </View>
-                    <View style={{ marginTop: 6 }}>
-                        <Text style={{ color: '#64748b' }}>
-                            Pago: R$ {Number(item.paidInMoney || 0).toFixed(2)} • {Number(item.paidInMiles || 0).toLocaleString('pt-BR')} milhas
-                        </Text>
-                    </View>
+                   
                 </View>
             </TouchableOpacity>
         );
