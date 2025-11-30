@@ -173,9 +173,10 @@ export const handleGoogleCallback = async (req, res) => {
 export const login = async (req, res) => {
     const { email, password } = req.body;
     try {
-
+        console.log('🔵 Login attempt:', email);
 
         if (!email || !password) {
+            console.log('❌ Email ou senha não fornecidos');
             return res.status(400).json({
                 success: false,
                 message: "Email e senha são obrigatórios."
@@ -184,14 +185,17 @@ export const login = async (req, res) => {
 
         const findUser = await db.Users.findOne({ where: { email: email } });
 
-
         if (!findUser) {
+            console.log('❌ Usuário não encontrado:', email);
             return res.status(401).json({ success: false, message: "Usuário ou senha inválidos." });
         }
 
+        console.log('✅ Usuário encontrado, comparando senha...');
         const isPasswordValid = await bcrypt.compare(password, findUser.password);
+        console.log('🔐 Senha válida?', isPasswordValid);
 
         if (!isPasswordValid) {
+            console.log('❌ Senha inválida');
             return res.status(401).json({ success: false, message: "Usuário ou senha inválidos." });
         }
 
