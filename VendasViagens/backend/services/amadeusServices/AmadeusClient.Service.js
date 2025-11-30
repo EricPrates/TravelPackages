@@ -439,7 +439,9 @@ export class AmadeusClient {
             return responseWithPrices;
 
         } catch (error) {
-
+            console.error('❌ Erro ao buscar voos na Amadeus:', error.message);
+            console.error('   Origem:', origin, 'Destino:', destination);
+            console.error('   Datas:', departureDate, '-', returnDate);
             return [];
         }
     }

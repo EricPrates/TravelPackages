@@ -99,6 +99,94 @@ export class MockDataService {
         return days > 0 ? days : 3;
     }
 
+    searchFlights(params) {
+        const { origin, destination, departureDate, returnDate, numberOfTravelers = 1 } = params;
+        
+        const originCity = this.getCityName(origin);
+        const destCity = this.getCityName(destination);
+        const flights = [];
+        const numFlights = 3 + Math.floor(Math.random() * 3);
+        
+        const airlines = ['LATAM', 'Gol', 'Azul', 'Air France', 'TAP'];
+        
+        for (let i = 0; i < numFlights; i++) {
+            const airline = airlines[i % airlines.length];
+            const basePrice = 1500 + Math.random() * 3000;
+            const totalPrice = basePrice * numberOfTravelers;
+            
+            flights.push({
+                id: `MOCK_FLIGHT_${origin}_${destination}_${i}`,
+                type: 'flight-offer',
+                source: 'MOCK',
+                itineraries: [{
+                    duration: 'PT10H30M',
+                    segments: [{
+                        departure: {
+                            iataCode: origin,
+                            at: `${departureDate}T08:00:00`
+                        },
+                        arrival: {
+                            iataCode: destination,
+                            at: `${departureDate}T18:30:00`
+                        },
+                        carrierCode: airline.substring(0, 2).toUpperCase(),
+                        number: `${1000 + i}`,
+                        aircraft: { code: '320' },
+                        duration: 'PT10H30M',
+                        numberOfStops: i % 2
+                    }]
+                }, {
+                    duration: 'PT11H00M',
+                    segments: [{
+                        departure: {
+                            iataCode: destination,
+                            at: `${returnDate}T10:00:00`
+                        },
+                        arrival: {
+                            iataCode: origin,
+                            at: `${returnDate}T21:00:00`
+                        },
+                        carrierCode: airline.substring(0, 2).toUpperCase(),
+                        number: `${2000 + i}`,
+                        aircraft: { code: '320' },
+                        duration: 'PT11H00M',
+                        numberOfStops: i % 2
+                    }]
+                }],
+                price: {
+                    currency: 'BRL',
+                    total: totalPrice.toFixed(2),
+                    base: (totalPrice * 0.85).toFixed(2),
+                    grandTotal: totalPrice.toFixed(2)
+                },
+                pricingOptions: {
+                    fareType: ['PUBLISHED'],
+                    includedCheckedBagsOnly: true
+                },
+                validatingAirlineCodes: [airline.substring(0, 2).toUpperCase()],
+                travelerPricings: [{
+                    travelerId: '1',
+                    fareOption: 'STANDARD',
+                    travelerType: 'ADULT',
+                    price: {
+                        currency: 'BRL',
+                        total: basePrice.toFixed(2),
+                        base: (basePrice * 0.85).toFixed(2)
+                    }
+                }],
+                moneyPrice: parseFloat(totalPrice.toFixed(2)),
+                milesPrice: this.calculateMilesPrice(totalPrice, 'FLIGHT'),
+                airline: airline,
+                flightNumber: `${airline.substring(0, 2).toUpperCase()}${1000 + i}`,
+                cabin: i % 3 === 0 ? 'Business' : 'Economy',
+                stops: i % 2,
+                duration: '10h 30m'
+            });
+        }
+
+        return flights;
+    }
+
     searchHotels(params) {
         const { destination, checkin, checkout, numberOfTravelers = 1 } = params;
         

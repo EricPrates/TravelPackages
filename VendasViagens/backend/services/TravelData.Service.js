@@ -12,7 +12,17 @@ export class TravelDataService {
 
    
     async searchFlights(params) {
-        return await amadeusClient.searchFlights(params);
+        try {
+            const flights = await amadeusClient.searchFlights(params);
+            if (flights && flights.length > 0) {
+                return flights;
+            }
+            console.log('⚠️ Amadeus retornou 0 voos, usando Mock');
+            return mockDataService.searchFlights(params);
+        } catch (error) {
+            console.log('❌ Erro na Amadeus, usando Mock:', error.message);
+            return mockDataService.searchFlights(params);
+        }
     }
 
    
