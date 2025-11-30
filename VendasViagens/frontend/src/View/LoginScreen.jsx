@@ -8,8 +8,8 @@ import { useNavigation } from "@react-navigation/native";
 
 export default function LoginScreen() {
     const navigator = useNavigation();
-    const [email, setEmail] = useState('eric@agent.com');
-    const [password, setPassword] = useState('123');
+    const [email, setEmail] = useState('eric@test.com');
+    const [password, setPassword] = useState('123456');
     const [name, setName] = useState('');
    
     const { login, error, googleLogin, URL } = useAuth();

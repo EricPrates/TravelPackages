@@ -39,6 +39,9 @@ echo "🔄 Fazendo deploy no servidor AWS..."
 echo ""
 
 ssh -i ~/Aws_vianna_2025_teste.pem ubuntu@44.219.93.219 << 'ENDSSH'
+    echo "💾 Fazendo backup do banco de dados..."
+    cp ~/trabalho2/VendasViagens/db/travel_packages.db ~/trabalho2/VendasViagens/db/travel_packages.db.backup
+    
     echo "📥 Atualizando código..."
     cd ~/trabalho2
     git pull origin main

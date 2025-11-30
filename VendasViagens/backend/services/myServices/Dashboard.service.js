@@ -10,7 +10,7 @@ export const getUserDashboard = async (req, res) => {
         const userId = req.user.id;
         const { from, to } = req.query;
         
-        // Ajustar datas para incluir o dia completo
+// Ajustar datas para incluir o dia completo
         const endDate = to ? new Date(to) : new Date();
         endDate.setHours(23, 59, 59, 999); // Fim do dia
         

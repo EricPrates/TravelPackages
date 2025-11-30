@@ -1,10 +1,32 @@
 // ...existing code...
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 import PurchaseDetailsController from "../controller/PurchaseDetails.controller";
 
-export default function PurchaseDetailsScreen({ route }) {
-    const { purchase, isLoading, error } = PurchaseDetailsController(route);
+export default function PurchaseDetailsScreen({ route, navigation }) {
+    const { purchase, isLoading, error, cancelPurchase, isCancelling } = PurchaseDetailsController(route);
+
+    const handleCancel = () => {
+        Alert.alert(
+            'Cancelar Compra',
+            'Tem certeza que deseja cancelar esta compra? O valor será reembolsado para sua carteira.',
+            [
+                { text: 'Não', style: 'cancel' },
+                {
+                    text: 'Sim, Cancelar',
+                    style: 'destructive',
+                    onPress: async () => {
+                        const success = await cancelPurchase();
+                        if (success) {
+                            Alert.alert('Sucesso', 'Compra cancelada e valores reembolsados!', [
+                                { text: 'OK', onPress: () => navigation.goBack() }
+                            ]);
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
     const formatDate = (dateString) =>
         new Date(dateString).toLocaleDateString('pt-BR') + ' às ' +
@@ -135,6 +157,22 @@ export default function PurchaseDetailsScreen({ route }) {
                     <Text style={styles.summaryTotal}>R$ 0,00</Text>
                 )}
             </View>
+
+            {purchase.status === 'CONFIRMED' && (
+                <View style={styles.actionButtons}>
+                    <TouchableOpacity 
+                        style={[styles.cancelButton, isCancelling && styles.buttonDisabled]}
+                        onPress={handleCancel}
+                        disabled={isCancelling}
+                    >
+                        {isCancelling ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <Text style={styles.cancelButtonText}>Cancelar Compra</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+            )}
         </ScrollView>
     );
 }
@@ -164,5 +202,22 @@ const styles = StyleSheet.create({
     summaryLabel: { fontSize: 16, color: '#666', fontWeight: '600' },
     summaryAmount: { fontSize: 18, fontWeight: 'bold', color: '#1890ff' },
     summaryTotal: { fontSize: 28, fontWeight: 'bold', color: '#1890ff', marginTop: 8 },
-    error: { color: 'red', fontSize: 16, textAlign: 'center' }
+    error: { color: 'red', fontSize: 16, textAlign: 'center' },
+    actionButtons: { padding: 16, marginBottom: 20 },
+    cancelButton: { 
+        backgroundColor: '#ef4444', 
+        padding: 16, 
+        borderRadius: 8, 
+        alignItems: 'center',
+        elevation: 2
+    },
+    cancelButtonText: { 
+        color: 'white', 
+        fontSize: 16, 
+        fontWeight: 'bold' 
+    },
+    buttonDisabled: { 
+        backgroundColor: '#9ca3af', 
+        opacity: 0.6 
+    }
 });

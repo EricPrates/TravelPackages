@@ -295,19 +295,28 @@ export const update = async (req, res) => {
     const travelPackageId = req.params.id;
     
     try {
+        console.log('🔵 Atualizando pacote:', travelPackageId);
+        console.log('📦 Dados recebidos:', req.body);
+        
         const [updated] = await TravelPackage.update(req.body, {
             where: { id: travelPackageId }
         });
+        
+        console.log('✅ Linhas atualizadas:', updated);
+        
         if (updated === 1) {
             const updatedTravelPackage = await TravelPackage.findByPk(travelPackageId);
+            console.log('✅ Pacote atualizado:', updatedTravelPackage.title);
             res.status(200).json({ success: true, data: updatedTravelPackage });
         } else {
+            console.log('❌ Pacote não encontrado');
             res.status(404).json({
                 success: false,
                 message: "Pacote de viagem não encontrado."
             });
         }
     } catch (error) {
+        console.error('❌ Erro ao atualizar:', error);
         res.status(500).json({
             success: false,
             message: error.message || "Erro ao atualizar pacote de viagem"

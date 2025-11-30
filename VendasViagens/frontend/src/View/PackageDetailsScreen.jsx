@@ -196,9 +196,17 @@ export default function PackageDetailsScreen({ route }) {
                         style={[styles.buyButton, styles.milesButton, isLoading && styles.disabledButton]}
                     >
                         <Text style={styles.buyButtonText}>Deletar Pacote</Text>
+                        
                     </TouchableOpacity>
+                       <TouchableOpacity
+                        disabled={isLoading}
+                        onPress={() => handlePurchase('cash')}
+                        style={[styles.buyButton, styles.cashButton, isLoading && styles.disabledButton]}
+                    >
+                        <Text style={styles.buyButtonText}>Comprar com Dinheiro</Text>
                     
-                    </View>
+                    </TouchableOpacity>
+                 </View>
         </View>
     );
 }

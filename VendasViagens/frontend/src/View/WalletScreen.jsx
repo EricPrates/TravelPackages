@@ -72,7 +72,7 @@ export default function Carteira() {
                             <Text style={styles.cardIcon}>💵</Text>
                             <Text style={styles.cardTitle}>Saldo em Dinheiro</Text>
                         </View>
-                        <Text style={styles.balanceAmount}>${balanceCash.toFixed(2)}</Text>
+                        <Text style={styles.balanceAmount}>${balanceCash}</Text>
                         <Text style={styles.balanceLabel}>Disponível para uso</Text>
                     </View>
 

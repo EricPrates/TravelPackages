@@ -18,25 +18,33 @@ export default function AdminPanelController(updatePackage) {
             description: updatePackage ? updatePackage.description : '',
             numberOfTravelers: updatePackage ? updatePackage.numberOfTravelers : '1'
         });
-    
+    const id = packageData.id;
     const updatePackageInDB = async () => {
         setIsLoading(true);
         setError(null);
-        console.log('Updating package with data:', packageData);
+        
+        // Garantir que o agentId está presente
+        const updateData = {
+            ...packageData,
+            agentId: user.id
+        };
+        
+        console.log('🔵 Updating package with data:', updateData);
+        console.log('🔑 Package ID:', id);
         
         try {
-            const response = await fetch(`${URL}/travel-packages/${packageData.id}`, {
+            const response = await fetch(`${URL}/travel-packages/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(packageData),
+                body: JSON.stringify(updateData),
             });
             
-            
             const data = await response.json();
-            console.log('Response received:', response.status, response.ok);
+            console.log('📥 Response received:', response.status, response.ok);
+            console.log('📦 Response data:', data);
            
             if (!response.ok) {
                 throw new Error(data.message || 'Erro ao atualizar pacote');
@@ -47,6 +55,7 @@ export default function AdminPanelController(updatePackage) {
                 throw new Error(data.message || 'Erro ao atualizar pacote');
             }
         } catch (err) {
+            console.error('❌ Erro:', err);
             setError(err.message);
             return { success: false, error: err.message };
         } finally {

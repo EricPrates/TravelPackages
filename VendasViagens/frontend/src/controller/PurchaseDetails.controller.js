@@ -5,6 +5,7 @@ const inicialState = {
     purchase:null,
     isLoading: false,
     error: null,
+    isCancelling: false,
 };
 const reducer = (state, action) => {
     switch (action.type) {
@@ -24,6 +25,24 @@ const reducer = (state, action) => {
             return {
                 ...state,
                 isLoading: false,
+                error: action.payload.error,
+            };
+        case 'CANCEL_PURCHASE_REQUEST':
+            return {
+                ...state,
+                isCancelling: true,
+                error: null,
+            };
+        case 'CANCEL_PURCHASE_SUCCESS':
+            return {
+                ...state,
+                isCancelling: false,
+                purchase: { ...state.purchase, status: 'CANCELLED' },
+            };
+        case 'CANCEL_PURCHASE_FAILURE':
+            return {
+                ...state,
+                isCancelling: false,
                 error: action.payload.error,
             };
         default:
@@ -81,7 +100,37 @@ export default function PurchaseDetailsController(route) {
         }
     };
 
-   
+    const cancelPurchase = async () => {
+        dispatch({ type: 'CANCEL_PURCHASE_REQUEST' });
+        try {
+            const response = await fetch(`${URL}/purchases/${purchaseId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erro ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                dispatch({ type: 'CANCEL_PURCHASE_SUCCESS' });
+                return true;
+            } else {
+                throw new Error(data.message || 'Erro ao cancelar compra');
+            }
+        } catch (err) {
+            dispatch({ 
+                type: 'CANCEL_PURCHASE_FAILURE', 
+                payload: { error: err.message || 'Erro ao cancelar compra' } 
+            });
+            return false;
+        }
+    };
 
     useEffect(() => {
         if (purchaseId) {
@@ -93,7 +142,8 @@ export default function PurchaseDetailsController(route) {
         purchase: state.purchase,
         isLoading: state.isLoading,
         error: state.error,
+        isCancelling: state.isCancelling,
         fetchPurchaseById,
-
+        cancelPurchase,
     };
 }
