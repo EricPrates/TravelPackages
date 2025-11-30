@@ -8,7 +8,8 @@ const PackageComponents = db.PackageComponents;
 
 export const fetchOptions = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { packageId } = req.params;
+        const id = packageId;
         const { type } = req.query;
         
       
