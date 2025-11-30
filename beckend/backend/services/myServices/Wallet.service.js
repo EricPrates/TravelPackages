@@ -178,75 +178,105 @@ export const getBalance = async (req, res) => {
 }
 
 export const getWalletStatement = async (req, res) => {
-    try {
-        const userId = req.user.id;
-        
-        const user = await Users.findByPk(userId);
-        if (!user) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'Usuário não encontrado.' 
-            });
-        }
-
-        const wallet = await getOrCreateWallet(userId);
-        
-        // Buscar todas as transações
-        const transactions = await WalletTransaction.findAll({
-            where: { walletId: wallet.id },
-            order: [['date', 'DESC']],
-            include: [{
-                model: Purchase,
-                as: 'purchase',
-                attributes: ['id', 'status', 'purchaseDate', 'paidInMiles', 'paidInMoney'],
-                required: false
-            }]
-        });
-
-        const statement = transactions.map(t => ({
-            id: t.id,
-            date: t.date,
-            type: t.type,
-            coinType: t.coinType,
-            paidInMiles: t.purchase ? parseFloat(t.purchase.paidInMiles) : null,
-            paidInMoney: t.purchase ? parseFloat(t.purchase.paidInMoney) : null,
-            amount: parseFloat(t.amount),
-            description: t.description,
-            relatedPurchaseId: t.relatedPurchaseId,
-              purchase: t.purchase ? {
-                id: t.purchase.id,
-                status: t.purchase.status,
-                purchaseDate: t.purchase.purchaseDate,
-                paidInMiles: parseFloat(t.purchase.paidInMiles || 0),  
-                paidInMoney: parseFloat(t.purchase.paidInMoney || 0)
-            } : null,
-            displayAmount: t.type === 'DEPOSIT' 
-                ? parseFloat(t.amount) 
-                : -parseFloat(t.amount)
-        }));
-
-        return res.status(200).json({
-            success: true,
-            data: {
-                userId: parseInt(userId),
-                walletId: wallet.id,
-                currentBalance: {
-                    balanceCash: parseFloat(wallet.balanceCash),
-                    balanceMiles: parseFloat(wallet.balanceMiles)
-                },
-                transactions: statement,
-                summary: {
-                    totalTransactions: statement.length,
-                    balanceCash: parseFloat(wallet.balanceCash),
-                    balanceMiles: parseFloat(wallet.balanceMiles)
-                }
-            }
-        });
-    } catch (error) {
-        return res.status(500).json({ 
-            success: false, 
-            message: 'Erro ao obter extrato da carteira.', 
-            error: error.message 
-        });
+  try {
+    const userId = req.user.id;
+    const user = await Users.findByPk(userId);
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
     }
+
+    const wallet = await getOrCreateWallet(userId);
+
+    // Buscar todas as transações em ordem decrescente (mais recentes primeiro)
+    const transactions = await WalletTransaction.findAll({
+      where: { walletId: wallet.id },
+      order: [['date', 'DESC']],  // Ordem decrescente
+      include: [{
+        model: Purchase,
+        as: 'purchase',
+        attributes: ['id', 'status', 'purchaseDate', 'paidInMiles', 'paidInMoney'],
+        required: false
+      }]
+    });
+
+    // Começar do saldo ATUAL e voltar no tempo
+    let runningBalanceCash = parseFloat(wallet.balanceCash);
+    let runningBalanceMiles = parseFloat(wallet.balanceMiles);
+
+    const statement = transactions.map(t => {
+      const amount = parseFloat(t.amount);
+      const isDeposit = t.type === 'DEPOSIT';
+      
+      // Saldo DEPOIS da transação (saldo atual antes de reverter)
+      const balanceAfterCash = runningBalanceCash;
+      const balanceAfterMiles = runningBalanceMiles;
+
+      // Reverter a operação para calcular saldo ANTES
+      if (t.coinType === 'CASH') {
+        runningBalanceCash -= isDeposit ? amount : -amount;
+      } else if (t.coinType === 'MILES') {
+        runningBalanceMiles -= isDeposit ? amount : -amount;
+      }
+
+      // Saldo ANTES da transação
+      const balanceBeforeCash = runningBalanceCash;
+      const balanceBeforeMiles = runningBalanceMiles;
+
+      return {
+        id: t.id,
+        date: t.date,
+        type: t.type,
+        coinType: t.coinType,
+        amount: amount,
+        description: t.description,
+        relatedPurchaseId: t.relatedPurchaseId,
+        
+       
+        balanceBefore: {
+          cash: balanceBeforeCash,
+          miles: balanceBeforeMiles
+        },
+        balanceAfter: {
+          cash: balanceAfterCash,
+          miles: balanceAfterMiles
+        },
+        
+        purchase: t.purchase ? {
+          id: t.purchase.id,
+          status: t.purchase.status,
+          purchaseDate: t.purchase.purchaseDate,
+          paidInMiles: parseFloat(t.purchase.paidInMiles || 0),
+          paidInMoney: parseFloat(t.purchase.paidInMoney || 0)
+        } : null,
+        
+        displayAmount: isDeposit ? amount : -amount
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        userId: parseInt(userId),
+        walletId: wallet.id,
+        currentBalance: {
+          balanceCash: parseFloat(wallet.balanceCash),
+          balanceMiles: parseFloat(wallet.balanceMiles)
+        },
+        transactions: statement,
+        summary: {
+          totalTransactions: statement.length,
+          balanceCash: parseFloat(wallet.balanceCash),
+          balanceMiles: parseFloat(wallet.balanceMiles)
+        }
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Erro ao obter extrato da carteira.', 
+      error: error.message 
+    });
+  }
 };
+        

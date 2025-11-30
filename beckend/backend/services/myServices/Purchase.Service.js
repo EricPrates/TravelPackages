@@ -75,14 +75,6 @@ export const findPurchasesWithFilters = async (req, res) => {
                 travelPackage: p.travelPackage
             };
             
-            console.log('📦 Purchase formatada:', {
-                id: formatted.id,
-                totalMoneyPrice: formatted.totalMoneyPrice,
-                totalMilesPrice: formatted.totalMilesPrice,
-                paidInMoney: formatted.paidInMoney,
-                paidInMiles: formatted.paidInMiles
-            });
-            
             return formatted;
         });
 
@@ -137,14 +129,6 @@ export const findPurchaseById = async (req, res) => {
             });
         }
 
-        console.log('🔍 Purchase encontrada:', {
-            id: purchase.id,
-            totalMoneyPrice: purchase.totalMoneyPrice,
-            totalMilesPrice: purchase.totalMilesPrice,
-            paidInMoney: purchase.paidInMoney,
-            paidInMiles: purchase.paidInMiles
-        });
-
         // Formatar valores para garantir que sejam números
         const formattedPurchase = {
             id: purchase.id,
@@ -158,14 +142,12 @@ export const findPurchaseById = async (req, res) => {
             travelPackage: purchase.travelPackage
         };
 
-        console.log('📤 Retornando purchase formatada:', formattedPurchase);
-
         return res.status(200).json({ 
             success: true, 
             data: formattedPurchase 
         });
     } catch (error) {
-        console.error('❌ Erro ao buscar compra:', error);
+        console.error('Erro ao buscar compra:', error);
         return res.status(500).json({ 
             success: false, 
             message: 'Erro ao buscar compra.', 
@@ -212,14 +194,6 @@ async function validatePurchaseData(userId, packageId, paymentChoice, transactio
             sum + parseFloat(comp.milesPrice || 0), 0
         );
     }
-    
-    console.log('📦 Pacote carregado:', {
-        id: travelPackage.id,
-        title: travelPackage.title,
-        components: travelPackage.components?.length || 0,
-        totalMoneyPrice: travelPackage.totalMoneyPrice,
-        totalMilesPrice: travelPackage.totalMilesPrice
-    });
     
     return { user, travelPackage, wallet };
 }
@@ -368,14 +342,6 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
         const currentBalanceCash = parseFloat(wallet.balanceCash);
         const currentBalanceMiles = parseFloat(wallet.balanceMiles);
 
-        console.log('💰 Valores calculados:', {
-            totalMoneyPrice,
-            totalMilesPrice,
-            quantity,
-            packageMoneyPrice: travelPackage.totalMoneyPrice,
-            packageMilesPrice: travelPackage.totalMilesPrice
-        });
-
         // Validar saldo
         validateBalance(paymentChoice, currentBalanceCash, currentBalanceMiles, totalMoneyPrice, totalMilesPrice, cashAmount, milesAmount);
 
@@ -383,8 +349,6 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
         const { paidInMoney, paidInMiles, milesEarned } = calculatePaymentAmounts(
             paymentChoice, totalMoneyPrice, totalMilesPrice, cashAmount, milesAmount
         );
-
-        console.log('💳 Valores de pagamento:', { paidInMoney, paidInMiles, milesEarned });
 
         // Criar a compra
         const newPurchase = await Purchase.create({
@@ -398,14 +362,6 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
             paidInMiles,
             purchaseDate: new Date()
         }, { transaction });
-
-        console.log('✅ Compra criada:', {
-            id: newPurchase.id,
-            totalMoneyPrice: newPurchase.totalMoneyPrice,
-            totalMilesPrice: newPurchase.totalMilesPrice,
-            paidInMoney: newPurchase.paidInMoney,
-            paidInMiles: newPurchase.paidInMiles
-        });
 
         // Processar transações da wallet
         await processWalletTransactions(

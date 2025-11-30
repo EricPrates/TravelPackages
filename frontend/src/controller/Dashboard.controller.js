@@ -29,18 +29,11 @@ export default function DashboardController() {
 
             const data = await response.json();
 
-            console.log('📊 Dashboard - Resposta do backend:', JSON.stringify(data, null, 2));
-
             if (!response.ok) {
                 throw new Error(data.message || 'Erro ao buscar dashboard');
             }
 
             if (data.success) {
-                console.log('📊 Dashboard - Dados recebidos:', {
-                    totalSpentMoney: data.data.periodStats.totalSpentMoney,
-                    totalSpentMiles: data.data.periodStats.totalSpentMiles,
-                    totalPurchases: data.data.periodStats.totalPurchases
-                });
                 setDashboardData(data.data);
             } else {
                 throw new Error(data.message || 'Erro ao buscar dashboard');

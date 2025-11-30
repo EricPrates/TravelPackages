@@ -38,56 +38,9 @@ export const getUserDashboard = async (req, res) => {
             order: [['purchaseDate', 'DESC']]
         });
 
-        // Debug: buscar TODAS as compras do usuário para comparar
-        const allUserPurchases = await Purchase.findAll({ 
-            where: { userId },
-            order: [['purchaseDate', 'DESC']]
-        });
-        
-        console.log('📊 Dashboard - TODAS as compras do usuário:', allUserPurchases.length);
-        if (allUserPurchases.length > 0) {
-            console.log('📊 Dashboard - Compra mais recente:', {
-                id: allUserPurchases[0].id,
-                purchaseDate: allUserPurchases[0].purchaseDate,
-                paidInMoney: allUserPurchases[0].paidInMoney,
-                paidInMiles: allUserPurchases[0].paidInMiles
-            });
-        }
-        
-        console.log('📊 Dashboard - Compras no período:', purchases.length);
-        console.log('📊 Dashboard - Período filtro:', { 
-            from: startDate.toISOString(), 
-            to: endDate.toISOString() 
-        });
-        
-        if (purchases.length > 0) {
-            console.log('📊 Dashboard - Primeira compra do período:', {
-                id: purchases[0].id,
-                purchaseDate: purchases[0].purchaseDate,
-                paidInMoney: purchases[0].paidInMoney,
-                paidInMiles: purchases[0].paidInMiles,
-                status: purchases[0].status
-            });
-        }
-
         // Calcular totais usando paidInMoney e paidInMiles
-        const totalSpentMoney = purchases.reduce((sum, p) => {
-            const value = parseFloat(p.paidInMoney || 0);
-            console.log(`  💵 Compra #${p.id}: R$ ${value}`);
-            return sum + value;
-        }, 0);
-        
-        const totalSpentMiles = purchases.reduce((sum, p) => {
-            const value = parseFloat(p.paidInMiles || 0);
-            console.log(`  ⭐ Compra #${p.id}: ${value} milhas`);
-            return sum + value;
-        }, 0);
-        
-        console.log('📊 Dashboard - TOTAIS:', {
-            totalSpentMoney,
-            totalSpentMiles,
-            totalPurchases: purchases.length
-        });
+        const totalSpentMoney = purchases.reduce((sum, p) => sum + parseFloat(p.paidInMoney || 0), 0);
+        const totalSpentMiles = purchases.reduce((sum, p) => sum + parseFloat(p.paidInMiles || 0), 0);
         
        
         const milesEarned = await WalletTransaction.sum('amount', {

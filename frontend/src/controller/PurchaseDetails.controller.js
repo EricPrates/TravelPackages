@@ -57,10 +57,7 @@ export default function PurchaseDetailsController(route) {
 
             const data = await response.json();
             
-            console.log('📦 Purchase recebida do backend:', JSON.stringify(data.data, null, 2));
-            
             if (data.success && data.data) {
-                // Garantir que os valores existam
                 const purchase = {
                     ...data.data,
                     totalMoneyPrice: parseFloat(data.data.totalMoneyPrice || 0),
@@ -68,13 +65,6 @@ export default function PurchaseDetailsController(route) {
                     paidInMoney: parseFloat(data.data.paidInMoney || 0),
                     paidInMiles: parseFloat(data.data.paidInMiles || 0)
                 };
-                
-                console.log('📦 Purchase processada:', {
-                    totalMoneyPrice: purchase.totalMoneyPrice,
-                    totalMilesPrice: purchase.totalMilesPrice,
-                    paidInMoney: purchase.paidInMoney,
-                    paidInMiles: purchase.paidInMiles
-                });
                 
                 dispatch({ 
                     type: 'FETCH_PURCHASE_SUCCESS', 

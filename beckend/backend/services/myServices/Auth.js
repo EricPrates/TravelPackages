@@ -245,7 +245,6 @@ export const login = async (req, res) => {
 
 
 
-
     export const tokenValidated = (req, res, next) => {
         const authHeader = req.headers.authorization;
 
@@ -285,12 +284,9 @@ export const login = async (req, res) => {
     }
 
 
-// Blacklist de tokens (em produção, use Redis)
+
 const tokenBlacklist = new Set();
 
-/**
- * Refresh Token - Gera novo access token a partir do refresh token
- */
 export const refreshToken = async (req, res) => {
     try {
         const { refreshToken } = req.body;
@@ -302,7 +298,7 @@ export const refreshToken = async (req, res) => {
             });
         }
         
-        // Verificar se o token está na blacklist
+       
         if (tokenBlacklist.has(refreshToken)) {
             return res.status(401).json({
                 success: false,
@@ -310,11 +306,11 @@ export const refreshToken = async (req, res) => {
             });
         }
         
-        // Verificar e decodificar o refresh token
+    
         try {
             const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_KEY);
             
-            // Buscar usuário
+           
             const user = await db.Users.findByPk(decoded.id);
             
             if (!user) {
@@ -324,11 +320,11 @@ export const refreshToken = async (req, res) => {
                 });
             }
             
-            // Gerar novos tokens
+  
             const newAccessToken = generateAccessToken(user);
             const newRefreshToken = generateRefreshToken(user);
             
-            // Adicionar o refresh token antigo na blacklist
+        
             tokenBlacklist.add(refreshToken);
             
             return res.status(200).json({
@@ -370,15 +366,12 @@ export const refreshToken = async (req, res) => {
     }
 };
 
-/**
- * Logout - Invalida os tokens do usuário
- */
 export const logout = async (req, res) => {
     try {
         const { refreshToken } = req.body;
         const accessToken = req.headers.authorization?.replace('Bearer ', '');
         
-        // Adicionar tokens na blacklist
+    
         if (accessToken) {
             tokenBlacklist.add(accessToken);
         }
@@ -404,9 +397,7 @@ export const logout = async (req, res) => {
     }
 };
 
-/**
- * Middleware para verificar se o token está na blacklist
- */
+
 export const checkBlacklist = (req, res, next) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
     
