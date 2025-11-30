@@ -11,11 +11,7 @@ export const fetchOptions = async (req, res) => {
         const { id } = req.params;
         const { type } = req.query;
         
-        console.log('🔍 fetchOptions chamado:');
-        console.log('   Package ID:', id);
-        console.log('   Type recebido:', type);
-        console.log('   Type uppercase:', type?.toUpperCase());
-        
+      
         const travelPackage = await TravelPackage.findByPk(id);
         if (!travelPackage) return res.status(404).json({ success: false, message: 'Pacote não encontrado' });
         

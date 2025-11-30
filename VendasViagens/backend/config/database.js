@@ -1,7 +1,11 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 export default{
     dialect: 'sqlite',
-    storage: process.env.NODE_ENV === 'production' 
-        ? '/opt/render/project/src/db/travel_packages.db'
-        : './db/travel_packages.db',
+    storage: process.env.DB_PATH || path.join(__dirname, '../../db/travel_packages.db'),
     logging: false
 }
