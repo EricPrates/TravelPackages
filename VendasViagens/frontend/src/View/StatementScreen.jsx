@@ -55,6 +55,18 @@ export default function StatementScreen() {
                         <Text style={styles.coinType}>Moeda: {item.coinType}</Text>
                         <Text style={styles.description}>{item.description}</Text>
                         
+                        {item.balanceAfter && (
+                            <View style={styles.balanceContainer}>
+                                <Text style={styles.balanceLabel}>Novo Saldo:</Text>
+                                <Text style={styles.balanceValue}>
+                                    {item.coinType === 'CASH' 
+                                        ? `R$ ${item.balanceAfter.cash.toFixed(2)}`
+                                        : `${item.balanceAfter.miles.toLocaleString('pt-BR')} milhas`
+                                    }
+                                </Text>
+                            </View>
+                        )}
+                        
                         {item.relatedPurchaseId && (
                             <Text style={styles.purchase}>Compra ID: {item.relatedPurchaseId}</Text>
                         )}
@@ -131,6 +143,25 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#888',
         marginTop: 4,
+    },
+    balanceContainer: {
+        marginTop: 8,
+        paddingTop: 8,
+        borderTopWidth: 1,
+        borderTopColor: '#e0e0e0',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    balanceLabel: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#555',
+    },
+    balanceValue: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#2196F3',
     },
     error: {
         color: 'red',
