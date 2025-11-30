@@ -9,9 +9,9 @@ router.post('/', tokenValidated, requireAgent, travels.createBasePackage);
 router.get('/', tokenValidated, travels.findAll);
 
 
-router.get('/:id', travels.findOne);
-router.put('/:id', tokenValidated, requireAgent, travels.update);
-router.delete('/:id', tokenValidated, requireAgent, travels.remove);
+router.get('/:packageId', travels.findOne);
+router.put('/:packageId', tokenValidated, requireAgent, travels.update);
+router.delete('/:packageId', tokenValidated, requireAgent, travels.remove);
 
 export default app =>{
     app.use ('/travel-packages', router);

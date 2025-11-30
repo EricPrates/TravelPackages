@@ -260,7 +260,7 @@ export const isValidDate = (dateString) => {
 
 export const findOne = async (req, res) => {
     try {
-        const id = req.params.id;
+        const id = req.params.packageId;
         const data = await TravelPackage.findByPk(id, {
             include: [
                 {
@@ -292,7 +292,7 @@ export const findOne = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-    const travelPackageId = req.params.id;
+    const travelPackageId = req.params.packageId;
     
     try {
         console.log('🔵 Atualizando pacote:', travelPackageId);
@@ -326,7 +326,7 @@ export const update = async (req, res) => {
 
 export const remove = async (req, res) => {
     try {
-        const id = req.params.id;
+        const id = req.params.packageId;
         const deleted = await TravelPackage.destroy({
             where: { id: id }
         });

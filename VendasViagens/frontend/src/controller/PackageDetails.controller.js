@@ -19,7 +19,7 @@ export default function PackageDetailsController(travelPackage) {
   const [milesRequired, setMilesRequired] = useState(0);
 
   const { id, totalMoneyPrice, totalMilesPrice } = travelPackage;  
-  const userId = user?.id;
+
   const totalMoney = Number(totalMoneyPrice);
   const totalMiles = Number(totalMilesPrice);
 
