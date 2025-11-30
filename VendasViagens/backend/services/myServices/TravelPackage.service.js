@@ -326,11 +326,14 @@ export const update = async (req, res) => {
 };
 
 export const remove = async (req, res) => {
+    const id = req.params.packageId;  // ✅ Movido para fora do try para estar disponível no catch
     try {
-        const id = req.params.packageId;
+        console.log('🗑️ Deletando pacote:', id);
         const deleted = await TravelPackage.destroy({
             where: { id: id }
         });
+
+        console.log('✅ Linhas deletadas:', deleted);
 
         if (deleted == 1) {
             res.status(200).json({ success: true, message: "Pacote deletado com sucesso" });
@@ -341,6 +344,7 @@ export const remove = async (req, res) => {
             });
         }
     } catch (error) {
+        console.error('❌ Erro ao deletar:', error);
         res.status(500).json({
             success: false,
             message: "Erro ao deletar o pacote de viagem com id=" + id

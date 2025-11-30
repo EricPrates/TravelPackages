@@ -1,11 +1,77 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../AuthContext';
 
 export default function AddComponentsScreen({ route }) {
     const navigation = useNavigation();
+    const { token, URL } = useAuth();
     const { travelPackage } = route.params || {};
+    const [components, setComponents] = React.useState(travelPackage?.components || []);
+    const [isLoading, setIsLoading] = React.useState(false);
+
+
+    useFocusEffect(
+        React.useCallback(() => {
+            if (travelPackage?.id) {
+                fetchPackageComponents();
+            }
+        }, [travelPackage?.id])
+    );
+
+    const fetchPackageComponents = async () => {
+        try {
+            const response = await fetch(`${URL}/travel-packages/${travelPackage.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success && data.data.components) {
+                setComponents(data.data.components);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar componentes:', error);
+        }
+    };
+
+    const handleDeleteComponent = async (componentId) => {
+        Alert.alert(
+            'Excluir Componente',
+            'Tem certeza que deseja excluir este componente?',
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                    text: 'Excluir',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setIsLoading(true);
+                        try {
+                            const response = await fetch(`${URL}/package-components/${componentId}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            });
+                            const data = await response.json();
+                            if (data.success) {
+                                setComponents(components.filter(c => c.id !== componentId));
+                                Alert.alert('Sucesso', 'Componente excluído com sucesso!');
+                            } else {
+                                Alert.alert('Erro', data.message || 'Erro ao excluir componente');
+                            }
+                        } catch (error) {
+                            Alert.alert('Erro', 'Erro ao excluir componente');
+                            console.error(error);
+                        } finally {
+                            setIsLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
     const ComponentButton = ({ icon, title, description, color, onPress }) => (
         <TouchableOpacity
@@ -50,7 +116,40 @@ export default function AddComponentsScreen({ route }) {
             </View>
 
             <View style={styles.content}>
-                <Text style={styles.sectionTitle}>Selecione o tipo de componente:</Text>
+                {components && components.length > 0 && (
+                    <View style={styles.existingComponentsSection}>
+                        <Text style={styles.sectionTitle}>Componentes Adicionados ({components.length})</Text>
+                        {components.map((component) => (
+                            <View key={component.id} style={styles.componentCard}>
+                                <View style={styles.componentInfo}>
+                                    <Ionicons 
+                                        name={
+                                            component.type === 'FLIGHT' ? 'airplane' :
+                                            component.type === 'HOTEL' ? 'bed' :
+                                            component.type === 'ACTIVITY' ? 'location' : 'car'
+                                        } 
+                                        size={24} 
+                                        color="#6366f1" 
+                                    />
+                                    <View style={styles.componentDetails}>
+                                        <Text style={styles.componentName}>{component.name}</Text>
+                                        <Text style={styles.componentPrice}>
+                                            R$ {component.moneyPrice?.toFixed(2)} | {component.milesPrice?.toLocaleString()} milhas
+                                        </Text>
+                                    </View>
+                                </View>
+                                <TouchableOpacity
+                                    style={styles.deleteButton}
+                                    onPress={() => handleDeleteComponent(component.id)}
+                                >
+                                    <Ionicons name="trash" size={20} color="#dc2626" />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </View>
+                )}
+
+                <Text style={styles.sectionTitle}>Adicionar Novo Componente:</Text>
 
                 <ComponentButton
                     icon="airplane"
@@ -189,6 +288,44 @@ const styles = StyleSheet.create({
     buttonDescription: {
         fontSize: 14,
         color: '#64748b',
+    },
+    existingComponentsSection: {
+        marginBottom: 24,
+    },
+    componentCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#fff',
+        padding: 16,
+        borderRadius: 12,
+        marginBottom: 8,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    componentInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    componentDetails: {
+        marginLeft: 12,
+        flex: 1,
+    },
+    componentName: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1e293b',
+        marginBottom: 4,
+    },
+    componentPrice: {
+        fontSize: 14,
+        color: '#64748b',
+    },
+    deleteButton: {
+        padding: 8,
+        borderRadius: 8,
+        backgroundColor: '#fee2e2',
     },
     infoBox: {
         flexDirection: 'row',

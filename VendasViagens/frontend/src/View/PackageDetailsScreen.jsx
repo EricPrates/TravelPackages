@@ -19,14 +19,14 @@ export default function PackageDetailsScreen({ route }) {
         handleMixedInputsChange,
         handlePurchase,
         mixedError,
-        setMixedError,
         setCashAmount,
         setMilesAmount,
         cashAmount,
         milesAmount,
         isLoading,
         milesRequired,
-        verifyMilesRequired
+        verifyMilesRequired,
+        handleDelete
 
     } = PackageDetailsController(travelPackage);
 
@@ -192,7 +192,7 @@ export default function PackageDetailsScreen({ route }) {
                     </TouchableOpacity>
                     <TouchableOpacity
                         disabled={isLoading}
-                        onPress={() => handlePurchase('miles')}
+                        onPress={() => handleDelete()}
                         style={[styles.buyButton, styles.milesButton, isLoading && styles.disabledButton]}
                     >
                         <Text style={styles.buyButtonText}>Deletar Pacote</Text>

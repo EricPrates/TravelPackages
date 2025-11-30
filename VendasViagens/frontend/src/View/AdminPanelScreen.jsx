@@ -60,61 +60,6 @@ export default function AdminPanelScreen() {
                 />
             </View>
 
-            <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                    <Ionicons name="people" size={20} color="#6366f1" />
-                    <Text style={styles.sectionTitle}>Gerenciar Usuários</Text>
-                </View>
-
-                <MenuButton
-                    icon="person-add"
-                    title="Criar Usuário"
-                    description="Cadastrar novo usuário"
-                    color="#6366f1"
-                    onPress={() => navigation.navigate('CreateUser')}
-                />
-
-                <MenuButton
-                    icon="people"
-                    title="Listar Usuários"
-                    description="Ver todos os usuários"
-                    color="#8b5cf6"
-                    onPress={() => navigation.navigate('ListUsers')}
-                />
-            </View>
-
-            <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                    <Ionicons name="bar-chart" size={20} color="#6366f1" />
-                    <Text style={styles.sectionTitle}>Relatórios</Text>
-                </View>
-
-                <MenuButton
-                    icon="analytics"
-                    title="Relatórios de Vendas"
-                    description="Visualizar métricas e relatórios"
-                    color="#ef4444"
-                    onPress={() => navigation.navigate('SalesReports')}
-                />
-            </View>
-
-            <View style={styles.statsContainer}>
-                <View style={styles.statCard}>
-                    <View style={[styles.statIcon, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
-                        <Ionicons name="briefcase" size={20} color="#6366f1" />
-                    </View>
-                    <Text style={styles.statNumber}>24</Text>
-                    <Text style={styles.statLabel}>Pacotes Ativos</Text>
-                </View>
-
-                <View style={styles.statCard}>
-                    <View style={[styles.statIcon, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-                        <Ionicons name="people" size={20} color="#10b981" />
-                    </View>
-                    <Text style={styles.statNumber}>156</Text>
-                    <Text style={styles.statLabel}>Usuários</Text>
-                </View>
-            </View>
 
             <TouchableOpacity
                 style={styles.logoutButton}

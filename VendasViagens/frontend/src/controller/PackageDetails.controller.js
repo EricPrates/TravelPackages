@@ -19,10 +19,10 @@ export default function PackageDetailsController(travelPackage) {
   const [milesRequired, setMilesRequired] = useState(0);
 
   const { id, totalMoneyPrice, totalMilesPrice } = travelPackage;  
-
+  const userId = user?.id;
   const totalMoney = Number(totalMoneyPrice);
   const totalMiles = Number(totalMilesPrice);
-
+  const packageId = id;
   const verifyMilesRequired = () => {
   const cash = parseFloat(cashAmount) || 0;
   
@@ -44,7 +44,45 @@ export default function PackageDetailsController(travelPackage) {
   verifyMilesRequired();
 }, [cashAmount]);
 
-  
+const handleDelete = async () => {
+    try {
+        setIsLoading(true);
+        console.log('🔴 Tentando deletar pacote:', packageId);
+        console.log('🔴 URL:', `${URL}/travel-packages/${packageId}`);
+        
+        const res = await fetch(`${URL}/travel-packages/${packageId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        console.log('🔴 Status:', res.status);
+        console.log('🔴 OK?:', res.ok);
+
+        let data = null;
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await res.json();
+            console.log('🔴 Data:', data);
+        }
+
+        if (!res.ok) {
+            throw new Error(data?.message || 'Falha ao deletar o pacote.');
+        }
+
+        Alert.alert('Sucesso', data?.message || 'Pacote deletado com sucesso!');
+        navigation.goBack();
+    } catch (err) {
+        console.error('❌ Erro ao deletar:', err);
+        Alert.alert('Erro', err.message || 'Falha ao deletar o pacote.');
+    } finally {
+        setIsLoading(false);
+    }
+};
+
+
 
   const validateMixed = () => {
     const cash = parseFloat(cashAmount) || 0;
@@ -191,5 +229,6 @@ export default function PackageDetailsController(travelPackage) {
     purchasePackageWithMiles,
     purchasePackageMixed,
     verifyMilesRequired,
+    handleDelete,
   };
 }
