@@ -326,28 +326,51 @@ export const update = async (req, res) => {
 };
 
 export const remove = async (req, res) => {
-    const id = req.params.packageId;  // ✅ Movido para fora do try para estar disponível no catch
+    const id = req.params.packageId;
     try {
         console.log('🗑️ Deletando pacote:', id);
+        
+        // Verificar se o pacote existe
+        const travelPackage = await TravelPackage.findByPk(id);
+        if (!travelPackage) {
+            return res.status(404).json({
+                success: false,
+                message: `Pacote de viagem com id=${id} não encontrado.`
+            });
+        }
+
+        // Deletar componentes relacionados primeiro
+        await PackageComponents.destroy({
+            where: { packageId: id }
+        });
+        console.log('✅ Componentes deletados');
+
+        // Agora deletar o pacote
         const deleted = await TravelPackage.destroy({
             where: { id: id }
         });
 
-        console.log('✅ Linhas deletadas:', deleted);
+        console.log('✅ Pacote deletado');
 
-        if (deleted == 1) {
-            res.status(200).json({ success: true, message: "Pacote deletado com sucesso" });
-        } else {
-            res.status(404).json({
-                success: false,
-                message: `Não foi possível encontrar o pacote de viagem com id=${id}.`
-            });
-        }
+        res.status(200).json({ 
+            success: true, 
+            message: "Pacote e seus componentes deletados com sucesso" 
+        });
+
     } catch (error) {
         console.error('❌ Erro ao deletar:', error);
+        
+        // Mensagem específica para constraint de compras
+        if (error.name === 'SequelizeForeignKeyConstraintError') {
+            return res.status(400).json({
+                success: false,
+                message: "Não é possível deletar este pacote pois existem compras associadas a ele."
+            });
+        }
+        
         res.status(500).json({
             success: false,
-            message: "Erro ao deletar o pacote de viagem com id=" + id
+            message: error.message || "Erro ao deletar o pacote de viagem"
         });
     }
 };

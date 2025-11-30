@@ -116,7 +116,9 @@ db.Purchase.belongsTo(db.Users, {
 
 db.TravelPackage.hasMany(db.Purchase, { 
     foreignKey: 'packageId', 
-    as: 'purchases' 
+    as: 'purchases',
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE'
 });
 
 db.Purchase.belongsTo(db.TravelPackage, { 
