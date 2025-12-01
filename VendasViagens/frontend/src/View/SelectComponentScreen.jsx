@@ -83,7 +83,7 @@ export default function SelectedComponentScreen() {
                     )}
 
 
-                    {itemType !== 'FLIGHT' && (
+                    {itemType !== 'ACTIVITY' && (
                         <Text style={styles.packageDescription} numberOfLines={2}>
                             {item.description || 'Sem descrição'}
                         </Text>

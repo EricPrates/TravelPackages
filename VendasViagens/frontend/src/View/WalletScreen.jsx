@@ -59,7 +59,7 @@ export default function Carteira() {
                         </Text>
                     </View>
                     <Text style={styles.welcomeText}>
-                        {user ? `Olá, ${user.name}!` : "Visitante"}
+                        {user ? `Olá, ${user.name}!` : "Viajante"}
                     </Text>
                     <Text style={styles.subtitle}>Gerencie sua conta e visualize seus saldos</Text>
                 </View>

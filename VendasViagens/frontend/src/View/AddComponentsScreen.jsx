@@ -87,6 +87,7 @@ export default function AddComponentsScreen({ route }) {
             </View>
             <Ionicons name="chevron-forward" size={24} color="#64748b" />
         </TouchableOpacity>
+        
     );
 
     if (!travelPackage) {

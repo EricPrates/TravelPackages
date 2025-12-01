@@ -2,7 +2,10 @@ import { FlatList, View, StyleSheet, SafeAreaView, Text, TouchableOpacity, Image
 import { Searchbar } from "react-native-paper";
 import HomeController from "../controller/Home.controller";
 import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect } from '@react-navigation/native'
 import { useAuth } from "../AuthContext";
+import React from "react";
+
 export default function HomeScreen() {
     const {
         state: { packages, isLoading, error, searchQuery },
@@ -10,9 +13,13 @@ export default function HomeScreen() {
     } = HomeController();
     const { user } = useAuth();
     const typeUser = user.type;
-
     const navigation = useNavigation();
-
+ 
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchPackagesData();
+        }, [])
+    );
     const renderPackageItem = ({ item }) => (
         <TouchableOpacity style={styles.packageCard} onPress={() => navigation.navigate('PackageDetails', { travelPackage: item })}>
             <Image

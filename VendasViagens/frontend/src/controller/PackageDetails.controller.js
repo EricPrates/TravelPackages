@@ -47,8 +47,7 @@ export default function PackageDetailsController(travelPackage) {
 const handleDelete = async () => {
     try {
         setIsLoading(true);
-        console.log('🔴 Tentando deletar pacote:', packageId);
-        console.log('🔴 URL:', `${URL}/travel-packages/${packageId}`);
+   
         
         const res = await fetch(`${URL}/travel-packages/${packageId}`, {
             method: 'DELETE',
@@ -58,14 +57,13 @@ const handleDelete = async () => {
             },
         });
 
-        console.log('🔴 Status:', res.status);
-        console.log('🔴 OK?:', res.ok);
+    
 
         let data = null;
         const contentType = res.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
             data = await res.json();
-            console.log('🔴 Data:', data);
+         
         }
 
         if (!res.ok) {
@@ -73,9 +71,9 @@ const handleDelete = async () => {
         }
 
         Alert.alert('Sucesso', data?.message || 'Pacote deletado com sucesso!');
-        navigation.goBack();
+        navigation.navigate('Home');
     } catch (err) {
-        console.error('❌ Erro ao deletar:', err);
+        console.error('Erro ao deletar:', err);
         Alert.alert('Erro', err.message || 'Falha ao deletar o pacote.');
     } finally {
         setIsLoading(false);

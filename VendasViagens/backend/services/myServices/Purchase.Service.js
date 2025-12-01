@@ -297,7 +297,7 @@ async function processWalletTransactions(wallet, paidInMoney, paidInMiles, miles
     await wallet.save({ transaction });
 }
 
-//FUNÇÃO PRINCIPAL (REFATORADA)
+//FUNÇÃO PRINCIPAL 
 
 export const createPurchaseWithCashOrMiles = async (req, res) => {
     const transaction = await sequelize.transaction();
@@ -306,7 +306,7 @@ export const createPurchaseWithCashOrMiles = async (req, res) => {
         const { packageId, quantity = 1, paymentChoice, cashAmount = 0, milesAmount = 0 } = req.body;
         const userId = req.user.id;
 
-        // Validação de campos obrigatórios
+
         if (!userId || !packageId || !paymentChoice) {
             await transaction.rollback();
             return res.status(400).json({

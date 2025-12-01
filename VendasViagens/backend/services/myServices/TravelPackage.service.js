@@ -30,11 +30,8 @@ export const fetchOptions = async (req, res) => {
 
             let options = [];
             const typeUpper = type.toUpperCase();
-            console.log('   Entrando no switch com:', typeUpper);
-            
             switch (typeUpper) {
                 case 'FLIGHT':
-                    console.log('   ✈️ Buscando FLIGHTS...');
                     options = await travelDataService.searchFlights({
                         origin: travelPackage.origin,
                         destination: travelPackage.destination,
@@ -42,37 +39,28 @@ export const fetchOptions = async (req, res) => {
                         returnDate: formatDate(travelPackage.returnDate),
                         numberOfTravelers: travelPackage.numberOfTravelers || 1
                     });
-                    console.log('   ✈️ Flights encontrados:', options?.length || 0);
                     break;
                 case 'HOTEL':
-                    console.log('   🏨 Buscando HOTELS...');
                     options = await travelDataService.searchHotels({
                         destination: travelPackage.destination,
                         checkin: formatDate(travelPackage.departureDate),
                         checkout: formatDate(travelPackage.returnDate),
                         numberOfTravelers: travelPackage.numberOfTravelers || 1
                     });
-                    console.log('   🏨 Hotels encontrados:', options?.length || 0);
                     break;
                 case 'ACTIVITY':
-                    console.log('   🎯 Buscando ACTIVITIES...');
                     options = await travelDataService.searchActivities({
                         destination: travelPackage.destination
                     });
-                    console.log('   🎯 Activities encontradas:', options?.length || 0);
                     break;
                 case 'CAR_RENTAL':
-                    console.log('   🚗 Buscando CAR_RENTALS...');
                     options = await travelDataService.searchCarRentals({
                         destination: travelPackage.destination,
                         checkin: formatDate(travelPackage.departureDate),
                         checkout: formatDate(travelPackage.returnDate)
                     });
-                    console.log('   🚗 Cars encontrados:', options?.length || 0);
                     break;
             }
-
-            console.log('   📦 Retornando', options?.length || 0, 'opções do tipo', typeUpper);
             
             return res.status(200).json({ 
                 success: true, 
@@ -108,9 +96,7 @@ export const fetchOptions = async (req, res) => {
 
 
 export const findAll = async (req, res) => {
-    console.log('🔵 findAll chamado');
     try {
-        console.log('🔵 Buscando pacotes...');
         const data = await TravelPackage.findAll({
             include: [
                 {
@@ -123,16 +109,13 @@ export const findAll = async (req, res) => {
                 },
             ],
         });
-        console.log('🔵 Pacotes encontrados:', data.length);
-        console.log('🔵 Enviando resposta...');
         res.status(200).json({
             success: true,
             data: data
         });
-        console.log('✅ Resposta enviada');
     } catch (error) {
-        console.error('❌ Erro ao buscar pacotes:', error.message);
-        res.status(500).json({
+        console.error('Erro ao buscar pacotes:', error.message);
+        res.status(200).json({
             success: false,
             message: error.message || "Erro ao buscar pacotes de viagem"
         });
@@ -296,21 +279,19 @@ export const update = async (req, res) => {
     const travelPackageId = req.params.packageId;
     
     try {
-        console.log('🔵 Atualizando pacote:', travelPackageId);
-        console.log('📦 Dados recebidos:', req.body);
+        
         
         const [updated] = await TravelPackage.update(req.body, {
             where: { id: travelPackageId }
         });
-        
-        console.log('✅ Linhas atualizadas:', updated);
+     
+      
         
         if (updated === 1) {
             const updatedTravelPackage = await TravelPackage.findByPk(travelPackageId);
-            console.log('✅ Pacote atualizado:', updatedTravelPackage.title);
+           
             res.status(200).json({ success: true, data: updatedTravelPackage });
         } else {
-            console.log('❌ Pacote não encontrado');
             res.status(404).json({
                 success: false,
                 message: "Pacote de viagem não encontrado."
@@ -328,8 +309,6 @@ export const update = async (req, res) => {
 export const remove = async (req, res) => {
     const id = req.params.packageId;
     try {
-        console.log('🗑️ Deletando pacote:', id);
-        
         // Verificar se o pacote existe
         const travelPackage = await TravelPackage.findByPk(id);
         if (!travelPackage) {
@@ -343,14 +322,11 @@ export const remove = async (req, res) => {
         await PackageComponents.destroy({
             where: { packageId: id }
         });
-        console.log('✅ Componentes deletados');
 
         // Agora deletar o pacote
         const deleted = await TravelPackage.destroy({
             where: { id: id }
         });
-
-        console.log('✅ Pacote deletado');
 
         res.status(200).json({ 
             success: true, 
@@ -358,9 +334,9 @@ export const remove = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Erro ao deletar:', error);
+        console.error(error);
         
-        // Mensagem específica para constraint de compras
+      
         if (error.name === 'SequelizeForeignKeyConstraintError') {
             return res.status(400).json({
                 success: false,

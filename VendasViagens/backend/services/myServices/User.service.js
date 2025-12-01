@@ -65,11 +65,8 @@ export const register = async (req, res) => {
             });
         }
 
-        console.log('🔵 Criando usuário:', email);
         const hash = await bcrypt.hash(password, 10);
-        console.log('🔐 Hash gerado:', hash.substring(0, 30) + '...');
         const user = await Users.create({ name, email, password: hash, role }, {transaction});
-        console.log('✅ Usuário criado com ID:', user.id);
         await Wallet.create({ userId: user.id, balanceCash: 0.00, balanceMiles: 0.00 }, {transaction});
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
@@ -77,7 +74,6 @@ export const register = async (req, res) => {
             { expiresIn: '8h', algorithm: 'HS256' }
         );
         await transaction.commit();
-        console.log('✅ Registro completo');
         return res.status(201).json({
             success: true,
             message: 'Usuário registrado com sucesso.',

@@ -54,8 +54,7 @@ db.TravelPackage.hasMany(db.PackageComponents, {
 db.PackageComponents.belongsTo(db.TravelPackage, { 
     foreignKey: 'packageId', 
     as: 'travelPackage', 
-    onDelete: 'CASCADE', 
-    onUpdate: 'CASCADE' 
+   
 });
 
 // Relacionamentos User <-> Wallet (1:1)
@@ -84,16 +83,14 @@ db.Wallet.hasMany(db.WalletTransaction, {
 db.WalletTransaction.belongsTo(db.Wallet, { 
     foreignKey: 'walletId', 
     as: 'wallet', 
-    onDelete: 'CASCADE', 
-    onUpdate: 'CASCADE' 
+    
 });
 
 // Relacionamentos TravelPackage <-> User (agent)
 db.TravelPackage.belongsTo(db.Users, { 
     foreignKey: 'agentId', 
     as: 'agent',
-    onUpdate: 'CASCADE',
-    onDelete: 'CASCADE'
+    
 });
 
 db.Users.hasMany(db.TravelPackage, { 
@@ -106,7 +103,10 @@ db.Users.hasMany(db.TravelPackage, {
 // Relacionamentos Purchase
 db.Users.hasMany(db.Purchase, { 
     foreignKey: 'userId', 
-    as: 'purchases' 
+    as: 'purchases',
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE'
+    
 });
 
 db.Purchase.belongsTo(db.Users, { 
