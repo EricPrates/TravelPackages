@@ -309,7 +309,7 @@ export const update = async (req, res) => {
 export const remove = async (req, res) => {
     const id = req.params.packageId;
     try {
-        // Verificar se o pacote existe
+      
         const travelPackage = await TravelPackage.findByPk(id);
         if (!travelPackage) {
             return res.status(404).json({

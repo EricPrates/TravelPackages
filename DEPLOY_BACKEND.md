@@ -43,6 +43,7 @@ Execute do seu computador local (depois de fazer commit/push):
 ```bash
 ssh -i ~/Aws_vianna_2025_teste.pem ubuntu@44.219.93.219 "cd ~/trabalho2 && git pull origin main && cd VendasViagens && npm install && pm2 restart vendasviagens && pm2 logs vendasviagens --lines 30 --nostream"
 ```
+conectar e startar ssh -i ~/Aws_vianna_2025_teste.pem ubuntu@44.219.93.219 "cd ~/trabalho2/VendasViagens/backend && pm2 start server.js --name vendasviagens"
 
 ---
 

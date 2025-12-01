@@ -248,27 +248,21 @@ export class AmadeusClient {
     }
 
     async searchActivities(params) {
-        const { destination, latitude, longitude } = params;
+        const { destination } = params;
         try {
-            console.log(`🎯 Buscando atividades em ${destination}...`);
-            
             const token = await this.getAccessToken();
             
-          
-            let lat = latitude;
-            let long = longitude;
+            // Buscar coordenadas usando a API da Amadeus
+            const coords = await this.getCityCoordinates(destination);
             
-            if (!lat || !long) {
-                
-                const coords = await this.getCityCoordinates(destination);
-                lat = coords.latitude;
-                long = coords.longitude;
-                console.log(`✅ Coordenadas: ${lat}, ${long}`);
+            if (!coords || !coords.latitude || !coords.longitude) {
+                console.error(`Coordenadas não encontradas para: ${destination}`);
+                return [];
             }
 
             const url = new URL(`${this.baseURL}/v1/shopping/activities`);
-            url.searchParams.append('latitude', lat);
-            url.searchParams.append('longitude', long);
+            url.searchParams.append('latitude', coords.latitude);
+            url.searchParams.append('longitude', coords.longitude);
             url.searchParams.append('radius', '20');
 
             const response = await fetch(url, {
@@ -279,17 +273,15 @@ export class AmadeusClient {
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                throw new Error(`HTTP ${response.status}`);
             }
 
             const data = await response.json();
             
             if (!data.data || data.data.length === 0) {
-                
                 return [];
             }
 
-            // Simplificar dados das atividades
             const responseWithPrices = data.data.map(activity => {
                 const price = activity.price;
                 const moneyPrice = parseFloat(price?.amount || 0);
@@ -302,15 +294,13 @@ export class AmadeusClient {
                     description: activity.shortDescription || activity.description?.substring(0, 200),
                     moneyPrice: moneyPrice,
                     milesPrice: milesPrice,
-                 
-        
                 };
             });
 
             return responseWithPrices;
 
         } catch (error) {
-            console.error("❌ Erro ao buscar atividades:", error.message);
+            console.error("Erro ao buscar atividades:", error.message);
             return [];
         }
     }

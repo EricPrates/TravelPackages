@@ -56,13 +56,13 @@ function packagesReducer(state, action) {
 export default function HomeController() {
     const { token, URL, user, isLoading } = useAuth();
     const [state, dispatch] = useReducer(packagesReducer, initialState);
-    const [refreshSignal, setRefreshSignal] = useState(0);
+
 
 
 
     const fetchPackagesData = async () => {
         dispatch({ type: 'FETCH_PACKAGES_REQUEST' });
-
+        
 
         try {
 
@@ -81,7 +81,7 @@ export default function HomeController() {
             }
 
             const data = await response.json();
-
+            console.log('📦 Pacotes recebidos:', data.data?.length);
             if (data.success) {
                 dispatch({
                     type: 'FETCH_PACKAGES_SUCCESS',
@@ -99,13 +99,10 @@ export default function HomeController() {
         }
     };
 
-   const sendRefreshSignal = useCallback(() => {
-        setRefreshSignal(prev => prev + 1);
-    }, []);
 
     useEffect(() => {
         fetchPackagesData();
-    }, [isLoading, refreshSignal]);
+    }, [isLoading]);
     const setSearchQuery = (query) => {
         dispatch({
             type: 'SET_SEARCH_QUERY',
@@ -128,6 +125,6 @@ export default function HomeController() {
             fetchPackagesData,
             clearSearch: () => setSearchQuery('')
         },
-        fetchPackagesData,
+        
     };
 }

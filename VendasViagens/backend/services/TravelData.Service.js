@@ -27,30 +27,11 @@ export class TravelDataService {
 
    
     async searchActivities(params) {
-       
-        const coords = mockDataService.getCityCoordinates(params.destination);
-        
-        if (coords) {
-            try {
-                const activities = await amadeusClient.searchActivities({
-                    ...params,
-                    latitude: coords.latitude,
-                    longitude: coords.longitude
-                });
-                
-                if (activities && activities.length > 0) {
-                    return activities;
-                }
-            } catch (error) {
-           
-            }
-        }
-        
-     
         try {
             const activities = await amadeusClient.searchActivities(params);
             return activities && activities.length > 0 ? activities : [];
         } catch (error) {
+            console.error('Erro ao buscar atividades:', error.message);
             return [];
         }
     }

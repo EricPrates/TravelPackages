@@ -117,7 +117,7 @@ export default function MenuDrawer() {
           }} component={AddComponentsScreen} />
           <Drawer.Screen name="SelecionarComponentes" options={{
             drawerLabel: 'Selecionar Componentes',
-            
+            drawerItemStyle: { display: 'none' },
             drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="puzzle-plus" size={size} color={color} />
             )
@@ -133,20 +133,20 @@ export default function MenuDrawer() {
             drawerLabel: 'Histórico de Compras',
        
             drawerIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="puzzle-plus" size={size} color={color} />
+              <MaterialCommunityIcons name="history" size={size} color={color} />
             )
           }} component={PurchaseHistoryScreen} />
           <Drawer.Screen name="Extrato" options={{
             drawerLabel: 'Extrato',
             
             drawerIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="puzzle-plus" size={size} color={color} />
+              <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />
             )
           }} component={StatementScreen} />
          
           <Drawer.Screen name="PurchaseDetails" options={{
             drawerLabel: 'Detalhes da Compra',
-            
+            drawerItemStyle: { display: 'none' },
             drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="puzzle-plus" size={size} color={color} />
             )

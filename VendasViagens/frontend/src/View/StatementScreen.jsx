@@ -1,9 +1,15 @@
 import { FlatList, Text, View, StyleSheet, ActivityIndicator } from "react-native";
 import StatementController from "../controller/Statement.controller";
+import { useFocusEffect } from "@react-navigation/native";
+import React from "react";
 
 export default function StatementScreen() {
-    const { isLoading, transactions, error } = StatementController();
-
+    const { isLoading, transactions, error, fetchTransactions} = StatementController();
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchTransactions();
+        }, [])
+    );
     if (isLoading) {
         return (
             <View style={styles.center}>
@@ -38,7 +44,7 @@ export default function StatementScreen() {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Extrato de Transações</Text>
-            
+
             <FlatList
                 data={transactions}
                 keyExtractor={(item) => item.id.toString()}
@@ -50,23 +56,23 @@ export default function StatementScreen() {
                                 {formatAmount(item)}
                             </Text>
                         </View>
-                        
+
                         <Text style={styles.date}>{formatDate(item.date)}</Text>
                         <Text style={styles.coinType}>Moeda: {item.coinType}</Text>
                         <Text style={styles.description}>{item.description}</Text>
-                        
+
                         {item.balanceAfter && (
                             <View style={styles.balanceContainer}>
                                 <Text style={styles.balanceLabel}>Novo Saldo:</Text>
                                 <Text style={styles.balanceValue}>
-                                    {item.coinType === 'CASH' 
+                                    {item.coinType === 'CASH'
                                         ? `R$ ${item.balanceAfter.cash.toFixed(2)}`
                                         : `${item.balanceAfter.miles.toLocaleString('pt-BR')} milhas`
                                     }
                                 </Text>
                             </View>
                         )}
-                        
+
                         {item.relatedPurchaseId && (
                             <Text style={styles.purchase}>Compra ID: {item.relatedPurchaseId}</Text>
                         )}
