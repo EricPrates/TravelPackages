@@ -176,7 +176,7 @@ export const login = async (req, res) => {
         console.log('🔵 Login attempt:', email);
 
         if (!email || !password) {
-            console.log('❌ Email ou senha não fornecidos');
+          
             return res.status(400).json({
                 success: false,
                 message: "Email e senha são obrigatórios."
@@ -186,16 +186,16 @@ export const login = async (req, res) => {
         const findUser = await db.Users.findOne({ where: { email: email } });
 
         if (!findUser) {
-            console.log('❌ Usuário não encontrado:', email);
+           
             return res.status(401).json({ success: false, message: "Usuário ou senha inválidos." });
         }
 
-        console.log('✅ Usuário encontrado, comparando senha...');
+        
         const isPasswordValid = await bcrypt.compare(password, findUser.password);
         console.log('🔐 Senha válida?', isPasswordValid);
 
         if (!isPasswordValid) {
-            console.log('❌ Senha inválida');
+         
             return res.status(401).json({ success: false, message: "Usuário ou senha inválidos." });
         }
 
@@ -262,27 +262,26 @@ export const login = async (req, res) => {
         const token = authHeader.split(" ")[1];
 
         try {
-            // Verifica o token
+        
             const decoded = jwt.verify(token, JWT_PRIVATE_KEY, { algorithms: ['HS256'] });
             
-            // ✨ RENOVAÇÃO PREVENTIVA: Verifica se está perto de expirar
-            const now = Math.floor(Date.now() / 1000);
+          
             const timeUntilExpiry = decoded.exp - now;
             
-            // Se falta menos de 5 minutos (300 segundos) para expirar
+           
             if (timeUntilExpiry < 300) {
-                console.log(`⚠️ Token expira em ${timeUntilExpiry}s. Gerando novo token...`);
+
                 
-                // Gera novo access token
+                
                 const newAccessToken = generateAccessToken({
                     id: decoded.id,
                     email: decoded.email,
                     role: decoded.role
                 });
                 
-                // Envia no header da resposta (frontend pode capturar e salvar)
+               
                 res.setHeader('X-New-Access-Token', newAccessToken);
-                console.log(`✅ Novo token gerado para usuário ${decoded.email}`);
+               
             }
             
             req.user = decoded;

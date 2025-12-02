@@ -145,13 +145,83 @@ export class AmadeusClient {
     }
 
     async getCityCoordinates(cityCode) {
+        const COORDINATES_MAP = {
+            // Brasil - Principais
+            'GRU': { latitude: -23.4356, longitude: -46.4731, cityName: 'São Paulo', iataCode: 'GRU' },
+            'CGH': { latitude: -23.6267, longitude: -46.6556, cityName: 'São Paulo Congonhas', iataCode: 'CGH' },
+            'GIG': { latitude: -22.8099, longitude: -43.2505, cityName: 'Rio de Janeiro', iataCode: 'GIG' },
+            'BSB': { latitude: -15.8697, longitude: -47.9208, cityName: 'Brasília', iataCode: 'BSB' },
+            'SSA': { latitude: -12.9086, longitude: -38.3224, cityName: 'Salvador', iataCode: 'SSA' },
+            'FOR': { latitude: -3.7763, longitude: -38.5326, cityName: 'Fortaleza', iataCode: 'FOR' },
+            'REC': { latitude: -8.1264, longitude: -34.9236, cityName: 'Recife', iataCode: 'REC' },
+            'CWB': { latitude: -25.5284, longitude: -49.1759, cityName: 'Curitiba', iataCode: 'CWB' },
+            'POA': { latitude: -29.9939, longitude: -51.1711, cityName: 'Porto Alegre', iataCode: 'POA' },
+            'BEL': { latitude: -1.3792, longitude: -48.4761, cityName: 'Belém', iataCode: 'BEL' },
+            'MAO': { latitude: -3.0386, longitude: -60.0497, cityName: 'Manaus', iataCode: 'MAO' },
+            'JPA': { latitude: -7.1475, longitude: -34.9486, cityName: 'João Pessoa', iataCode: 'JPA' },
+            'NAT': { latitude: -5.7680, longitude: -35.3761, cityName: 'Natal', iataCode: 'NAT' },
+            'MCZ': { latitude: -9.5108, longitude: -35.7917, cityName: 'Maceió', iataCode: 'MCZ' },
+            'AJU': { latitude: -10.9840, longitude: -37.0703, cityName: 'Aracaju', iataCode: 'AJU' },
+            'FRC': { latitude: -20.5919, longitude: -47.3828, cityName: 'Franca', iataCode: 'FRC' },
+            'VCP': { latitude: -23.0074, longitude: -47.1344, cityName: 'Campinas', iataCode: 'VCP' },
+            'CNF': { latitude: -19.6244, longitude: -43.9719, cityName: 'Belo Horizonte', iataCode: 'CNF' },
+            'VIX': { latitude: -20.2581, longitude: -40.2864, cityName: 'Vitória', iataCode: 'VIX' },
+            'FLN': { latitude: -27.6703, longitude: -48.5525, cityName: 'Florianópolis', iataCode: 'FLN' },
+            'IGU': { latitude: -25.5953, longitude: -54.4872, cityName: 'Foz do Iguaçu', iataCode: 'IGU' },
+            
+            // Europa
+            'CDG': { latitude: 49.0097, longitude: 2.5479, cityName: 'Paris', iataCode: 'CDG' },
+            'LHR': { latitude: 51.4700, longitude: -0.4543, cityName: 'London', iataCode: 'LHR' },
+            'BCN': { latitude: 41.2974, longitude: 2.0833, cityName: 'Barcelona', iataCode: 'BCN' },
+            'MAD': { latitude: 40.4983, longitude: -3.5676, cityName: 'Madrid', iataCode: 'MAD' },
+            'LIS': { latitude: 38.7742, longitude: -9.1342, cityName: 'Lisbon', iataCode: 'LIS' },
+            'FRA': { latitude: 50.0379, longitude: 8.5622, cityName: 'Frankfurt', iataCode: 'FRA' },
+            'AMS': { latitude: 52.3105, longitude: 4.7683, cityName: 'Amsterdam', iataCode: 'AMS' },
+            'IST': { latitude: 41.2753, longitude: 28.7519, cityName: 'Istanbul', iataCode: 'IST' },
+            
+            // América do Norte
+            'JFK': { latitude: 40.6413, longitude: -73.7781, cityName: 'New York', iataCode: 'JFK' },
+            'LAX': { latitude: 33.9416, longitude: -118.4085, cityName: 'Los Angeles', iataCode: 'LAX' },
+            'MIA': { latitude: 25.7959, longitude: -80.2870, cityName: 'Miami', iataCode: 'MIA' },
+            'ORD': { latitude: 41.9742, longitude: -87.9073, cityName: 'Chicago', iataCode: 'ORD' },
+            'SFO': { latitude: 37.6213, longitude: -122.3790, cityName: 'San Francisco', iataCode: 'SFO' },
+            'LAS': { latitude: 36.0840, longitude: -115.1537, cityName: 'Las Vegas', iataCode: 'LAS' },
+            'MEX': { latitude: 19.4363, longitude: -99.0721, cityName: 'Mexico City', iataCode: 'MEX' },
+            'CUN': { latitude: 21.0365, longitude: -86.8771, cityName: 'Cancún', iataCode: 'CUN' },
+            
+            // América do Sul
+            'EZE': { latitude: -34.8222, longitude: -58.5358, cityName: 'Buenos Aires', iataCode: 'EZE' },
+            'SCL': { latitude: -33.3930, longitude: -70.7858, cityName: 'Santiago', iataCode: 'SCL' },
+            'LIM': { latitude: -12.0219, longitude: -77.1143, cityName: 'Lima', iataCode: 'LIM' },
+            'BOG': { latitude: 4.7016, longitude: -74.1469, cityName: 'Bogotá', iataCode: 'BOG' },
+            
+            // Ásia
+            'DXB': { latitude: 25.2532, longitude: 55.3657, cityName: 'Dubai', iataCode: 'DXB' },
+            'NRT': { latitude: 35.7720, longitude: 140.3929, cityName: 'Tokyo', iataCode: 'NRT' },
+            'SIN': { latitude: 1.3644, longitude: 103.9915, cityName: 'Singapore', iataCode: 'SIN' },
+            'BKK': { latitude: 13.6900, longitude: 100.7501, cityName: 'Bangkok', iataCode: 'BKK' },
+            'HKG': { latitude: 22.3080, longitude: 113.9185, cityName: 'Hong Kong', iataCode: 'HKG' },
+            
+            // Oceania
+            'SYD': { latitude: -33.9399, longitude: 151.1753, cityName: 'Sydney', iataCode: 'SYD' },
+            'MEL': { latitude: -37.6690, longitude: 144.8410, cityName: 'Melbourne', iataCode: 'MEL' },
+            'FCO': { latitude: 41.8003, longitude: 12.2389, cityName: 'Rome', iataCode: 'FCO' },
+            'AMS': { latitude: 52.3105, longitude: 4.7683, cityName: 'Amsterdam', iataCode: 'AMS' }
+        };
+
+       
+        if (COORDINATES_MAP[cityCode]) {
+            console.log(`📍 Usando coordenadas fixas para ${cityCode}`);
+            return COORDINATES_MAP[cityCode];
+        }
+
+     
         try {
             const token = await this.getAccessToken();
             
-            // Tenta buscar como CITY primeiro
             let url = new URL(`${this.baseURL}/v1/reference-data/locations`);
             url.searchParams.append('keyword', cityCode);
-            url.searchParams.append('subType', 'CITY');
+            url.searchParams.append('subType', 'CITY,AIRPORT');
 
             let response = await fetch(url, {
                 headers: {
@@ -161,30 +231,13 @@ export class AmadeusClient {
             });
 
             let data = await response.json();
-            
-          
-            if (!data.data || data.data.length === 0) {
-          
-                
-                url = new URL(`${this.baseURL}/v1/reference-data/locations`);
-                url.searchParams.append('keyword', cityCode);
-                url.searchParams.append('subType', 'AIRPORT');
-
-                response = await fetch(url, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
-                    }
-                });
-
-                data = await response.json();
-            }
 
             if (!data.data || data.data.length === 0) {
                 throw new Error(`Localização ${cityCode} não encontrada`);
             }
 
             const location = data.data[0];
+            console.log(`📍 Coordenadas obtidas da API Amadeus para ${cityCode}`);
             return {
                 latitude: location.geoCode.latitude,
                 longitude: location.geoCode.longitude,
@@ -193,7 +246,7 @@ export class AmadeusClient {
             };
 
         } catch (error) {
-          
+            console.error(`❌ Erro ao buscar coordenadas para ${cityCode}:`, error.message);
             throw error;
         }
     }

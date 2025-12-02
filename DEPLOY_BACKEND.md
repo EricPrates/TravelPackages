@@ -28,7 +28,7 @@ ssh -i ~/Aws_vianna_2025_teste.pem ubuntu@44.219.93.219
 ```bash
 cd ~/trabalho2
 git pull origin main
-cd VendasViagens
+cd VendasViagens/backend
 npm install
 pm2 restart vendasviagens
 pm2 logs vendasviagens
@@ -41,9 +41,15 @@ pm2 logs vendasviagens
 Execute do seu computador local (depois de fazer commit/push):
 
 ```bash
-ssh -i ~/Aws_vianna_2025_teste.pem ubuntu@44.219.93.219 "cd ~/trabalho2 && git pull origin main && cd VendasViagens && npm install && pm2 restart vendasviagens && pm2 logs vendasviagens --lines 30 --nostream"
+# Deploy simples (sem instalar dependências)
+ssh -i ~/Aws_vianna_2025_teste.pem ubuntu@44.219.93.219 "cd ~/trabalho2 && git pull origin main && pm2 restart vendasviagens && pm2 logs vendasviagens --lines 30 --nostream"
+
+# Deploy completo (quando mudar dependências)
+ssh -i ~/Aws_vianna_2025_teste.pem ubuntu@44.219.93.219 "cd ~/trabalho2 && git pull origin main && cd VendasViagens/backend && npm install && pm2 restart vendasviagens && pm2 logs vendasviagens --lines 30 --nostream"
+
+# Conectar e startar pela primeira vez
+ssh -i ~/Aws_vianna_2025_teste.pem ubuntu@44.219.93.219 "cd ~/trabalho2/VendasViagens/backend && pm2 start server.js --name vendasviagens"
 ```
-conectar e startar ssh -i ~/Aws_vianna_2025_teste.pem ubuntu@44.219.93.219 "cd ~/trabalho2/VendasViagens/backend && pm2 start server.js --name vendasviagens"
 
 ---
 
@@ -75,8 +81,8 @@ pm2 logs vendasviagens --err --lines 50
 
 # Parar e iniciar novamente
 pm2 delete vendasviagens
-cd ~/trabalho2/VendasViagens
-pm2 start backend/server.js --name vendasviagens
+cd ~/trabalho2/VendasViagens/backend
+pm2 start server.js --name vendasviagens
 pm2 save
 ```
 
