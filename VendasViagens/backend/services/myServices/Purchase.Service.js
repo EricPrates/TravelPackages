@@ -279,7 +279,7 @@ async function processWalletTransactions(wallet, paidInMoney, paidInMiles, miles
             type: 'DEPOSIT',
             coinType: 'MILES',
             amount: milesEarned,
-            description: `Cashback de ${MILES_EARNED_RATE * 100}% sobre compra #${purchaseId}`,
+            description: `Cashback de ${MILES_EARNED_RATE}% sobre compra #${purchaseId}`,
             relatedPurchaseId: purchaseId,
             date: new Date()
         }, { transaction });
