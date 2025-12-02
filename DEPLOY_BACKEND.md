@@ -5,6 +5,14 @@
 - Acesso SSH ao servidor AWS
 
 ---
+# 1. Copie a chave para home (pendrive, download, etc)
+cp /caminho/da/chave/Aws_vianna_2025_teste.pem ~/
+
+# 2. Ajuste permissões
+chmod 400 ~/Aws_vianna_2025_teste.pem
+
+# 3. Execute o mesmo comando que usa no WSL
+ssh -i ~/Aws_vianna_2025_teste.pem ubuntu@44.219.93.219 "cd ~/trabalho2 && git pull origin main && pm2 restart vendasviagens && pm2 logs vendasviagens --lines 30 --nostream"
 
 ## 🔄 Deploy Rápido (Passo a Passo)
 
