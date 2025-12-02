@@ -37,9 +37,7 @@ export async function getOrCreateWallet (userId) {
  
     return wallet;
 }
-/**
- * Adicionar milhas por promoção
- */
+
 export const addMilesPromo = async (req, res) => {
     const dbTransaction = await db.sequelize.transaction();
     
@@ -57,11 +55,11 @@ export const addMilesPromo = async (req, res) => {
         
         const wallet = await getOrCreateWallet(userId);
         
-        // Adicionar milhas
+     
         wallet.balanceMiles = parseFloat(wallet.balanceMiles) + parseFloat(amount);
         await wallet.save({ transaction: dbTransaction });
         
-        // Registrar transação
+   
         const walletTransaction = await WalletTransaction.create({
             walletId: wallet.id,
             type: 'DEPOSIT',
@@ -113,6 +111,13 @@ export const cashDeposit = async (req, res) => {
         }
         const wallet = await getOrCreateWallet(userId);
         wallet.balanceCash = parseFloat(wallet.balanceCash) + parseFloat(amount);
+        
+        const milesEarned = Math.floor(parseFloat(amount) / 100);
+        
+        if (milesEarned > 0) {
+            wallet.balanceMiles = parseFloat(wallet.balanceMiles) + milesEarned;
+        }
+        
         await wallet.save({ transaction: dbTransaction });
 
         const walletTransaction = await WalletTransaction.create({
@@ -123,13 +128,29 @@ export const cashDeposit = async (req, res) => {
             description: `Depósito em dinheiro de R$ ${amount}`,
             date: new Date()
         }, { transaction: dbTransaction });
+        
+        let milesTransaction = null;
+        if (milesEarned > 0) {
+            milesTransaction = await WalletTransaction.create({
+                walletId: wallet.id,
+                type: 'DEPOSIT',
+                coinType: 'MILES',
+                amount: milesEarned,
+                description: `Bônus de ${milesEarned} milha(s) por depósito de R$ ${amount}`,
+                date: new Date()
+            }, { transaction: dbTransaction });
+        }
+        
         await dbTransaction.commit();
         return res.status(200).json({
             success: true,
             message: 'Depósito em dinheiro realizado com sucesso.',
             data: {
                 transaction: walletTransaction,
-                newBalance: wallet.balanceCash
+                milesTransaction: milesTransaction,
+                milesEarned: milesEarned,
+                newBalanceCash: wallet.balanceCash,
+                newBalanceMiles: wallet.balanceMiles
             }
         });
     } catch (error) {
