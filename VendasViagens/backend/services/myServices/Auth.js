@@ -262,8 +262,29 @@ export const login = async (req, res) => {
         const token = authHeader.split(" ")[1];
 
         try {
-
+            // Verifica o token
             const decoded = jwt.verify(token, JWT_PRIVATE_KEY, { algorithms: ['HS256'] });
+            
+            // ✨ RENOVAÇÃO PREVENTIVA: Verifica se está perto de expirar
+            const now = Math.floor(Date.now() / 1000);
+            const timeUntilExpiry = decoded.exp - now;
+            
+            // Se falta menos de 5 minutos (300 segundos) para expirar
+            if (timeUntilExpiry < 300) {
+                console.log(`⚠️ Token expira em ${timeUntilExpiry}s. Gerando novo token...`);
+                
+                // Gera novo access token
+                const newAccessToken = generateAccessToken({
+                    id: decoded.id,
+                    email: decoded.email,
+                    role: decoded.role
+                });
+                
+                // Envia no header da resposta (frontend pode capturar e salvar)
+                res.setHeader('X-New-Access-Token', newAccessToken);
+                console.log(`✅ Novo token gerado para usuário ${decoded.email}`);
+            }
+            
             req.user = decoded;
             next();
         } catch (error) {

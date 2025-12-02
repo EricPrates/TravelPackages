@@ -4,7 +4,7 @@ import { Snackbar } from 'react-native-paper';
 import PurchaseHistoryController from '../controller/PurchaseHistory.controller';
 import { useNavigation } from '@react-navigation/native';
 export default function PurchaseHistoryScreen() {
-    const { purchases, pagination, filters, isLoading, error, refreshing, onRefresh, fetchPurchaseHistory } = PurchaseHistoryController();
+    const { purchases, totalItems, filters, isLoading, error, refreshing, onRefresh } = PurchaseHistoryController();
     const [snackbarVisible, setSnackbarVisible] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const navigation = useNavigation();
@@ -90,12 +90,6 @@ export default function PurchaseHistoryScreen() {
         );
     }
 
-    const loadNextPage = () => {
-        if (pagination.currentPage < pagination.totalPages && !isLoading) {
-            fetchPurchaseHistory({ page: pagination.currentPage + 1, limit: pagination.itemsPerPage });
-        }
-    };
-
     return (
         <View style={styles.container}>
             <FlatList
@@ -111,8 +105,6 @@ export default function PurchaseHistoryScreen() {
                         tintColor="#6366f1"
                     />
                 }
-                onEndReached={loadNextPage}
-                onEndReachedThreshold={0.4}
                 ListEmptyComponent={
                     <View style={styles.emptyState}>
                         <Text style={styles.emptyStateEmoji}>🛍️</Text>
@@ -124,10 +116,14 @@ export default function PurchaseHistoryScreen() {
                     purchases?.length > 0 ? (
                         <View style={styles.listHeader}>
                             <Text style={styles.listHeaderTitle}>
-                                📋 Página {pagination.currentPage} de {pagination.totalPages} • {pagination.totalItems} itens
+                                📋 {totalItems} {totalItems === 1 ? 'compra' : 'compras'}
                             </Text>
-                            {filters?.status && <Text style={{ color: '#64748b' }}>Filtro status: {filters.status}</Text>}
-                            {filters?.destination && <Text style={{ color: '#64748b' }}>Destino: {filters.destination}</Text>}
+                            {filters?.status && filters.status !== 'all' && (
+                                <Text style={{ color: '#64748b' }}>Filtro status: {filters.status}</Text>
+                            )}
+                            {filters?.destination && filters.destination !== 'all' && (
+                                <Text style={{ color: '#64748b' }}>Destino: {filters.destination}</Text>
+                            )}
                         </View>
                     ) : null
                 }

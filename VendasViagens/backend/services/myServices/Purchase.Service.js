@@ -13,7 +13,7 @@ const MILES_EARNED_RATE = 0.01;
 
 export const findPurchasesWithFilters = async (req, res) => {
     try {
-        const { userId, status, destination, from, to, page = 1, limit = 10 } = req.query;
+        const { userId, status, destination, from, to } = req.query;
 
         if (!userId) {
             return res.status(400).json({ 
@@ -47,18 +47,14 @@ export const findPurchasesWithFilters = async (req, res) => {
             })
         }];
 
-        const offset = (parseInt(page) - 1) * parseInt(limit);
-
-        const { count, rows: purchases } = await Purchase.findAndCountAll({
+        const purchases = await Purchase.findAll({
             where,
             include,
             attributes: [
                 'id', 'purchaseDate', 'status', 'quantity',
                 'totalMoneyPrice', 'totalMilesPrice', 'paidInMoney', 'paidInMiles'
             ],
-            order: [['purchaseDate', 'DESC']],
-            limit: parseInt(limit),
-            offset
+            order: [['purchaseDate', 'DESC']]
         });
 
         // Formatar purchases para garantir que os valores apareçam
@@ -87,12 +83,7 @@ export const findPurchasesWithFilters = async (req, res) => {
                     destination: destination || 'all',
                     period: from && to ? { from, to } : 'all'
                 },
-                pagination: {
-                    currentPage: parseInt(page),
-                    totalPages: Math.ceil(count / parseInt(limit)),
-                    totalItems: count,
-                    itemsPerPage: parseInt(limit)
-                },
+                totalItems: formattedPurchases.length,
                 purchases: formattedPurchases
             }
         });

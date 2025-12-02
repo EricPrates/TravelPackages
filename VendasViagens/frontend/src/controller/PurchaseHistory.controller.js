@@ -5,7 +5,7 @@ export default function PurchaseHistoryController() {
     const { user, token, URL } = useAuth();
 
     const [purchases, setPurchases] = useState([]);
-    const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 });
+    const [totalItems, setTotalItems] = useState(0);
     const [filters, setFilters] = useState({ status: 'all', destination: 'all', period: 'all' });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -13,16 +13,14 @@ export default function PurchaseHistoryController() {
 
     const userId = user?.id;
 
-    async function fetchPurchaseHistory({ page = 1, limit = 10, status, destination, from, to } = {}) {
+    async function fetchPurchaseHistory({ status, destination, from, to } = {}) {
         setIsLoading(true);
         setError(null);
         try {
             if (!token || !userId) throw new Error('Usuário não autenticado');
 
             const params = new URLSearchParams({
-                userId: String(userId),
-                page: String(page),
-                limit: String(limit),
+                userId: String(userId)
             });
             if (status) params.append('status', status);
             if (destination) params.append('destination', destination);
@@ -43,7 +41,7 @@ export default function PurchaseHistoryController() {
             if (!payload || !Array.isArray(payload.purchases)) throw new Error('Resposta inválida do servidor');
 
             setPurchases(payload.purchases);
-            setPagination(payload.pagination);
+            setTotalItems(payload.totalItems || 0);
             setFilters(payload.filters);
         } catch (err) {
             setError(err.message || 'Erro ao carregar histórico');
@@ -55,17 +53,16 @@ export default function PurchaseHistoryController() {
 
     const onRefresh = () => {
         setRefreshing(true);
-        fetchPurchaseHistory({ page: 1, limit: pagination.itemsPerPage || 10 });
+        fetchPurchaseHistory();
     };
 
     useEffect(() => {
-        fetchPurchaseHistory({ page: 1, limit: 10 });
-      
+        fetchPurchaseHistory();
     }, [token, userId]);
 
     return {
         purchases,
-        pagination,
+        totalItems,
         filters,
         isLoading,
         error,

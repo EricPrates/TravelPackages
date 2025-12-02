@@ -7,9 +7,6 @@ export default function PackageDetailsController(travelPackage) {
   const { user, token, URL } = useAuth();
   const navigation = useNavigation();  
   
-  const [purchases, setPurchases] = useState([]);
-  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 });
-  const [filters, setFilters] = useState({ status: 'all', destination: 'all', period: 'all' });
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [errorHistory, setErrorHistory] = useState(null);
   const [mixedError, setMixedError] = useState('');
@@ -203,9 +200,6 @@ const handleDelete = async () => {
     cashAmount,
     milesAmount,
     isLoading,
-    purchases,
-    pagination,
-    filters,
     isLoadingHistory,
     errorHistory,
     milesRequired,
