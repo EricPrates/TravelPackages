@@ -131,7 +131,7 @@ export default function SelectedComponentScreen() {
                     style={styles.retryButton}
                     onPress={fetchComponents}
                 >
-                    <Text style={styles.retryButtonText}>🔄 Tentar Novamente</Text>
+                    <Text style={styles.retryButtonText}> Tentar Novamente</Text>
                 </TouchableOpacity>
             </View>
         );
@@ -161,6 +161,12 @@ export default function SelectedComponentScreen() {
                             : 'Tente ajustar os filtros da sua busca'
                         }
                     </Text>
+                     <TouchableOpacity
+                    style={styles.retryButton}
+                    onPress={() =>{ navigation.navigate(AdicionarComponentes)}}
+                >
+                    <Text style={styles.retryButtonText}> Voltar a tela anterior</Text>
+                </TouchableOpacity>
                 </View>
             }
             ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -170,20 +176,8 @@ export default function SelectedComponentScreen() {
                         <Text style={styles.listHeaderTitle}>
                             {allComponents.length} opç{allComponents.length !== 1 ? 'ões' : 'ão'} disponível{allComponents.length !== 1 ? 'is' : ''}
                         </Text>
-                        <View style={styles.componentsSummary}>
-                            <Text style={styles.summaryText}>
-                                ✈️ {allComponents.filter(item => item.type?.includes('flight')).length} voos
-                            </Text>
-                            <Text style={styles.summaryText}>
-                                🏨 {allComponents.filter(item => item.type?.includes('hotel')).length} hotéis
-                            </Text>
-                            <Text style={styles.summaryText}>
-                                🎯 {allComponents.filter(item => item.type?.includes('activity')).length} atividades
-                            </Text>
-                            <Text style={styles.summaryText}>
-                                🚗 {allComponents.filter(item => item.type?.includes('car')).length} carros
-                            </Text>
-                        </View>
+                     
+            
                         <Snackbar
                             visible={visible}
                             onDismiss={(() => setVisible(false))}

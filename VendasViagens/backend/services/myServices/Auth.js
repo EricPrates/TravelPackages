@@ -262,10 +262,10 @@ export const login = async (req, res) => {
         const token = authHeader.split(" ")[1];
 
         try {
-        
             const decoded = jwt.verify(token, JWT_PRIVATE_KEY, { algorithms: ['HS256'] });
             
-          
+            // Calcular tempo até expiração
+            const now = Math.floor(Date.now() / 1000);
             const timeUntilExpiry = decoded.exp - now;
             
            
