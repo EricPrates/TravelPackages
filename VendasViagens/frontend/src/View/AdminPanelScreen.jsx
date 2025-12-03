@@ -59,7 +59,13 @@ export default function AdminPanelScreen() {
                     onPress={() => navigation.navigate('Home')}
                 />
             </View>
-
+            <MenuButton
+                    icon="add-circle"
+                    title="Criar Usuário"
+                    description="Adicionar um novo usuário"
+                    color="#6710b9ff"
+                    onPress={() => navigation.navigate('CriarUsuario')}
+                />
 
             <TouchableOpacity
                 style={styles.logoutButton}

@@ -67,13 +67,23 @@ export const register = async (req, res) => {
 
         const hash = await bcrypt.hash(password, 10);
         const user = await Users.create({ name, email, password: hash, role }, {transaction});
-        await Wallet.create({ userId: user.id, balanceCash: 0.00, balanceMiles: 0.00 }, {transaction});
-        const token = jwt.sign(
+        const wallet = await Wallet.create({ userId: user.id, balanceCash: 0.00, balanceMiles: 0.00 }, {transaction});
+        
+        // Importar funções de geração de token do Auth.js
+        const accessToken = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
             process.env.JWT_PRIVATE_KEY,
-            { expiresIn: '8h', algorithm: 'HS256' }
+            { expiresIn: '15m', algorithm: 'HS256' }
         );
+        
+        const refreshToken = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            process.env.JWT_REFRESH_KEY,
+            { expiresIn: '7d', algorithm: 'HS256' }
+        );
+        
         await transaction.commit();
+        
         return res.status(201).json({
             success: true,
             message: 'Usuário registrado com sucesso.',
@@ -84,8 +94,17 @@ export const register = async (req, res) => {
                     name: user.name,
                     role: user.role
                 },
-                token: token,
-                token_type: "Bearer"
+                token: {
+                    accessToken: accessToken,
+                    refreshToken: refreshToken,
+                    token_type: "Bearer",
+                    expiresIn: "15m"
+                },
+                wallet: {
+                    id: wallet.id,
+                    balanceCash: wallet.balanceCash,
+                    balanceMiles: wallet.balanceMiles
+                }
             }
         });
     } catch (err) {

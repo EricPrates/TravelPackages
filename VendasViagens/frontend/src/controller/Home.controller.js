@@ -54,7 +54,7 @@ function packagesReducer(state, action) {
 }
 
 export default function HomeController() {
-    const { token, URL, user, isLoading } = useAuth();
+    const { token, URL,  isLoading } = useAuth();
     const [state, dispatch] = useReducer(packagesReducer, initialState);
 
 
@@ -81,6 +81,8 @@ export default function HomeController() {
             }
 
             const data = await response.json();
+            console.log(data);
+            
             console.log('📦 Pacotes recebidos:', data.data?.length);
             if (data.success) {
                 dispatch({
@@ -101,8 +103,10 @@ export default function HomeController() {
 
 
     useEffect(() => {
-        fetchPackagesData();
-    }, [isLoading]);
+        if (token){
+            fetchPackagesData();
+        }
+    }, [token]);
     const setSearchQuery = (query) => {
         dispatch({
             type: 'SET_SEARCH_QUERY',

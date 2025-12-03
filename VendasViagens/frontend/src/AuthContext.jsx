@@ -76,8 +76,8 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const register = async (name, email, password) => {
-        console.log('chamado');
+    const register = async (name, email, password, role = '') => {
+       
         
         dispatch({ type: 'LOGIN_REQUEST' });
         try {
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ name, email, password }),
+                body: JSON.stringify({ name, email, password, role}),
             });
             const data = await response.json();
             console.log(data);

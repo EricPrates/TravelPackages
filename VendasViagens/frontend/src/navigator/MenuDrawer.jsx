@@ -13,6 +13,7 @@ import PurchaseHistoryScreen from '../View/PurchaseHistoryScreen';
 import DashboardScreen from '../View/DashboardScreen';
 import StatementScreen from '../View/StatementScreen';
 import PurchaseDetailsScreen from '../View/PurchaseDetailsScreen';
+import CreateUserScreen from '../View/CreateUserScreen';
 const Drawer = createDrawerNavigator();
 
 // Custom Drawer Content com botão de logout
@@ -151,6 +152,13 @@ export default function MenuDrawer() {
               <MaterialCommunityIcons name="puzzle-plus" size={size} color={color} />
             )
           }} component={PurchaseDetailsScreen} />
+        <Drawer.Screen name="CriarUsuario" options={{
+            drawerLabel: 'Criar Usuário',
+            drawerItemStyle: { display: 'none' },
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="account-plus" size={size} color={color} />
+            )
+          }} component={CreateUserScreen} />
         </>
       )}
     </Drawer.Navigator>
