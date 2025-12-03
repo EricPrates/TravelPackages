@@ -38,10 +38,12 @@ export const findOne = async (req, res) => {
     }
 };
 export const register = async (req, res) => {
+    const { name, email, password, role} = req.body;
+    const roleLower = role.toLowerCase();
+
     const transaction = await db.sequelize.transaction();
     try {
-        const { name, email, password, role ='customer'} = req.body;
-
+        
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
@@ -66,7 +68,7 @@ export const register = async (req, res) => {
         }
 
         const hash = await bcrypt.hash(password, 10);
-        const user = await Users.create({ name, email, password: hash, role }, {transaction});
+        const user = await Users.create({ name, email, password: hash, role: roleLower }, {transaction});
         const wallet = await Wallet.create({ userId: user.id, balanceCash: 0.00, balanceMiles: 0.00 }, {transaction});
         
         // Importar funções de geração de token do Auth.js
