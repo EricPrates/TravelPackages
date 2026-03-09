@@ -1,7 +1,43 @@
 # Documentação da API - Sistema de Vendas de Viagens
 
+
 Base URL: `http://44.219.93.219:4567`
 
+# Travel Sales API
+
+API REST para gerenciamento de vendas de pacotes de viagem.
+
+Funcionalidades principais:
+
+- autenticação JWT
+- compra de pacotes
+- carteira com dinheiro e milhas
+- dashboard de estatísticas
+- gerenciamento de pacotes por agentes
+  
+## Tecnologias
+
+### Backend
+- Node.js
+- Express
+- JWT Authentication
+- REST API
+
+### Frontend
+- React Native
+- JavaScript
+- TailwindCSS
+
+## Arquitetura
+
+O sistema é composto por:
+
+- API REST em Node.js
+- autenticação com JWT (access + refresh token)
+- aplicação mobile em React Native
+- sistema de carteira com duas moedas (cash e miles)
+- controle de permissões por papel (agent / user)
+- 
 ## 📋 Índice
 - [Autenticação](#autenticação)
 - [Usuários](#usuários)
