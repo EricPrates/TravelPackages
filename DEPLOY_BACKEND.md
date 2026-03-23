@@ -142,8 +142,8 @@ pm2 restart vendasviagens
 
 ## 🔗 Links Úteis
 
-- **Servidor:** http://44.219.93.219:4567
-- **API Base:** http://44.219.93.219:4567
+- **API Base:** `http://localhost:4567` (desenvolvimento)
+- **Produção:** Deploy na AWS EC2 (instância encerrada)
 - **Health Check:** http://44.219.93.219:4567/
 
 ---
@@ -152,12 +152,12 @@ pm2 restart vendasviagens
 
 1. **Sempre faça backup do banco antes de deploy importante:**
    ```bash
-   scp -i ~/Aws_vianna_2025_teste.pem ubuntu@44.219.93.219:~/trabalho2/VendasViagens/db/travel_packages.db ./backup_$(date +%Y%m%d).db
+   scp -i ~/sua-chave.pem ubuntu@SEU-IP-AWS:~/trabalho2/VendasViagens/db/travel_packages.db ./backup_$(date +%Y%m%d).db
    ```
 
 2. **Ver últimas alterações no servidor:**
    ```bash
-   ssh -i ~/Aws_vianna_2025_teste.pem ubuntu@44.219.93.219 "cd ~/trabalho2 && git log -5 --oneline"
+   ssh -i ~/sua-chave.pem ubuntu@SEU-IP "cd ~/trabalho2 && git log -5 --oneline"
    ```
 
 3. **Testar API rapidamente:**
